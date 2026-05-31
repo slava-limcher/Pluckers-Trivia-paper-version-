@@ -986,8 +986,24 @@
   #liveBanner .lb-title { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
   #liveBanner .lb-title b { color: var(--yellow); font-size: 22px; letter-spacing: 3px; }
   #liveBanner .lb-url { font-size: 11px; color: #9fb6c8; word-break: break-all; margin-top: 2px; }
+  #liveBanner .lb-code { font-size: 44px; font-weight: 900; color: var(--yellow); letter-spacing: 8px; line-height: 1; margin: 4px 0 2px; }
+  #liveBanner .lb-howto { font-size: 11px; color: #cfe8ff; margin-top: 4px; line-height: 1.4; max-width: 240px; }
+  #liveBanner .lb-howto b { color: #fff; }
   #liveBanner .lb-warn { font-size: 11px; color: var(--yellow); margin-top: 6px; line-height: 1.35; max-width: 240px; }
   #liveBanner .lb-warn b { color: #fff; }
+
+  /* TV "enter room code" setup screen */
+  .code-entry { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 40px; }
+  .code-entry .ce-title { font-size: 64px; color: var(--yellow); margin: 0; letter-spacing: 6px; text-shadow: 3px 3px 0 var(--blue); }
+  .code-entry .ce-sub { font-size: 26px; color: var(--cream); margin: 0; }
+  .code-entry .ce-input {
+    font-size: 90px; font-weight: 900; letter-spacing: 20px; text-align: center;
+    width: 460px; max-width: 90vw; padding: 18px 10px 18px 30px;
+    border-radius: 16px; border: 5px solid var(--yellow); background: var(--cream);
+    color: var(--blue-dark); text-transform: uppercase;
+  }
+  .code-entry .ce-input:focus { outline: none; border-color: var(--red); }
+  .code-entry .ce-err { color: var(--yellow); font-size: 20px; min-height: 22px; margin: 0; }
   #liveBanner .lb-qr { background: #fff; padding: 5px; border-radius: 8px; flex: 0 0 auto; }
   #liveBanner .lb-qr img, #liveBanner .lb-qr canvas { display: block; }
   #liveBanner .lb-stop {
@@ -1018,31 +1034,6 @@
   /* Persistent instructions panel injected on TVs (lives outside #main so it
      survives re-renders). Reuses the .instructions look. */
   #tvInstructions { /* positioning inherited from .instructions */ }
-
-  /* QR code shown on the TVs (left side, mirrors the instructions on the right). */
-  #tvQr {
-    position: fixed;
-    left: 36px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 6;
-    background: var(--blue-dark);
-    border: 5px solid var(--yellow);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 12px 30px rgba(0,0,0,.5);
-  }
-  #tvQr .tvqr-label {
-    color: var(--yellow);
-    font-weight: 900;
-    letter-spacing: 2px;
-    font-size: 18px;
-    margin-bottom: 10px;
-    max-width: 160px;
-  }
-  #tvQr .tvqr-box { background: #fff; padding: 8px; border-radius: 8px; }
-  #tvQr .tvqr-box img, #tvQr .tvqr-box canvas { display: block; }
 </style>
 </head>
 <body>
@@ -1496,11 +1487,18 @@ function backToMenu() {
 // ============================================================
 document.addEventListener("keydown", (e) => {
   if (e.repeat) return;
+  // Let typing flow normally into form fields (e.g. the TV code box).
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   if (document.getElementById("loadModal")) {
     if (e.key === "Escape") {
       e.preventDefault();
       closeLoadModal();
     }
+    return;
+  }
+  // On any TV / display screen, the only key that does anything is fullscreen.
+  if (document.body.classList.contains("display-mode")) {
+    if (e.key === "f" || e.key === "F") { e.preventDefault(); toggleFullscreen(); }
     return;
   }
   switch (e.key) {
@@ -1843,17 +1841,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
 // ----------------------------------------------------------------
 const LIVE_TABLE = "sessions";
 
-// What the QR code on the TV screens points to. Leave "" to use the room's own
-// join link (a phone that scans it follows along, view-only). Or set it to any
-// URL you want guests to open instead (menu, rules page, sign-up, etc.).
-const TV_QR_URL   = "";
-const TV_QR_LABEL = "SCAN TO PLAY ALONG";
-
-// All TVs and the host share ONE fixed room, so the TV link never changes and
-// you set each TV up only once. For multiple venues, give each its own host
-// link with ?room=NAME (and the matching TVs use ?tv&room=NAME).
-const DEFAULT_ROOM = "PLUCKERS";
-
 const live = {
   role: "off",      // "off" | "host" | "display"
   code: null,
@@ -1869,16 +1856,20 @@ function liveClient() {
   if (!live.sb) live.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return live.sb;
 }
-// Which room this page uses: ?room=NAME overrides, otherwise the fixed default.
-function roomFromUrl() {
-  return (new URLSearchParams(location.search).get("room") || DEFAULT_ROOM).toUpperCase();
+// Fresh, unique room code per session so several locations never collide.
+function makeRoomCode() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I/L
+  let s = "";
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
 }
-// The permanent link you put on every TV (and the "play along" QR). Always a
-// view-only display link, so scanning it can never let someone control the game.
+// Permanent link to bookmark on every TV; it shows an "enter code" screen.
+function tvBaseUrl() {
+  return location.origin + location.pathname + "?tv";
+}
+// Direct-connect link for the current room (used by the QR / scan-to-watch).
 function tvUrl() {
-  let u = location.origin + location.pathname + "?tv";
-  if (live.code && live.code !== DEFAULT_ROOM) u += "&room=" + encodeURIComponent(live.code);
-  return u;
+  return tvBaseUrl() + "&room=" + encodeURIComponent(live.code || "");
 }
 // A URL a phone on another device can't reach (running off your PC, not the web).
 function isLocalUrl() {
@@ -1910,7 +1901,7 @@ async function goLive() {
     return;
   }
   live.role = "host";
-  live.code = roomFromUrl();
+  live.code = makeRoomCode();
   try {
     const { error } = await liveClient().from(LIVE_TABLE).upsert(snapshot());
     if (error) throw error;
@@ -1954,9 +1945,9 @@ function showLiveBanner() {
   el.innerHTML =
     '<div class="lb-dot"></div>' +
     '<div class="lb-info">' +
-      '<div class="lb-title">● LIVE • ROOM <b>' + live.code + '</b></div>' +
-      '<div style="font-size:12px;color:#cfe8ff;margin-top:4px;">Open this on every TV:</div>' +
-      '<div class="lb-url">' + escapeHtml(url) + '</div>' +
+      '<div class="lb-title">● LIVE — ROOM CODE</div>' +
+      '<div class="lb-code">' + live.code + '</div>' +
+      '<div class="lb-howto">On each TV open <b>' + escapeHtml(tvBaseUrl()) + '</b> and enter this code (or scan ⟶)</div>' +
       warn +
     '</div>' +
     '<div class="lb-qr" id="lbQr"></div>' +
@@ -2020,8 +2011,8 @@ function showDisplayTag() {
   el.textContent = "MIRRORING • ROOM " + live.code;
 }
 
-// Inject the always-on TV chrome: an Instructions panel (right) and a QR (left).
-// These live in #app, outside <main>, so they persist across question re-renders.
+// Inject the always-on TV chrome: an Instructions panel (right).
+// Lives in #app, outside <main>, so it persists across question re-renders.
 function mountTvChrome() {
   const app = document.getElementById("app");
 
@@ -2039,37 +2030,16 @@ function mountTvChrome() {
       '</ol>';
     app.appendChild(ins);
   }
-
-  if (!document.getElementById("tvQr")) {
-    const wrap = document.createElement("div");
-    wrap.id = "tvQr";
-    wrap.innerHTML =
-      '<div class="tvqr-label">' + escapeHtml(TV_QR_LABEL) + '</div>' +
-      '<div class="tvqr-box" id="tvQrBox"></div>';
-    app.appendChild(wrap);
-    const target = TV_QR_URL || tvUrl();
-    const boxEl = document.getElementById("tvQrBox");
-    if (typeof QRCode !== "undefined" && boxEl) {
-      try { new QRCode(boxEl, { text: target, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M }); }
-      catch (e) { wrap.style.display = "none"; }
-    } else {
-      wrap.style.display = "none";
-    }
-  }
 }
 
-// On TVs, show/hide the injected chrome per screen so it never covers content:
-//   • Instructions: title + round-intro only (hidden during questions & the answer review)
-//   • QR:           title + round-intro + questions (hidden during the full-screen answers)
+// On TVs, show the Instructions panel only on the title + round-intro screens
+// (hidden during questions and the answer review so it never covers content).
 function updateTvChromeVisibility() {
   if (live.role !== "display") return;
   const s = game.state;
   const ins = document.getElementById("tvInstructions");
-  const qr  = document.getElementById("tvQr");
   const showIns = (s === State.TITLE || s === State.ROUND_INTRO);
-  const showQr  = (s === State.TITLE || s === State.ROUND_INTRO || s === State.QUESTION);
   if (ins) ins.style.display = showIns ? "" : "none";
-  if (qr)  qr.style.display  = showQr  ? "" : "none";
 }
 function showDisplayWaiting() {
   main.innerHTML =
@@ -2078,14 +2048,46 @@ function showDisplayWaiting() {
     'This screen updates automatically when the host presses GO LIVE.</p></div>';
 }
 
+// TV setup screen: shown on the permanent ?tv link so staff just type the
+// 4-character code from the host screen (no long URL to type each session).
+function showCodeEntry() {
+  document.body.classList.add("display-mode");
+  main.innerHTML =
+    '<div class="view code-entry">' +
+      '<h2 class="ce-title">ENTER ROOM CODE</h2>' +
+      '<p class="ce-sub">Get the code from the host\'s screen</p>' +
+      '<input id="ceInput" class="ce-input" maxlength="4" autocomplete="off" ' +
+        'autocapitalize="characters" spellcheck="false" placeholder="• • • •" />' +
+      '<button class="btn" id="ceGo">WATCH GAME</button>' +
+      '<p id="ceErr" class="ce-err"></p>' +
+    '</div>';
+  const inp = document.getElementById("ceInput");
+  const go = () => {
+    const code = (inp.value || "").trim().toUpperCase();
+    if (code.length < 3) {
+      document.getElementById("ceErr").textContent = "Enter the code shown on the host screen.";
+      inp.focus();
+      return;
+    }
+    connectAsDisplay(code);
+  };
+  document.getElementById("ceGo").addEventListener("click", go);
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+  inp.focus();
+}
+
 // ============================================================
 // BOOT
 // ============================================================
 const _params = new URLSearchParams(location.search);
-if (_params.has("tv") || _params.has("screen")) {
-  connectAsDisplay(roomFromUrl());   // TV / display screen  →  .../?tv
+const _isTv = _params.has("tv") || _params.has("screen");
+const _roomParam = _params.get("room");
+if (_isTv && _roomParam) {
+  connectAsDisplay(_roomParam.toUpperCase());   // TV opened with a code (or scanned)
+} else if (_isTv) {
+  showCodeEntry();                              // permanent TV link → ask for the code
 } else {
-  render();                          // host / admin (full controls + GO LIVE)
+  render();                                     // host / admin (full controls + GO LIVE)
 }
 </script>
 </body>
