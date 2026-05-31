@@ -1,0 +1,1738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pluckers Trivia</title>
+<style>
+  :root {
+    --red: #c8102e;
+    --red-dark: #9a0a22;
+    --red-deep: #6b0717;
+    --yellow: #f4c430;
+    --yellow-bright: #ffd84d;
+    --blue: #1d3a8a;
+    --blue-dark: #142764;
+    --blue-bright: #2a52be;
+    --cream: #f7f1e3;
+    --black: #0c0c0c;
+    --charcoal: #1a1a1a;
+    --panel: #222;
+    --ink: #fff8e7;
+    --ink-dim: #d9c9a0;
+    --good: var(--yellow);
+    --shadow: 0 24px 70px rgba(0,0,0,.55);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background:
+      radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    color: var(--ink);
+    font-family: "Impact", "Oswald", "Bebas Neue", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(244,196,48,.035) 0 14px, transparent 14px 28px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  #app {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  /* Header bar */
+  header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 36px;
+    background: var(--blue-dark);
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+  header::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 9px;
+    border-top: 2px solid var(--black);
+    background: linear-gradient(180deg,
+      var(--blue) 0,
+      var(--blue) 33.33%,
+      var(--yellow) 33.33%,
+      var(--yellow) 66.66%,
+      var(--red) 66.66%,
+      var(--red) 100%);
+  }
+  header .brand, header .meta { position: relative; z-index: 2; }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+  .brand .logo {
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    background: var(--cream);
+    display: grid;
+    place-items: center;
+    font-size: 46px;
+    font-weight: 900;
+    color: var(--red);
+    text-shadow: 2px 2px 0 var(--blue);
+    box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 -3px 0 rgba(0,0,0,.12);
+    border: 3px solid var(--black);
+    transform: rotate(-4deg);
+  }
+  .brand .brand-logo-img {
+    height: 72px;
+    width: auto;
+    max-width: 260px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+  }
+  .brand .name {
+    font-size: 38px;
+    color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--black);
+    line-height: 1;
+  }
+  .brand .name small {
+    display: block;
+    font-size: 14px;
+    color: var(--cream);
+    letter-spacing: 6px;
+    margin-top: 4px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,.2);
+  }
+  .meta {
+    display: flex;
+    gap: 14px;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--blue);
+  }
+  .meta .chip {
+    background: var(--cream);
+    border: 3px solid var(--blue);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 900;
+    color: var(--red);
+  }
+  .meta .chip b { color: var(--blue); }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    min-height: 0;
+  }
+  .view {
+    width: 100%;
+    max-width: 1500px;
+    text-align: center;
+  }
+
+  /* Title screen */
+  .title-wrap { padding: 40px 0; }
+  .title-logo {
+    position: relative;
+    width: 320px; height: 200px;
+    margin: 0 auto 24px;
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg,
+        var(--red) 0,
+        var(--red) 11.5%, var(--black) 11.5%, var(--black) 12.5%,
+        var(--blue) 12.5%, var(--blue) 26%, var(--black) 26%, var(--black) 27%,
+        var(--yellow) 27%, var(--yellow) 73%, var(--black) 73%, var(--black) 74%,
+        var(--blue) 74%, var(--blue) 87.5%, var(--black) 87.5%, var(--black) 88.5%,
+        var(--red) 88.5%, var(--red) 100%
+      );
+    display: grid;
+    place-items: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    border: 6px solid var(--black);
+  }
+  .title-logo .logo-p {
+    font-size: 140px;
+    font-weight: 900;
+    color: var(--red);
+    line-height: 1;
+    text-shadow:
+      4px 4px 0 var(--blue),
+      8px 8px 0 var(--black);
+  }
+  .title-logo-img {
+    display: block;
+    width: auto;
+    max-width: min(620px, 84vw);
+    max-height: 280px;
+    margin: 0 auto 24px;
+    filter: drop-shadow(0 18px 32px rgba(0,0,0,.6));
+  }
+  h1.title {
+    font-size: 130px;
+    line-height: .95;
+    margin: 0 0 8px;
+    color: var(--red);
+    text-shadow:
+      5px 5px 0 var(--yellow),
+      10px 10px 0 var(--blue),
+      14px 14px 0 var(--black);
+    letter-spacing: 4px;
+  }
+  h1.title .sub {
+    display: block;
+    font-size: 80px;
+    color: var(--yellow);
+    text-shadow:
+      4px 4px 0 var(--blue),
+      8px 8px 0 var(--black);
+    letter-spacing: 14px;
+    margin-top: 8px;
+  }
+  .lead {
+    color: var(--ink);
+    font-size: 30px;
+    margin: 22px auto 32px;
+    max-width: 960px;
+    letter-spacing: 2px;
+    line-height: 1.5;
+  }
+  .lead b { color: var(--yellow); }
+  .win-prizes {
+    position: fixed;
+    left: 72px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-8deg);
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, var(--yellow-bright), var(--yellow) 70%);
+    border: 8px solid var(--red);
+    box-shadow: 0 0 0 6px var(--blue), 0 18px 40px rgba(0,0,0,.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: .9;
+    z-index: 5;
+  }
+  .win-prizes .wp-top {
+    color: var(--blue);
+    font-size: 50px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.15);
+  }
+  .win-prizes .wp-big {
+    color: var(--red);
+    font-size: 70px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 var(--black);
+  }
+  .instructions {
+    position: fixed;
+    right: 36px;
+    top: 50%;
+    transform: translateY(-50%) rotate(2deg);
+    width: 460px;
+    background: #ffffff;
+    border: 6px solid var(--red);
+    border-radius: 18px;
+    box-shadow: 0 0 0 7px var(--blue), 0 20px 46px rgba(0,0,0,.55);
+    padding: 0 0 26px;
+    text-align: left;
+    overflow: hidden;
+    z-index: 5;
+  }
+  .instructions .instr-header {
+    background: var(--red);
+    color: var(--yellow);
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    padding: 16px 18px;
+    text-align: center;
+    text-shadow: 2px 2px 0 var(--black);
+    border-bottom: 5px solid var(--black);
+  }
+  .instructions .instr-list {
+    margin: 26px 0 0;
+    padding: 0 28px 0 62px;
+    color: var(--blue-dark);
+  }
+  .instructions .instr-list li {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.35;
+    margin-bottom: 22px;
+    letter-spacing: .3px;
+  }
+  .instructions .instr-list li:last-child { margin-bottom: 0; }
+  .instructions .instr-list li b { color: var(--red); }
+
+  @media (max-width: 1100px) {
+    .win-prizes { width: 150px; height: 150px; left: 16px; border-width: 6px; }
+    .win-prizes .wp-top { font-size: 28px; }
+    .win-prizes .wp-big { font-size: 38px; }
+    .instructions { width: 320px; right: 14px; }
+    .instructions .instr-header { font-size: 30px; }
+    .instructions .instr-list { padding: 0 18px 0 46px; }
+    .instructions .instr-list li { font-size: 22px; margin-bottom: 16px; }
+  }
+
+  .grab-sheet {
+    display: inline-block;
+    margin: 24px auto 8px;
+    padding: 18px 42px;
+    background: var(--yellow);
+    color: var(--red);
+    border: 4px solid var(--black);
+    border-radius: 14px;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--blue);
+    box-shadow: 0 8px 0 var(--blue-dark), 0 14px 26px rgba(0,0,0,.5);
+    transform: rotate(-2deg);
+  }
+
+  /* Buttons */
+  .btn {
+    background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+    color: var(--cream);
+    border: 4px solid var(--black);
+    border-radius: 14px;
+    padding: 22px 48px;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow: 0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);
+    transition: transform .08s ease, box-shadow .12s ease, filter .15s ease;
+    font-family: inherit;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 var(--black);
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 4px 0 var(--blue-dark), 0 8px 16px rgba(0,0,0,.5);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--yellow);
+    border-color: var(--yellow);
+    box-shadow: none;
+    text-shadow: none;
+  }
+  .btn-row { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+
+  .hint {
+    margin-top: 28px;
+    color: var(--cream);
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .hint kbd {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--red);
+    border: 2px solid var(--black);
+    border-bottom-width: 4px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 0 4px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  /* Round intro */
+  @keyframes round-label-in {
+    0%   { opacity: 0; transform: translateY(-24px); letter-spacing: 4px; }
+    100% { opacity: 1; transform: translateY(0); letter-spacing: 18px; }
+  }
+  @keyframes round-number-pop {
+    0%   { opacity: 0; transform: scale(.4) rotate(-8deg); }
+    60%  { opacity: 1; transform: scale(1.08) rotate(2deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @keyframes round-rise {
+    0%   { opacity: 0; transform: translateY(28px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .round-intro {
+    padding: 40px;
+  }
+  .round-label {
+    font-size: 48px;
+    letter-spacing: 18px;
+    color: var(--cream);
+    text-shadow: 3px 3px 0 var(--blue);
+    margin-bottom: 8px;
+    animation: round-label-in .35s ease-out both;
+  }
+  .round-number {
+    font-size: 220px;
+    line-height: 1;
+    color: var(--yellow);
+    text-shadow:
+      6px 6px 0 var(--red),
+      12px 12px 0 var(--blue),
+      18px 18px 0 var(--black);
+    margin: 0;
+    animation: round-number-pop .5s cubic-bezier(.2,.8,.3,1.2) .12s both;
+  }
+  .round-category {
+    font-size: 84px;
+    color: var(--red);
+    text-shadow:
+      4px 4px 0 var(--yellow),
+      8px 8px 0 var(--black);
+    margin: 16px 0 8px;
+    letter-spacing: 6px;
+    animation: round-rise .4s ease-out .42s both;
+  }
+  .round-count {
+    font-size: 26px;
+    color: var(--cream);
+    letter-spacing: 4px;
+    margin-bottom: 32px;
+    animation: round-rise .4s ease-out .55s both;
+  }
+
+  /* Question screen */
+  .q-screen {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 20px;
+    height: 100%;
+    align-content: stretch;
+  }
+  .q-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    animation: q-badge-drop .3s ease-out both;
+  }
+  .q-badge {
+    background: var(--blue);
+    border: 4px solid var(--black);
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--black);
+  }
+  .q-category {
+    background: var(--red);
+    border: 4px solid var(--black);
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--black);
+  }
+  @keyframes q-enter {
+    0%   { opacity: 0; transform: translateX(48px) scale(.97); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  @keyframes q-badge-drop {
+    0%   { opacity: 0; transform: translateY(-16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .q-text {
+    animation: q-enter .3s cubic-bezier(.2,.7,.3,1) both;
+    font-size: 92px;
+    line-height: 1.18;
+    color: var(--cream);
+    background: linear-gradient(180deg, var(--blue-dark), #0a1234);
+    border: 5px solid var(--yellow);
+    border-radius: 22px;
+    padding: 40px 50px;
+    box-shadow: var(--shadow);
+    letter-spacing: 1px;
+  }
+  .q-text .q-num {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--red);
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    padding: 4px 18px;
+    margin-right: 18px;
+    font-size: 76px;
+    vertical-align: middle;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.15);
+  }
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    background: var(--cream);
+    border: 4px solid var(--black);
+    border-radius: 16px;
+    padding: 22px 28px;
+    font-size: 34px;
+    text-align: left;
+    color: var(--blue-dark);
+    transition: transform .15s, border-color .15s, background .25s;
+    box-shadow: 0 6px 0 rgba(0,0,0,.25);
+  }
+  .choice .letter {
+    flex: 0 0 70px;
+    height: 70px;
+    border-radius: 14px;
+    background: var(--red);
+    color: var(--cream);
+    display: grid;
+    place-items: center;
+    font-size: 42px;
+    font-weight: 900;
+    text-shadow: 2px 2px 0 var(--black);
+    border: 3px solid var(--black);
+  }
+  .choice:nth-child(2) .letter,
+  .choice:nth-child(3) .letter {
+    background: var(--blue);
+  }
+  .choice.reveal-correct {
+    background: linear-gradient(180deg, var(--yellow-bright), var(--yellow));
+    border-color: var(--red);
+    transform: scale(1.03);
+    box-shadow: 0 10px 30px rgba(244,196,48,.5), 0 0 0 4px var(--blue) inset;
+  }
+  .choice.reveal-correct .letter {
+    background: var(--red);
+    color: var(--cream);
+    border-color: var(--black);
+  }
+  .choice.reveal-correct .choice-text {
+    color: var(--red);
+    font-weight: 900;
+    text-shadow: 1px 1px 0 rgba(0,0,0,.1);
+  }
+  .choice.reveal-dim {
+    opacity: .35;
+  }
+
+  /* Answer reveal banner */
+  .reveal-banner {
+    margin-top: 12px;
+    font-size: 36px;
+    color: var(--yellow);
+    letter-spacing: 4px;
+    text-shadow:
+      3px 3px 0 var(--red),
+      6px 6px 0 var(--black);
+    animation: pop .35s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Round end */
+  .round-end h2 {
+    font-size: 100px;
+    color: var(--red);
+    text-shadow:
+      6px 6px 0 var(--yellow),
+      12px 12px 0 var(--blue),
+      18px 18px 0 var(--black);
+    margin: 0 0 20px;
+    letter-spacing: 4px;
+  }
+  .round-end .answers-list {
+    background: var(--cream);
+    border: 5px solid var(--blue);
+    border-radius: 18px;
+    padding: 30px;
+    margin: 24px auto;
+    max-width: 1100px;
+    box-shadow: var(--shadow);
+    text-align: left;
+  }
+  .answers-list ol {
+    columns: 2;
+    column-gap: 60px;
+    margin: 0;
+    padding-left: 24px;
+    font-size: 26px;
+    line-height: 1.7;
+    color: var(--blue-dark);
+  }
+  .answers-list ol b { color: var(--red); }
+
+  /* End screen */
+  .end h2 {
+    font-size: 110px;
+    color: var(--red);
+    text-shadow:
+      6px 6px 0 var(--yellow),
+      12px 12px 0 var(--blue),
+      18px 18px 0 var(--black);
+    margin: 0 0 20px;
+    letter-spacing: 6px;
+  }
+  .end p {
+    font-size: 30px;
+    color: var(--cream);
+    letter-spacing: 3px;
+    margin-bottom: 36px;
+  }
+
+  /* Footer */
+  footer {
+    position: relative;
+    padding: 14px 32px;
+    background: var(--blue-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--cream);
+  }
+  footer::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 9px;
+    border-bottom: 2px solid var(--black);
+    background: linear-gradient(180deg,
+      var(--red) 0,
+      var(--red) 33.33%,
+      var(--yellow) 33.33%,
+      var(--yellow) 66.66%,
+      var(--blue) 66.66%,
+      var(--blue) 100%);
+  }
+  footer .controls span { margin-right: 18px; }
+  footer kbd {
+    background: var(--cream);
+    color: var(--red);
+    border: 1px solid var(--black);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin: 0 2px;
+    font-family: inherit;
+    font-weight: 900;
+  }
+
+  /* Round-end answer review */
+  .round-end-answers {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100vh - 200px);
+    gap: 14px;
+    text-align: center;
+  }
+  .round-end-header h2 {
+    font-size: 56px;
+    margin: 0 0 4px;
+  }
+  .round-end-answers .round-category {
+    text-shadow: 3px 3px 0 var(--yellow), 5px 5px 0 var(--black);
+  }
+  .qa-list {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--cream);
+    border: 5px solid var(--blue);
+    border-radius: 18px;
+    padding: 18px 26px;
+    box-shadow: var(--shadow);
+    text-align: left;
+    color: var(--blue-dark);
+  }
+  .qa-list ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    columns: 2;
+    column-gap: 40px;
+    column-rule: 2px dashed rgba(29,58,138,.25);
+  }
+  /* Font sizes are driven by a base font-size set on .qa-list by JS (auto-fit).
+     Everything below is in em so the whole list scales together. */
+  .qa-list { font-size: 40px; }
+  .qa-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: .3em 0;
+    border-bottom: 1px dashed rgba(29,58,138,.15);
+  }
+  .qa-item:last-child { border-bottom: 0; }
+  .qa-q {
+    font-weight: 900;
+    color: var(--blue-dark);
+    line-height: 1.15;
+    font-size: 1em;
+  }
+  .qa-num {
+    display: inline-block;
+    color: var(--red);
+    margin-right: .2em;
+    font-weight: 900;
+  }
+  .qa-a {
+    color: var(--red);
+    margin-top: .05em;
+    line-height: 1.12;
+    padding-left: .1em;
+    font-size: .86em;
+  }
+  .qa-a b {
+    color: var(--blue);
+    letter-spacing: 1px;
+    margin-right: 4px;
+    font-size: .85em;
+  }
+
+  .round-end-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding-top: 4px;
+  }
+  .round-end-footer .lead-inline {
+    color: var(--cream);
+    font-size: 22px;
+    letter-spacing: 3px;
+  }
+
+  /* Status pill on title screen */
+  .status-pill {
+    display: inline-block;
+    background: var(--cream);
+    color: var(--blue-dark);
+    border: 4px solid var(--blue);
+    border-radius: 999px;
+    padding: 14px 36px;
+    font-size: 30px;
+    letter-spacing: 2px;
+    margin: 0 0 24px;
+    font-weight: 900;
+  }
+  .status-pill b { color: var(--red); }
+  .status-pill.custom { border-color: var(--red); }
+  .status-pill.custom b { color: var(--blue); }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 10, 31, .85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .modal {
+    background: var(--cream);
+    color: var(--blue-dark);
+    border: 6px solid var(--blue);
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    width: 100%;
+    max-width: 720px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 28px 32px;
+    position: relative;
+  }
+  .modal::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 14px;
+    background: linear-gradient(180deg,
+      var(--red) 0,
+      var(--red) 50%,
+      var(--yellow) 50%,
+      var(--yellow) 100%);
+    border-radius: 14px 14px 0 0;
+  }
+  .modal h2 {
+    margin: 18px 0 6px;
+    color: var(--red);
+    font-size: 38px;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .modal .modal-lead {
+    color: var(--blue-dark);
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 20px;
+    letter-spacing: 1px;
+  }
+  .modal .field {
+    margin-bottom: 20px;
+  }
+  .modal label {
+    display: block;
+    font-size: 16px;
+    color: var(--red);
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    font-weight: 900;
+  }
+  .modal input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: #fff;
+    border: 2px dashed var(--blue);
+    border-radius: 8px;
+    font-family: inherit;
+    color: var(--blue-dark);
+  }
+  .modal textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 14px;
+    background: #fff;
+    border: 2px solid var(--blue);
+    border-radius: 8px;
+    font-family: ui-monospace, "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    color: var(--blue-dark);
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .modal textarea:focus, .modal input[type="file"]:focus {
+    outline: none;
+    border-color: var(--red);
+  }
+  .format-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    border-bottom: 3px solid var(--blue);
+  }
+  .format-tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 4px solid transparent;
+    margin-bottom: -3px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 2px;
+    font-weight: 900;
+    color: var(--blue);
+    cursor: pointer;
+  }
+  .format-tab.active {
+    color: var(--red);
+    border-bottom-color: var(--red);
+  }
+  .format-help {
+    background: rgba(29, 58, 138, .08);
+    border-left: 4px solid var(--blue);
+    padding: 10px 14px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-family: ui-monospace, "Consolas", "Courier New", monospace;
+    color: var(--blue-dark);
+    white-space: pre;
+    overflow-x: auto;
+    border-radius: 0 6px 6px 0;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(29, 58, 138, .2);
+  }
+  .modal .btn {
+    padding: 14px 28px;
+    font-size: 18px;
+    box-shadow: 0 6px 0 var(--blue-dark);
+  }
+  .modal .btn:active {
+    box-shadow: 0 2px 0 var(--blue-dark);
+  }
+  .modal .btn.secondary {
+    background: var(--cream);
+    color: var(--blue);
+    border-color: var(--blue);
+    text-shadow: none;
+    box-shadow: 0 6px 0 var(--blue-dark);
+  }
+  .modal .btn.danger {
+    background: var(--yellow);
+    color: var(--red);
+    text-shadow: none;
+  }
+  .modal .error-msg {
+    background: var(--red);
+    color: var(--cream);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    border: 2px solid var(--black);
+  }
+  .modal .ok-msg {
+    background: var(--blue);
+    color: var(--yellow);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    border: 2px solid var(--black);
+  }
+  .modal .close-x {
+    position: absolute;
+    top: 22px;
+    right: 18px;
+    background: transparent;
+    border: 0;
+    color: var(--blue);
+    font-size: 28px;
+    font-weight: 900;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 10px;
+    z-index: 2;
+  }
+  .modal .close-x:hover { color: var(--red); }
+
+  @media (max-width: 900px) {
+    h1.title { font-size: 80px; }
+    h1.title .sub { font-size: 50px; letter-spacing: 8px; }
+    .q-text { font-size: 36px; padding: 28px; }
+    .choice { font-size: 24px; padding: 18px; }
+    .choice .letter { flex-basis: 54px; height: 54px; font-size: 32px; }
+    .choices { grid-template-columns: 1fr; }
+    .round-number { font-size: 140px; }
+    .round-category { font-size: 56px; letter-spacing: 4px; }
+    .answers-list ol { columns: 1; font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="logo">🍗</div>
+      <div class="name">PLUCKERS<small>TRIVIA NIGHT</small></div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <main id="main"></main>
+
+  <div id="modalRoot"></div>
+
+  <footer>
+    <div class="controls">
+      <span><kbd>SPACE</kbd> / <kbd>→</kbd> Next Question</span>
+      <span><kbd>←</kbd> Back</span>
+      <span><kbd>F</kbd> Fullscreen</span>
+      <span><kbd>ESC</kbd> Menu</span>
+    </div>
+    <div>WRITE YOUR ANSWERS ON THE PAPER PROVIDED</div>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// DEFAULT QUESTIONS — 7 categories × 10 questions.
+// Each question is { q: "...", a: "..." }. The answer is NEVER
+// shown on the game board — only on the private Answer Key page.
+// ============================================================
+const DEFAULT_ROUNDS = [
+  {
+    category: "Food & Drink",
+    questions: [
+      { q: "The Scoville scale measures what property of food?", a: "Spicy heat (capsaicin level)" },
+      { q: "Which country is credited with inventing pizza?", a: "Italy" },
+      { q: "What is the main ingredient in traditional guacamole?", a: "Avocado" },
+      { q: "What four ingredients are required to brew beer?", a: "Water, malt (barley), hops, yeast" },
+      { q: "What spirit is the main ingredient in a classic margarita?", a: "Tequila" },
+      { q: "After water, what is the most consumed beverage in the world?", a: "Tea" },
+      { q: "What dish is the national food of Spain, made with rice and saffron?", a: "Paella" },
+      { q: "What grain is the primary ingredient in traditional sushi?", a: "Rice" },
+      { q: "What gives sourdough bread its tangy flavor?", a: "Lactic acid (from a wild-yeast starter)" },
+      { q: "Which fruit is used to make traditional Italian limoncello?", a: "Lemons" }
+    ]
+  },
+  {
+    category: "Sports",
+    questions: [
+      { q: "How many players are on the field per team in soccer?", a: "11" },
+      { q: "What sport uses the term 'love' to mean zero?", a: "Tennis" },
+      { q: "The Super Bowl is the championship game of what league?", a: "NFL" },
+      { q: "How many holes are played in a standard round of golf?", a: "18" },
+      { q: "In which sport would you perform a 'slam dunk'?", a: "Basketball" },
+      { q: "How many rings are on the Olympic flag?", a: "5" },
+      { q: "Which is the only Grand Slam tennis tournament played on clay?", a: "French Open (Roland-Garros)" },
+      { q: "In what sport is the Stanley Cup awarded?", a: "Ice hockey (NHL)" },
+      { q: "How long is a marathon, rounded to the nearest mile?", a: "26 miles (officially 26.2)" },
+      { q: "Which country has won the most FIFA World Cup titles?", a: "Brazil (5)" }
+    ]
+  },
+  {
+    category: "Movies & TV",
+    questions: [
+      { q: "Who directed the 1994 film 'Pulp Fiction'?", a: "Quentin Tarantino" },
+      { q: "In the U.S. version of 'The Office', what is the name of the paper company?", a: "Dunder Mifflin" },
+      { q: "Which animated film features a clownfish named Marlin searching for his son?", a: "Finding Nemo" },
+      { q: "In what year was the first 'Star Wars' film released?", a: "1977" },
+      { q: "Who played Walter White in 'Breaking Bad'?", a: "Bryan Cranston" },
+      { q: "Which film won Best Picture at the 2020 Academy Awards?", a: "Parasite" },
+      { q: "In 'Friends', what is the name of the coffee shop where the characters hang out?", a: "Central Perk" },
+      { q: "Who voices Woody in the 'Toy Story' films?", a: "Tom Hanks" },
+      { q: "Which Alfred Hitchcock film features the famous shower scene?", a: "Psycho" },
+      { q: "Which actor played James Bond in the 1995 film 'GoldenEye'?", a: "Pierce Brosnan" }
+    ]
+  },
+  {
+    category: "Music",
+    questions: [
+      { q: "Who is widely known as the 'King of Pop'?", a: "Michael Jackson" },
+      { q: "How many strings does a standard guitar have?", a: "6" },
+      { q: "Which band recorded the album 'The Dark Side of the Moon'?", a: "Pink Floyd" },
+      { q: "What instrument did jazz great Louis Armstrong play?", a: "Trumpet" },
+      { q: "How many keys are on a standard piano?", a: "88" },
+      { q: "Which city is widely considered the home of country music in the U.S.?", a: "Nashville, Tennessee" },
+      { q: "Who wrote and originally performed 'Bohemian Rhapsody'?", a: "Freddie Mercury / Queen" },
+      { q: "What was The Beatles' first U.S. number-one single?", a: "I Want to Hold Your Hand" },
+      { q: "Which artist released the album '1989'?", a: "Taylor Swift" },
+      { q: "What is the highest-pitched female singing voice?", a: "Soprano" }
+    ]
+  },
+  {
+    category: "Geography",
+    questions: [
+      { q: "What is the capital of Australia?", a: "Canberra" },
+      { q: "What is the longest river in the world?", a: "The Nile (some sources say the Amazon)" },
+      { q: "Which country has the largest population in the world?", a: "India (surpassed China in 2023)" },
+      { q: "What is the smallest country in the world by land area?", a: "Vatican City" },
+      { q: "Which mountain range separates Europe from Asia?", a: "The Ural Mountains" },
+      { q: "What is the largest desert in the world?", a: "Antarctica (a polar desert)" },
+      { q: "Which African country was formerly known as Abyssinia?", a: "Ethiopia" },
+      { q: "What is the deepest ocean trench in the world?", a: "The Mariana Trench" },
+      { q: "Which U.S. state has the longest coastline?", a: "Alaska" },
+      { q: "What is the only continent without permanent human residents?", a: "Antarctica" }
+    ]
+  },
+  {
+    category: "History",
+    questions: [
+      { q: "In what year did the Berlin Wall fall?", a: "1989" },
+      { q: "Who was the first President of the United States?", a: "George Washington" },
+      { q: "In what year did World War II end?", a: "1945" },
+      { q: "Which civilization built Machu Picchu?", a: "The Inca" },
+      { q: "In what year did the Titanic sink?", a: "1912" },
+      { q: "Who painted the Sistine Chapel ceiling?", a: "Michelangelo" },
+      { q: "Which empire was ruled by Julius Caesar?", a: "The Roman Empire (Republic, technically)" },
+      { q: "The Magna Carta was signed in what century?", a: "The 13th century (1215)" },
+      { q: "Who was the first woman to win a Nobel Prize?", a: "Marie Curie" },
+      { q: "What ancient wonder of the world stood in the harbor of Rhodes?", a: "The Colossus of Rhodes" }
+    ]
+  },
+  {
+    category: "Science & Nature",
+    questions: [
+      { q: "How many bones are in the adult human body?", a: "206" },
+      { q: "What is the chemical symbol for gold?", a: "Au" },
+      { q: "What is the hardest natural substance on Earth?", a: "Diamond" },
+      { q: "What gas do plants absorb from the atmosphere for photosynthesis?", a: "Carbon dioxide (CO₂)" },
+      { q: "How many chambers are in the human heart?", a: "4" },
+      { q: "What is the largest mammal on Earth?", a: "The blue whale" },
+      { q: "What part of the atom carries a positive charge?", a: "The proton" },
+      { q: "What is the most abundant gas in Earth's atmosphere?", a: "Nitrogen" },
+      { q: "What is the only metal that is liquid at room temperature?", a: "Mercury" },
+      { q: "What organ in the human body produces insulin?", a: "The pancreas" }
+    ]
+  }
+];
+
+const STORAGE_KEY = "pluckers-trivia-rounds";
+let ROUNDS = loadRounds();
+
+// ============================================================
+// STATE
+// ============================================================
+const State = {
+  TITLE: "title",
+  ROUND_INTRO: "round_intro",
+  QUESTION: "question",
+  ROUND_END: "round_end",
+  END: "end"
+};
+
+const game = {
+  state: State.TITLE,
+  roundIdx: 0,
+  questionIdx: 0
+};
+
+const main = document.getElementById("main");
+const meta = document.getElementById("meta");
+
+function totalQuestions() {
+  return ROUNDS.reduce((sum, r) => sum + r.questions.length, 0);
+}
+function questionGlobalIndex() {
+  let n = 0;
+  for (let i = 0; i < game.roundIdx; i++) n += ROUNDS[i].questions.length;
+  return n + game.questionIdx + 1;
+}
+
+function renderMeta() {
+  if (game.state === State.TITLE || game.state === State.END) {
+    meta.innerHTML = "";
+    return;
+  }
+  const round = ROUNDS[game.roundIdx];
+  const qChip = (game.state === State.QUESTION)
+    ? `<div class="chip">QUESTION <b>${game.questionIdx + 1}</b> / ${round.questions.length}</div>`
+    : "";
+  meta.innerHTML = `
+    <div class="chip">ROUND <b>${game.roundIdx + 1}</b> / ${ROUNDS.length}</div>
+    ${qChip}
+  `;
+}
+
+// ============================================================
+// VIEWS
+// ============================================================
+function viewTitle() {
+  const isCustom = !!localStorage.getItem(STORAGE_KEY);
+  const statusClass = isCustom ? "status-pill custom" : "status-pill";
+  const counts = ROUNDS.map(r => r.questions.length);
+  const uniform = counts.every(c => c === counts[0]);
+  const qLabel = uniform
+    ? `<b>${counts[0]}</b> questions each`
+    : `<b>${totalQuestions()}</b> questions total`;
+  main.innerHTML = `
+    <div class="view title-wrap">
+      <div class="win-prizes">
+        <span class="wp-top">WIN</span>
+        <span class="wp-big">PRIZES!</span>
+      </div>
+      <div class="instructions">
+        <div class="instr-header">INSTRUCTIONS</div>
+        <ol class="instr-list">
+          <li><b>Grab an answer sheet.</b></li>
+          <li>Write each answer in its <b>numbered box.</b></li>
+          <li>Turn it in after each round.</li>
+          <li><b>Host announces the winners!</b></li>
+        </ol>
+      </div>
+      <div class="title-logo"><span class="logo-p" style="text-shadow:none;font-size:130px;">🍗</span></div>
+      <h1 class="title">PLUCKERS<span class="sub">TRIVIA</span></h1>
+      <div class="${statusClass}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
+      <div class="btn-row">
+        <button class="btn" id="startBtn">START GAME</button>
+        <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
+      </div>
+      <div class="hint">
+        Press <kbd>SPACE</kbd> to advance &nbsp;•&nbsp; <kbd>L</kbd> to load questions &nbsp;•&nbsp; <kbd>F</kbd> for fullscreen
+      </div>
+    </div>
+  `;
+  document.getElementById("startBtn").addEventListener("click", advance);
+  document.getElementById("loadBtn").addEventListener("click", openLoadModal);
+}
+
+function viewRoundIntro() {
+  const round = ROUNDS[game.roundIdx];
+  main.innerHTML = `
+    <div class="view round-intro">
+      <div class="round-label">ROUND</div>
+      <div class="round-number">${game.roundIdx + 1}</div>
+      <div class="round-category">${round.category}</div>
+      <div class="round-count">${round.questions.length} QUESTIONS</div>
+      <div class="btn-row">
+        <button class="btn" id="goBtn">LET'S GO!</button>
+      </div>
+      <div class="hint">Press <kbd>SPACE</kbd> to start the round</div>
+    </div>
+  `;
+  document.getElementById("goBtn").addEventListener("click", advance);
+}
+
+function viewQuestion() {
+  const round = ROUNDS[game.roundIdx];
+  const q = round.questions[game.questionIdx];
+  const qText = typeof q === "string" ? q : q.q;
+
+  main.innerHTML = `
+    <div class="view">
+      <div class="q-screen">
+        <div class="q-topbar">
+          <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
+        </div>
+        <div class="q-text">
+          <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
+        </div>
+        <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> for next question</div>
+      </div>
+    </div>
+  `;
+}
+
+function viewRoundEnd() {
+  const round = ROUNDS[game.roundIdx];
+  const isLast = game.roundIdx >= ROUNDS.length - 1;
+
+  const items = round.questions.map((q, i) => {
+    const qText = typeof q === "string" ? q : (q.q || "");
+    const aText = typeof q === "string" ? "" : (q.a || "");
+    return `
+      <li class="qa-item">
+        <div class="qa-q"><span class="qa-num">${i + 1}.</span>${escapeHtml(qText)}</div>
+        <div class="qa-a">${aText ? "<b>ANSWER:</b> " + escapeHtml(aText) : "<b>ANSWER:</b> <em style=\"opacity:.6\">(not provided)</em>"}</div>
+      </li>
+    `;
+  }).join("");
+
+  main.innerHTML = `
+    <div class="view round-end round-end-answers">
+      <div class="round-end-header">
+        <h2>END OF ROUND ${game.roundIdx + 1}</h2>
+        <div class="round-category" style="font-size:36px; margin:0;">${escapeHtml(round.category).toUpperCase()}</div>
+      </div>
+      <div class="qa-list">
+        <ol>${items}</ol>
+      </div>
+      <div class="round-end-footer">
+        <span class="lead-inline">Tally scores &nbsp;•&nbsp; Turn in your sheet</span>
+        <button class="btn" id="nextBtn">${isLast ? "FINISH GAME" : "NEXT ROUND"}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("nextBtn").addEventListener("click", advance);
+  fitAnswers();
+}
+
+// Scale the answer list so every question+answer fits on one screen with
+// no scrolling and as little empty space as possible.
+function fitAnswers() {
+  const box = main.querySelector(".qa-list");
+  if (!box) return;
+  const ol = box.querySelector("ol");
+  if (!ol) return;
+
+  const fits = () =>
+    ol.scrollHeight <= box.clientHeight && ol.scrollWidth <= box.clientWidth;
+
+  const MIN = 14, MAX = 64;
+  // Binary search for the largest base font-size that still fits.
+  let lo = MIN, hi = MAX, best = MIN;
+  for (let i = 0; i < 18; i++) {
+    const mid = (lo + hi) / 2;
+    box.style.fontSize = mid + "px";
+    if (fits()) { best = mid; lo = mid; }
+    else { hi = mid; }
+  }
+  box.style.fontSize = best + "px";
+}
+
+function viewEnd() {
+  main.innerHTML = `
+    <div class="view end">
+      <h2>THANKS FOR PLAYING!</h2>
+      <p>Hope you enjoyed Pluckers Trivia.<br/>Highest score wins — see your server for prizes.</p>
+      <div class="btn-row">
+        <button class="btn" id="againBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("againBtn").addEventListener("click", () => {
+    game.state = State.TITLE;
+    game.roundIdx = 0;
+    game.questionIdx = 0;
+    render();
+  });
+}
+
+function render() {
+  renderMeta();
+  switch (game.state) {
+    case State.TITLE: viewTitle(); break;
+    case State.ROUND_INTRO: viewRoundIntro(); break;
+    case State.QUESTION: viewQuestion(); break;
+    case State.ROUND_END: viewRoundEnd(); break;
+    case State.END: viewEnd(); break;
+  }
+}
+
+// Re-fit the answer list when the window/preview is resized.
+window.addEventListener("resize", () => {
+  if (game.state === State.ROUND_END) fitAnswers();
+});
+
+// ============================================================
+// FLOW
+// ============================================================
+function advance() {
+  switch (game.state) {
+    case State.TITLE:
+      game.state = State.ROUND_INTRO;
+      game.roundIdx = 0;
+      game.questionIdx = 0;
+      break;
+    case State.ROUND_INTRO:
+      game.state = State.QUESTION;
+      game.questionIdx = 0;
+      break;
+    case State.QUESTION: {
+      const round = ROUNDS[game.roundIdx];
+      if (game.questionIdx < round.questions.length - 1) {
+        game.questionIdx++;
+      } else {
+        game.state = State.ROUND_END;
+      }
+      break;
+    }
+    case State.ROUND_END:
+      if (game.roundIdx < ROUNDS.length - 1) {
+        game.roundIdx++;
+        game.questionIdx = 0;
+        game.state = State.ROUND_INTRO;
+      } else {
+        game.state = State.END;
+      }
+      break;
+    case State.END:
+      break;
+  }
+  render();
+}
+
+function goBack() {
+  switch (game.state) {
+    case State.QUESTION:
+      if (game.questionIdx > 0) {
+        game.questionIdx--;
+      } else {
+        game.state = State.ROUND_INTRO;
+      }
+      break;
+    case State.ROUND_END:
+      game.state = State.QUESTION;
+      game.questionIdx = ROUNDS[game.roundIdx].questions.length - 1;
+      break;
+    case State.ROUND_INTRO:
+      if (game.roundIdx > 0) {
+        game.roundIdx--;
+        game.state = State.ROUND_END;
+      } else {
+        game.state = State.TITLE;
+      }
+      break;
+    case State.END:
+      game.state = State.ROUND_END;
+      game.roundIdx = ROUNDS.length - 1;
+      break;
+  }
+  render();
+}
+
+function backToMenu() {
+  if (confirm("Return to title screen? Progress will be lost.")) {
+    game.state = State.TITLE;
+    game.roundIdx = 0;
+    game.questionIdx = 0;
+    render();
+  }
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+document.addEventListener("keydown", (e) => {
+  if (e.repeat) return;
+  if (document.getElementById("loadModal")) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeLoadModal();
+    }
+    return;
+  }
+  switch (e.key) {
+    case " ":
+    case "ArrowRight":
+    case "Enter":
+      e.preventDefault();
+      advance();
+      break;
+    case "ArrowLeft":
+      e.preventDefault();
+      goBack();
+      break;
+    case "f":
+    case "F":
+      e.preventDefault();
+      toggleFullscreen();
+      break;
+    case "l":
+    case "L":
+      if (game.state === State.TITLE) {
+        e.preventDefault();
+        openLoadModal();
+      }
+      break;
+    case "Escape":
+      e.preventDefault();
+      if (game.state !== State.TITLE) backToMenu();
+      break;
+  }
+});
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+// ============================================================
+// QUESTION LOADING / UPLOAD
+// ============================================================
+function loadRounds() {
+  try {
+    const raw = localStorage.getItem("pluckers-trivia-rounds");
+    if (!raw) return DEFAULT_ROUNDS;
+    const parsed = JSON.parse(raw);
+    if (validateRounds(parsed)) return normalizeRounds(parsed);
+  } catch (e) { /* fall through */ }
+  return DEFAULT_ROUNDS;
+}
+
+function saveRounds(rounds) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds));
+}
+
+function clearStoredRounds() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+// Internal shape: { category, questions: [{q, a}] }
+function validateRounds(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error("Must be a non-empty list of categories.");
+  }
+  for (let i = 0; i < data.length; i++) {
+    const r = data[i];
+    if (!r || typeof r.category !== "string" || !r.category.trim()) {
+      throw new Error(`Category ${i + 1}: missing or empty 'category' name.`);
+    }
+    if (!Array.isArray(r.questions) || r.questions.length === 0) {
+      throw new Error(`Category "${r.category}": needs at least one question.`);
+    }
+    for (let j = 0; j < r.questions.length; j++) {
+      const q = r.questions[j];
+      if (typeof q === "string") {
+        if (!q.trim()) throw new Error(`Category "${r.category}", question ${j + 1}: empty.`);
+      } else if (q && typeof q === "object") {
+        if (typeof q.q !== "string" || !q.q.trim()) {
+          throw new Error(`Category "${r.category}", question ${j + 1}: missing 'q' text.`);
+        }
+        if (q.a !== undefined && q.a !== null && typeof q.a !== "string") {
+          throw new Error(`Category "${r.category}", question ${j + 1}: 'a' must be a string.`);
+        }
+      } else {
+        throw new Error(`Category "${r.category}", question ${j + 1}: must be a string or {q, a} object.`);
+      }
+    }
+  }
+  return true;
+}
+
+function normalizeRounds(data) {
+  return data.map(r => ({
+    category: r.category.trim(),
+    questions: r.questions.map(q => {
+      if (typeof q === "string") return { q: q.trim(), a: "" };
+      return { q: (q.q || "").trim(), a: (q.a || "").trim() };
+    })
+  }));
+}
+
+function parseJsonRounds(text) {
+  const parsed = JSON.parse(text);
+  validateRounds(parsed);
+  return normalizeRounds(parsed);
+}
+
+// Text format:
+//   ## Category Name
+//   Question 1? | Answer
+//   Question 2? | Answer
+//
+//   ## Next Category
+//   ...
+// The "| Answer" portion is optional. " | " or " :: " both work as separators.
+function parseTextRounds(text) {
+  const lines = text.split(/\r?\n/);
+  const rounds = [];
+  let current = null;
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const catMatch = line.match(/^#{1,3}\s*(.+)$/);
+    if (catMatch) {
+      current = { category: catMatch[1].trim(), questions: [] };
+      rounds.push(current);
+    } else {
+      if (!current) {
+        throw new Error("Text must start with a category header (e.g. '## Sports') before any questions.");
+      }
+      // Split question/answer on " | " (preferred) or " :: "
+      let q = line, a = "";
+      const sepMatch = line.match(/^(.*?)\s*(?:\||::)\s*(.+)$/);
+      if (sepMatch) {
+        q = sepMatch[1].trim();
+        a = sepMatch[2].trim();
+      }
+      current.questions.push({ q, a });
+    }
+  }
+  validateRounds(rounds);
+  return normalizeRounds(rounds);
+}
+
+function applyRounds(rounds) {
+  saveRounds(rounds);
+  ROUNDS = rounds;
+}
+
+function templateJson() {
+  return JSON.stringify(DEFAULT_ROUNDS.slice(0, 1).map(r => ({
+    category: r.category,
+    questions: r.questions.slice(0, 3)
+  })), null, 2);
+}
+function templateText() {
+  return "## Food & Drink\nThe Scoville scale measures what property of food?\nWhich country is credited with inventing pizza?\n\n## Sports\nHow many players are on the field per team in soccer?\nWhat sport uses the term 'love' to mean zero?";
+}
+
+// ============================================================
+// LOAD MODAL
+// ============================================================
+let modalFormat = "text"; // "text" | "json"
+
+function openLoadModal() {
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="loadModal">
+      <div class="modal" role="dialog" aria-label="Load questions">
+        <button class="close-x" id="closeX" aria-label="Close">×</button>
+        <h2>LOAD QUESTIONS</h2>
+        <p class="modal-lead">
+          Upload a file or paste below. Include each answer after a <b>|</b> &mdash; answers stay hidden until the end of the round.
+          Custom questions are saved in this browser until you reset.
+        </p>
+
+        <div class="format-tabs" role="tablist">
+          <button class="format-tab ${modalFormat === "text" ? "active" : ""}" data-fmt="text" role="tab">PLAIN TEXT</button>
+          <button class="format-tab ${modalFormat === "json" ? "active" : ""}" data-fmt="json" role="tab">JSON</button>
+        </div>
+        <div class="format-help" id="formatHelp"></div>
+
+        <div id="msgArea"></div>
+
+        <div class="field">
+          <label for="fileInput">UPLOAD A FILE (.txt or .json)</label>
+          <input type="file" id="fileInput" accept=".txt,.json,text/plain,application/json" />
+        </div>
+
+        <div class="field">
+          <label for="pasteArea">OR PASTE YOUR QUESTIONS</label>
+          <textarea id="pasteArea" placeholder="Paste your questions here..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn danger" id="resetBtn">RESET TO DEFAULT</button>
+          <button class="btn secondary" id="cancelBtn">CANCEL</button>
+          <button class="btn" id="applyBtn">APPLY</button>
+        </div>
+      </div>
+    </div>
+  `;
+  updateFormatHelp();
+  document.getElementById("closeX").addEventListener("click", closeLoadModal);
+  document.getElementById("cancelBtn").addEventListener("click", closeLoadModal);
+  document.getElementById("applyBtn").addEventListener("click", applyFromModal);
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("Reset to the built-in default questions?")) {
+      clearStoredRounds();
+      ROUNDS = DEFAULT_ROUNDS.slice();
+      closeLoadModal();
+      render();
+    }
+  });
+  document.getElementById("fileInput").addEventListener("change", handleFilePicked);
+  document.querySelectorAll(".format-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      modalFormat = tab.dataset.fmt;
+      document.querySelectorAll(".format-tab").forEach(t => t.classList.toggle("active", t === tab));
+      updateFormatHelp();
+    });
+  });
+  document.getElementById("loadModal").addEventListener("click", (e) => {
+    if (e.target.id === "loadModal") closeLoadModal();
+  });
+}
+
+function closeLoadModal() {
+  document.getElementById("modalRoot").innerHTML = "";
+}
+
+function updateFormatHelp() {
+  const el = document.getElementById("formatHelp");
+  if (!el) return;
+  if (modalFormat === "text") {
+    el.textContent =
+      "## Category Name\n" +
+      "Question text? | Answer\n" +
+      "Another question? | Its answer\n" +
+      "\n" +
+      "## Next Category\n" +
+      "Question? | Answer\n" +
+      "\n" +
+      "(Use \" | \" to separate question and answer. Answer is optional.)";
+  } else {
+    el.textContent =
+      '[\n' +
+      '  {\n' +
+      '    "category": "Sports",\n' +
+      '    "questions": [\n' +
+      '      { "q": "Players on a soccer team?", "a": "11" },\n' +
+      '      { "q": "What sport uses \'love\' for zero?", "a": "Tennis" }\n' +
+      '    ]\n' +
+      '  }\n' +
+      ']';
+  }
+}
+
+function showModalMsg(text, type) {
+  const el = document.getElementById("msgArea");
+  if (!el) return;
+  el.innerHTML = `<div class="${type === "ok" ? "ok-msg" : "error-msg"}">${escapeHtml(text)}</div>`;
+}
+
+function handleFilePicked(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById("pasteArea").value = ev.target.result;
+    if (file.name.toLowerCase().endsWith(".json")) {
+      modalFormat = "json";
+    } else if (file.name.toLowerCase().endsWith(".txt")) {
+      modalFormat = "text";
+    }
+    document.querySelectorAll(".format-tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.fmt === modalFormat);
+    });
+    updateFormatHelp();
+    showModalMsg(`Loaded "${file.name}". Review and click APPLY to use these questions.`, "ok");
+  };
+  reader.onerror = () => showModalMsg("Could not read that file.", "err");
+  reader.readAsText(file);
+}
+
+function applyFromModal() {
+  const text = document.getElementById("pasteArea").value.trim();
+  if (!text) {
+    showModalMsg("Paste questions or pick a file first.", "err");
+    return;
+  }
+  try {
+    let parsed;
+    if (modalFormat === "json") {
+      parsed = parseJsonRounds(text);
+    } else {
+      // Auto-detect JSON if text starts with [
+      if (text.startsWith("[")) {
+        try { parsed = parseJsonRounds(text); }
+        catch { parsed = parseTextRounds(text); }
+      } else {
+        parsed = parseTextRounds(text);
+      }
+    }
+    applyRounds(parsed);
+    const total = parsed.reduce((n, r) => n + r.questions.length, 0);
+    showModalMsg(`Loaded ${parsed.length} categories, ${total} questions.`, "ok");
+    setTimeout(() => {
+      closeLoadModal();
+      render();
+    }, 600);
+  } catch (err) {
+    showModalMsg("Could not load: " + err.message, "err");
+  }
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+render();
+</script>
+</body>
+</html>
