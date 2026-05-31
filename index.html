@@ -954,6 +954,60 @@
     .round-category { font-size: 56px; letter-spacing: 4px; }
     .answers-list ol { columns: 1; font-size: 22px; }
   }
+  /* ---- Live multi-screen sync ---- */
+  #liveBanner {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--blue-dark);
+    border: 3px solid var(--yellow);
+    border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    color: var(--cream);
+    max-width: 420px;
+  }
+  #liveBanner .lb-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #2ed573; flex: 0 0 auto;
+    box-shadow: 0 0 0 0 rgba(46,213,115,.7);
+    animation: lb-pulse 1.6s infinite;
+  }
+  @keyframes lb-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(46,213,115,.6); }
+    70%  { box-shadow: 0 0 0 12px rgba(46,213,115,0); }
+    100% { box-shadow: 0 0 0 0 rgba(46,213,115,0); }
+  }
+  #liveBanner .lb-info { text-align: left; min-width: 0; }
+  #liveBanner .lb-title { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
+  #liveBanner .lb-title b { color: var(--yellow); font-size: 22px; letter-spacing: 3px; }
+  #liveBanner .lb-url { font-size: 11px; color: #9fb6c8; word-break: break-all; margin-top: 2px; }
+  #liveBanner .lb-warn { font-size: 11px; color: var(--yellow); margin-top: 6px; line-height: 1.35; max-width: 240px; }
+  #liveBanner .lb-warn b { color: #fff; }
+  #liveBanner .lb-qr { background: #fff; padding: 5px; border-radius: 8px; flex: 0 0 auto; }
+  #liveBanner .lb-qr img, #liveBanner .lb-qr canvas { display: block; }
+  #liveBanner .lb-stop {
+    flex: 0 0 auto; padding: 8px 12px; border: none; border-radius: 8px;
+    background: var(--red); color: #fff; font-weight: 800; cursor: pointer; font-size: 12px;
+  }
+  #displayTag {
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 50;
+    background: rgba(20,39,100,.85);
+    border: 2px solid var(--yellow);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 800; letter-spacing: 2px;
+    color: var(--yellow);
+  }
+  /* On a mirroring display, hide the host-only interactive controls. */
+  body.display-mode .btn-row,
+  body.display-mode #meta { display: none; }
 </style>
 </head>
 <body>
@@ -981,6 +1035,10 @@
   </footer>
 </div>
 
+<!-- Live multi-screen sync (Supabase) + QR for the join link. Loaded from CDN;
+     the game still works fully offline if these don't load. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ============================================================
 // DEFAULT QUESTIONS — 7 categories × 10 questions.
@@ -1174,6 +1232,7 @@ function viewTitle() {
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
+        <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">📺 GO LIVE</button>
       </div>
       <div class="hint">
         Press <kbd>SPACE</kbd> to advance &nbsp;•&nbsp; <kbd>L</kbd> to load questions &nbsp;•&nbsp; <kbd>F</kbd> for fullscreen
@@ -1182,6 +1241,8 @@ function viewTitle() {
   `;
   document.getElementById("startBtn").addEventListener("click", advance);
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
+  const lb = document.getElementById("liveBtn");
+  if (lb) lb.addEventListener("click", goLive);
 }
 
 function viewRoundIntro() {
@@ -1306,6 +1367,8 @@ function render() {
     case State.ROUND_END: viewRoundEnd(); break;
     case State.END: viewEnd(); break;
   }
+  // If we're hosting a live session, broadcast the new state to all displays.
+  if (live.role === "host" && !live.applying) pushState();
 }
 
 // Re-fit the answer list when the window/preview is resized.
@@ -1317,6 +1380,7 @@ window.addEventListener("resize", () => {
 // FLOW
 // ============================================================
 function advance() {
+  if (live.role === "display") return;   // mirroring screens are view-only
   switch (game.state) {
     case State.TITLE:
       game.state = State.ROUND_INTRO;
@@ -1352,6 +1416,7 @@ function advance() {
 }
 
 function goBack() {
+  if (live.role === "display") return;   // mirroring screens are view-only
   switch (game.state) {
     case State.QUESTION:
       if (game.questionIdx > 0) {
@@ -1730,9 +1795,194 @@ function escapeHtml(s) {
 }
 
 // ============================================================
+// LIVE MULTI-SCREEN SYNC (Supabase)
+// One screen "hosts" and controls the game; every screen opened with
+// ?room=CODE mirrors it in real time. Works fully offline if not set up.
+// ============================================================
+
+// ---- PASTE YOUR SUPABASE KEYS HERE (Project Settings → API) ----
+const SUPABASE_URL      = "https://yfatjubmmnykwopnuoyk.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
+// ----------------------------------------------------------------
+const LIVE_TABLE = "sessions";
+
+const live = {
+  role: "off",      // "off" | "host" | "display"
+  code: null,
+  sb: null,
+  channel: null,
+  applying: false   // true while applying a remote update (prevents echo)
+};
+
+function liveConfigured() {
+  return SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== "undefined";
+}
+function liveClient() {
+  if (!live.sb) live.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return live.sb;
+}
+function makeRoomCode() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I/L
+  let s = "";
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+function joinUrl() {
+  return location.origin + location.pathname + "?room=" + live.code;
+}
+// A URL a phone on another device can't reach (running off your PC, not the web).
+function isLocalUrl() {
+  const h = location.hostname;
+  return location.protocol === "file:" ||
+         h === "localhost" || h === "127.0.0.1" || h === "" ||
+         h.endsWith(".local") || /^192\.168\./.test(h) || /^10\./.test(h);
+}
+function snapshot() {
+  return {
+    room_code: live.code,
+    state: game.state,
+    round_idx: game.roundIdx,
+    question_idx: game.questionIdx,
+    rounds: ROUNDS,
+    updated_at: new Date().toISOString()
+  };
+}
+
+// ---- Host ----
+async function goLive() {
+  if (!liveConfigured()) {
+    alert(
+      "Live screens aren't set up yet.\n\n" +
+      "Open this file and paste your Supabase Project URL and anon key into " +
+      "SUPABASE_URL and SUPABASE_ANON_KEY near the bottom of the <script>, then reload.\n\n" +
+      "(If you don't have a Supabase project yet, ask for the 1-minute setup steps.)"
+    );
+    return;
+  }
+  live.role = "host";
+  live.code = makeRoomCode();
+  try {
+    const { error } = await liveClient().from(LIVE_TABLE).upsert(snapshot());
+    if (error) throw error;
+  } catch (err) {
+    live.role = "off"; live.code = null;
+    alert("Couldn't start the live session:\n" + (err.message || err));
+    return;
+  }
+  showLiveBanner();
+}
+
+async function pushState() {
+  if (live.role !== "host" || !live.code) return;
+  try {
+    await liveClient().from(LIVE_TABLE).update({
+      state: game.state,
+      round_idx: game.roundIdx,
+      question_idx: game.questionIdx,
+      rounds: ROUNDS,
+      updated_at: new Date().toISOString()
+    }).eq("room_code", live.code);
+  } catch (e) { /* a dropped update will be corrected by the next one */ }
+}
+
+function stopLive() {
+  if (live.channel && live.sb) live.sb.removeChannel(live.channel);
+  live.role = "off"; live.code = null; live.channel = null;
+  const el = document.getElementById("liveBanner");
+  if (el) el.remove();
+}
+
+function showLiveBanner() {
+  let el = document.getElementById("liveBanner");
+  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; document.body.appendChild(el); }
+  const url = joinUrl();
+  const local = isLocalUrl();
+  const warn = local
+    ? '<div class="lb-warn">⚠ This link only works on this computer. To use the QR on phones/other screens, ' +
+      'put the game online (drag the folder to <b>app.netlify.com/drop</b>) and press GO LIVE there.</div>'
+    : '';
+  el.innerHTML =
+    '<div class="lb-dot"></div>' +
+    '<div class="lb-info">' +
+      '<div class="lb-title">LIVE • ROOM <b>' + live.code + '</b></div>' +
+      '<div class="lb-url">' + escapeHtml(url) + '</div>' +
+      warn +
+    '</div>' +
+    '<div class="lb-qr" id="lbQr"></div>' +
+    '<button class="lb-stop" id="lbStop">STOP</button>';
+  document.getElementById("lbStop").addEventListener("click", stopLive);
+  const qr = document.getElementById("lbQr");
+  if (typeof QRCode !== "undefined" && qr && !local) {
+    try { new QRCode(qr, { text: url, width: 92, height: 92, correctLevel: QRCode.CorrectLevel.M }); }
+    catch (e) { qr.style.display = "none"; }
+  } else if (qr) {
+    qr.style.display = "none";   // hide the dead QR when running locally
+  }
+}
+
+// ---- Display (mirror) ----
+async function connectAsDisplay(code) {
+  live.role = "display";
+  live.code = code;
+  document.body.classList.add("display-mode");
+
+  if (!liveConfigured()) {
+    main.innerHTML =
+      '<div class="view"><h2 style="color:var(--yellow)">Live screens not set up</h2>' +
+      '<p style="color:var(--cream)">This file has no Supabase keys, so it can\'t join room <b>' +
+      escapeHtml(code) + '</b>.</p></div>';
+    return;
+  }
+
+  const sb = liveClient();
+  showDisplayTag();
+
+  // Load whatever the room is currently showing.
+  try {
+    const { data } = await sb.from(LIVE_TABLE).select("*").eq("room_code", code).maybeSingle();
+    if (data) applyRemote(data);
+    else showDisplayWaiting();
+  } catch (e) { showDisplayWaiting(); }
+
+  // Then live-subscribe to every change the host makes.
+  live.channel = sb.channel("room-" + code)
+    .on("postgres_changes",
+        { event: "*", schema: "public", table: LIVE_TABLE, filter: "room_code=eq." + code },
+        (payload) => { if (payload.new) applyRemote(payload.new); })
+    .subscribe();
+}
+
+function applyRemote(row) {
+  live.applying = true;
+  if (Array.isArray(row.rounds) && row.rounds.length) ROUNDS = row.rounds;
+  game.state       = row.state;
+  game.roundIdx    = row.round_idx;
+  game.questionIdx = row.question_idx;
+  live.applying = false;
+  render();
+}
+
+function showDisplayTag() {
+  let el = document.getElementById("displayTag");
+  if (!el) { el = document.createElement("div"); el.id = "displayTag"; document.body.appendChild(el); }
+  el.textContent = "MIRRORING • ROOM " + live.code;
+}
+function showDisplayWaiting() {
+  main.innerHTML =
+    '<div class="view"><h2 style="color:var(--yellow)">Waiting for the host…</h2>' +
+    '<p style="color:var(--cream)">Room <b>' + escapeHtml(live.code) + '</b> isn\'t live yet.<br>' +
+    'This screen updates automatically when the host presses GO LIVE.</p></div>';
+}
+
+// ============================================================
 // BOOT
 // ============================================================
-render();
+const _roomParam = new URLSearchParams(location.search).get("room");
+if (_roomParam) {
+  connectAsDisplay(_roomParam.toUpperCase());
+} else {
+  render();
+}
 </script>
 </body>
 </html>
