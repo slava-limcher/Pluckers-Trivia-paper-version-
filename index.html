@@ -1005,9 +1005,44 @@
     font-size: 13px; font-weight: 800; letter-spacing: 2px;
     color: var(--yellow);
   }
-  /* On a mirroring display, hide the host-only interactive controls. */
-  body.display-mode .btn-row,
-  body.display-mode #meta { display: none; }
+  /* ---- TV / display mode: clean board, no controls ---- */
+  /* Hide every interactive / host-only element inside the mirrored views. */
+  body.display-mode #main .btn-row,
+  body.display-mode #main .hint,
+  body.display-mode #main .status-pill,
+  body.display-mode #main .win-prizes,
+  body.display-mode #main .instructions,
+  body.display-mode #meta,
+  body.display-mode footer .controls { display: none; }
+
+  /* Persistent instructions panel injected on TVs (lives outside #main so it
+     survives re-renders). Reuses the .instructions look. */
+  #tvInstructions { /* positioning inherited from .instructions */ }
+
+  /* QR code shown on the TVs (left side, mirrors the instructions on the right). */
+  #tvQr {
+    position: fixed;
+    left: 36px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    background: var(--blue-dark);
+    border: 5px solid var(--yellow);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+  }
+  #tvQr .tvqr-label {
+    color: var(--yellow);
+    font-weight: 900;
+    letter-spacing: 2px;
+    font-size: 18px;
+    margin-bottom: 10px;
+    max-width: 160px;
+  }
+  #tvQr .tvqr-box { background: #fff; padding: 8px; border-radius: 8px; }
+  #tvQr .tvqr-box img, #tvQr .tvqr-box canvas { display: block; }
 </style>
 </head>
 <body>
@@ -1369,6 +1404,8 @@ function render() {
   }
   // If we're hosting a live session, broadcast the new state to all displays.
   if (live.role === "host" && !live.applying) pushState();
+  // On TV displays, show/hide the injected instructions + QR per screen.
+  updateTvChromeVisibility();
 }
 
 // Re-fit the answer list when the window/preview is resized.
@@ -1806,6 +1843,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
 // ----------------------------------------------------------------
 const LIVE_TABLE = "sessions";
 
+// What the QR code on the TV screens points to. Leave "" to use the room's own
+// join link (a phone that scans it follows along, view-only). Or set it to any
+// URL you want guests to open instead (menu, rules page, sign-up, etc.).
+const TV_QR_URL   = "";
+const TV_QR_LABEL = "SCAN TO PLAY ALONG";
+
+// All TVs and the host share ONE fixed room, so the TV link never changes and
+// you set each TV up only once. For multiple venues, give each its own host
+// link with ?room=NAME (and the matching TVs use ?tv&room=NAME).
+const DEFAULT_ROOM = "PLUCKERS";
+
 const live = {
   role: "off",      // "off" | "host" | "display"
   code: null,
@@ -1821,14 +1869,16 @@ function liveClient() {
   if (!live.sb) live.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return live.sb;
 }
-function makeRoomCode() {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I/L
-  let s = "";
-  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
+// Which room this page uses: ?room=NAME overrides, otherwise the fixed default.
+function roomFromUrl() {
+  return (new URLSearchParams(location.search).get("room") || DEFAULT_ROOM).toUpperCase();
 }
-function joinUrl() {
-  return location.origin + location.pathname + "?room=" + live.code;
+// The permanent link you put on every TV (and the "play along" QR). Always a
+// view-only display link, so scanning it can never let someone control the game.
+function tvUrl() {
+  let u = location.origin + location.pathname + "?tv";
+  if (live.code && live.code !== DEFAULT_ROOM) u += "&room=" + encodeURIComponent(live.code);
+  return u;
 }
 // A URL a phone on another device can't reach (running off your PC, not the web).
 function isLocalUrl() {
@@ -1860,7 +1910,7 @@ async function goLive() {
     return;
   }
   live.role = "host";
-  live.code = makeRoomCode();
+  live.code = roomFromUrl();
   try {
     const { error } = await liveClient().from(LIVE_TABLE).upsert(snapshot());
     if (error) throw error;
@@ -1895,16 +1945,17 @@ function stopLive() {
 function showLiveBanner() {
   let el = document.getElementById("liveBanner");
   if (!el) { el = document.createElement("div"); el.id = "liveBanner"; document.body.appendChild(el); }
-  const url = joinUrl();
+  const url = tvUrl();
   const local = isLocalUrl();
   const warn = local
-    ? '<div class="lb-warn">⚠ This link only works on this computer. To use the QR on phones/other screens, ' +
+    ? '<div class="lb-warn">⚠ This link only works on this computer. To use it on your TVs, ' +
       'put the game online (drag the folder to <b>app.netlify.com/drop</b>) and press GO LIVE there.</div>'
     : '';
   el.innerHTML =
     '<div class="lb-dot"></div>' +
     '<div class="lb-info">' +
-      '<div class="lb-title">LIVE • ROOM <b>' + live.code + '</b></div>' +
+      '<div class="lb-title">● LIVE • ROOM <b>' + live.code + '</b></div>' +
+      '<div style="font-size:12px;color:#cfe8ff;margin-top:4px;">Open this on every TV:</div>' +
       '<div class="lb-url">' + escapeHtml(url) + '</div>' +
       warn +
     '</div>' +
@@ -1936,6 +1987,7 @@ async function connectAsDisplay(code) {
 
   const sb = liveClient();
   showDisplayTag();
+  mountTvChrome();
 
   // Load whatever the room is currently showing.
   try {
@@ -1967,6 +2019,58 @@ function showDisplayTag() {
   if (!el) { el = document.createElement("div"); el.id = "displayTag"; document.body.appendChild(el); }
   el.textContent = "MIRRORING • ROOM " + live.code;
 }
+
+// Inject the always-on TV chrome: an Instructions panel (right) and a QR (left).
+// These live in #app, outside <main>, so they persist across question re-renders.
+function mountTvChrome() {
+  const app = document.getElementById("app");
+
+  if (!document.getElementById("tvInstructions")) {
+    const ins = document.createElement("div");
+    ins.id = "tvInstructions";
+    ins.className = "instructions";
+    ins.innerHTML =
+      '<div class="instr-header">INSTRUCTIONS</div>' +
+      '<ol class="instr-list">' +
+        '<li><b>Grab an answer sheet.</b></li>' +
+        '<li>Write each answer in its <b>numbered box.</b></li>' +
+        '<li>Turn it in after each round.</li>' +
+        '<li><b>Host announces the winners!</b></li>' +
+      '</ol>';
+    app.appendChild(ins);
+  }
+
+  if (!document.getElementById("tvQr")) {
+    const wrap = document.createElement("div");
+    wrap.id = "tvQr";
+    wrap.innerHTML =
+      '<div class="tvqr-label">' + escapeHtml(TV_QR_LABEL) + '</div>' +
+      '<div class="tvqr-box" id="tvQrBox"></div>';
+    app.appendChild(wrap);
+    const target = TV_QR_URL || tvUrl();
+    const boxEl = document.getElementById("tvQrBox");
+    if (typeof QRCode !== "undefined" && boxEl) {
+      try { new QRCode(boxEl, { text: target, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M }); }
+      catch (e) { wrap.style.display = "none"; }
+    } else {
+      wrap.style.display = "none";
+    }
+  }
+}
+
+// On TVs, show/hide the injected chrome per screen so it never covers content:
+//   • Instructions: title + round-intro only (hidden during questions & the answer review)
+//   • QR:           title + round-intro + questions (hidden during the full-screen answers)
+function updateTvChromeVisibility() {
+  if (live.role !== "display") return;
+  const s = game.state;
+  const ins = document.getElementById("tvInstructions");
+  const qr  = document.getElementById("tvQr");
+  const showIns = (s === State.TITLE || s === State.ROUND_INTRO);
+  const showQr  = (s === State.TITLE || s === State.ROUND_INTRO || s === State.QUESTION);
+  if (ins) ins.style.display = showIns ? "" : "none";
+  if (qr)  qr.style.display  = showQr  ? "" : "none";
+}
 function showDisplayWaiting() {
   main.innerHTML =
     '<div class="view"><h2 style="color:var(--yellow)">Waiting for the host…</h2>' +
@@ -1977,11 +2081,11 @@ function showDisplayWaiting() {
 // ============================================================
 // BOOT
 // ============================================================
-const _roomParam = new URLSearchParams(location.search).get("room");
-if (_roomParam) {
-  connectAsDisplay(_roomParam.toUpperCase());
+const _params = new URLSearchParams(location.search);
+if (_params.has("tv") || _params.has("screen")) {
+  connectAsDisplay(roomFromUrl());   // TV / display screen  →  .../?tv
 } else {
-  render();
+  render();                          // host / admin (full controls + GO LIVE)
 }
 </script>
 </body>
