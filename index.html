@@ -121,6 +121,27 @@
     margin-top: 4px;
     text-shadow: 1px 1px 0 rgba(0,0,0,.2);
   }
+  /* "DON'T CHEAT!" badge — centered in the header, shows on every screen. */
+  .dont-cheat {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    background: var(--red);
+    color: var(--yellow);
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    padding: 6px 22px;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--black);
+    white-space: nowrap;
+    z-index: 3;
+    box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  }
+  @media (max-width: 760px) {
+    .dont-cheat { font-size: 15px; padding: 4px 12px; }
+  }
   .meta {
     display: flex;
     gap: 14px;
@@ -185,8 +206,8 @@
   .title-logo-img {
     display: block;
     width: auto;
-    max-width: min(620px, 84vw);
-    max-height: 280px;
+    max-width: min(775px, 90vw);
+    max-height: 350px;
     margin: 0 auto 24px;
     filter: drop-shadow(0 18px 32px rgba(0,0,0,.6));
   }
@@ -1004,6 +1025,43 @@
   }
   .code-entry .ce-input:focus { outline: none; border-color: var(--red); }
   .code-entry .ce-err { color: var(--yellow); font-size: 20px; min-height: 22px; margin: 0; }
+
+  /* "How to play" line under the question — TV displays only (for mid-game joiners). */
+  .q-howto { display: none; }
+  body.display-mode .q-howto {
+    display: block;
+    align-self: start;
+    justify-self: center;
+    max-width: 1280px;
+    margin-top: 6px;
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--cream);
+    background: rgba(20,39,100,.55);
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    padding: 18px 32px;
+  }
+
+  /* "TURN IN YOUR ANSWER SHEET!" — shown after the last question of each round */
+  .turn-in { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; height: 100%; }
+  .turn-in .turn-in-big {
+    font-size: 130px;
+    line-height: 1.02;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--red);
+    text-shadow: 4px 4px 0 var(--yellow), 8px 8px 0 var(--black);
+    animation: turnin-pop .45s cubic-bezier(.2,.8,.3,1.2) both;
+  }
+  .turn-in .turn-in-sub { font-size: 34px; color: var(--cream); letter-spacing: 2px; }
+  @keyframes turnin-pop {
+    0%   { opacity: 0; transform: scale(.7); }
+    60%  { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
   #liveBanner .lb-qr { background: #fff; padding: 5px; border-radius: 8px; flex: 0 0 auto; }
   #liveBanner .lb-qr img, #liveBanner .lb-qr canvas { display: block; }
   #liveBanner .lb-stop {
@@ -1028,21 +1086,41 @@
   body.display-mode #main .status-pill,
   body.display-mode #main .win-prizes,
   body.display-mode #main .instructions,
+  body.display-mode #main .round-end-footer .btn,
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
 
   /* Persistent instructions panel injected on TVs (lives outside #main so it
      survives re-renders). Reuses the .instructions look. */
   #tvInstructions { /* positioning inherited from .instructions */ }
+  /* Title setup row (timer) */
+  .setup-row { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .setup-label { color: var(--cream); font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+  .timer-input {
+    width: 92px; font-size: 22px; padding: 8px 10px; border-radius: 10px;
+    border: 2px solid var(--yellow); background: var(--cream); color: var(--blue-dark);
+    text-align: center; font-weight: 800;
+  }
+  .timer-input:focus { outline: none; border-color: var(--red); }
+
+  /* Question countdown timer */
+  .q-timer {
+    background: var(--yellow); color: var(--blue-dark);
+    border: 4px solid var(--black); border-radius: 14px;
+    padding: 6px 18px; font-size: 40px; font-weight: 900; line-height: 1;
+    min-width: 96px; text-align: center;
+  }
+  .q-timer.q-timer-up { background: var(--red); color: #fff; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <div class="brand">
-      <div class="logo">🍗</div>
-      <div class="name">PLUCKERS<small>TRIVIA NIGHT</small></div>
+      <img class="brand-logo-img" src="pluckers-logo.png?v=3" alt="Pluckers" onerror="this.style.display='none'" />
+      <div class="name">TRIVIA<small>NIGHT</small></div>
     </div>
+    <div class="dont-cheat">👀 DON'T CHEAT!</div>
     <div class="meta" id="meta"></div>
   </header>
 
@@ -1182,6 +1260,12 @@ const DEFAULT_ROUNDS = [
 const STORAGE_KEY = "pluckers-trivia-rounds";
 let ROUNDS = loadRounds();
 
+// ---- Question timer ----
+const TIMER_KEY = "pluckers-trivia-timer";
+let TIMER_SECS = (function () { const n = parseInt(localStorage.getItem(TIMER_KEY), 10); return isNaN(n) ? 0 : n; })(); // 0 = off
+let TIMER_END = 0;                 // epoch ms the current question's timer ends (0 = none)
+function saveTimer() { try { localStorage.setItem(TIMER_KEY, String(TIMER_SECS)); } catch (e) {} }
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1189,15 +1273,62 @@ const State = {
   TITLE: "title",
   ROUND_INTRO: "round_intro",
   QUESTION: "question",
-  ROUND_END: "round_end",
+  TURN_IN: "turn_in",     // "TURN IN YOUR ANSWER SHEET!" after a round's last question
+  ROUND_END: "round_end", // answer review (shown mid-NEXT-round; last round at the end)
   END: "end"
 };
 
 const game = {
   state: State.TITLE,
   roundIdx: 0,
-  questionIdx: 0
+  questionIdx: 0,
+  answersIdx: 0,   // which round's answers the ROUND_END screen shows
+  cursor: 0        // position in SCHEDULE (the full ordered list of screens)
 };
+
+// The whole game is a flat, ordered list of screens, computed from ROUNDS.
+// Answers for round R are revealed in the MIDDLE of round R+1 (after Q5);
+// the final round's answers are shown at the very end.
+let SCHEDULE = [];
+function buildSchedule() {
+  const s = [{ state: State.TITLE }];
+  const N = ROUNDS.length;
+  for (let r = 0; r < N; r++) {
+    const len = ROUNDS[r].questions.length;
+    const mid = Math.min(4, len - 1);   // after the 5th question (or last, if fewer)
+    s.push({ state: State.ROUND_INTRO, roundIdx: r });
+    for (let qi = 0; qi < len; qi++) {
+      s.push({ state: State.QUESTION, roundIdx: r, questionIdx: qi });
+      if (qi === mid && r >= 1) {
+        s.push({ state: State.ROUND_END, roundIdx: r, answersIdx: r - 1 });
+      }
+    }
+    s.push({ state: State.TURN_IN, roundIdx: r });
+    if (r === N - 1) {
+      s.push({ state: State.ROUND_END, roundIdx: r, answersIdx: r });
+    }
+  }
+  s.push({ state: State.END });
+  SCHEDULE = s;
+}
+function applyFrame(f) {
+  if (!f) return;
+  game.state       = f.state;
+  game.roundIdx    = f.roundIdx    || 0;
+  game.questionIdx = f.questionIdx || 0;
+  game.answersIdx  = (f.answersIdx != null) ? f.answersIdx : 0;
+}
+function gotoCursor(n) {
+  game.cursor = Math.max(0, Math.min(n, SCHEDULE.length - 1));
+  applyFrame(SCHEDULE[game.cursor]);
+  // Host starts a fresh countdown each time it lands on a question.
+  if (game.state === State.QUESTION && TIMER_SECS > 0) {
+    TIMER_END = Date.now() + TIMER_SECS * 1000;
+  } else {
+    TIMER_END = 0;
+  }
+  render();
+}
 
 const main = document.getElementById("main");
 const meta = document.getElementById("meta");
@@ -1252,13 +1383,18 @@ function viewTitle() {
           <li><b>Host announces the winners!</b></li>
         </ol>
       </div>
-      <div class="title-logo"><span class="logo-p" style="text-shadow:none;font-size:130px;">🍗</span></div>
-      <h1 class="title">PLUCKERS<span class="sub">TRIVIA</span></h1>
+      <img class="title-logo-img" src="pluckers-logo.png?v=3" alt="Pluckers" onerror="this.style.display='none'" />
+      <h1 class="title">TRIVIA<span class="sub">NIGHT</span></h1>
       <div class="${statusClass}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
         <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">📺 GO LIVE</button>
+      </div>
+      <div class="setup-row">
+        <span class="setup-label">⏱ Seconds per question:</span>
+        <input id="timerInput" class="timer-input" type="number" min="0" step="5" value="${TIMER_SECS}" />
+        <span class="setup-label" style="font-size:14px; opacity:.75;">(0 = no timer)</span>
       </div>
       <div class="hint">
         Press <kbd>SPACE</kbd> to advance &nbsp;•&nbsp; <kbd>L</kbd> to load questions &nbsp;•&nbsp; <kbd>F</kbd> for fullscreen
@@ -1269,6 +1405,14 @@ function viewTitle() {
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
+  const ti = document.getElementById("timerInput");
+  if (ti) ti.addEventListener("change", () => {
+    TIMER_SECS = Math.max(0, parseInt(ti.value, 10) || 0);
+    ti.value = TIMER_SECS;
+    saveTimer();
+    if (live.role === "host") pushState();
+  });
+  processLogos();
 }
 
 function viewRoundIntro() {
@@ -1298,20 +1442,25 @@ function viewQuestion() {
       <div class="q-screen">
         <div class="q-topbar">
           <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
         </div>
         <div class="q-text">
           <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
         </div>
-        <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> for next question</div>
+        <div class="q-howto">📝 Just joined? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
+        <div class="btn-row"><button class="btn" id="qNextBtn">NEXT QUESTION ▶</button></div>
+        <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> or click NEXT to advance</div>
       </div>
     </div>
   `;
+  const nb = document.getElementById("qNextBtn");
+  if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
 }
 
 function viewRoundEnd() {
-  const round = ROUNDS[game.roundIdx];
-  const isLast = game.roundIdx >= ROUNDS.length - 1;
+  const round = ROUNDS[game.answersIdx];
+  const isFinalAnswers = game.answersIdx >= ROUNDS.length - 1;
 
   const items = round.questions.map((q, i) => {
     const qText = typeof q === "string" ? q : (q.q || "");
@@ -1327,20 +1476,34 @@ function viewRoundEnd() {
   main.innerHTML = `
     <div class="view round-end round-end-answers">
       <div class="round-end-header">
-        <h2>END OF ROUND ${game.roundIdx + 1}</h2>
+        <h2>ROUND ${game.answersIdx + 1} ANSWERS</h2>
         <div class="round-category" style="font-size:36px; margin:0;">${escapeHtml(round.category).toUpperCase()}</div>
       </div>
       <div class="qa-list">
         <ol>${items}</ol>
       </div>
       <div class="round-end-footer">
-        <span class="lead-inline">Tally scores &nbsp;•&nbsp; Turn in your sheet</span>
-        <button class="btn" id="nextBtn">${isLast ? "FINISH GAME" : "NEXT ROUND"}</button>
+        <span class="lead-inline">Check your answers &nbsp;•&nbsp; ${isFinalAnswers ? "That’s the game!" : "Back to the game next"}</span>
+        <button class="btn" id="nextBtn">${isFinalAnswers ? "FINISH GAME" : "CONTINUE"}</button>
       </div>
     </div>
   `;
   document.getElementById("nextBtn").addEventListener("click", advance);
   fitAnswers();
+}
+
+function viewTurnIn() {
+  main.innerHTML = `
+    <div class="view turn-in">
+      <div class="turn-in-big">TURN IN YOUR<br>ANSWER SHEET!</div>
+      <div class="turn-in-sub">End of Round ${game.roundIdx + 1} — hand your sheet to the host</div>
+      <div class="btn-row">
+        <button class="btn" id="turnInBtn">CONTINUE</button>
+      </div>
+      <div class="hint">Press <kbd>SPACE</kbd> to continue</div>
+    </div>
+  `;
+  document.getElementById("turnInBtn").addEventListener("click", advance);
 }
 
 // Scale the answer list so every question+answer fits on one screen with
@@ -1390,6 +1553,7 @@ function render() {
     case State.TITLE: viewTitle(); break;
     case State.ROUND_INTRO: viewRoundIntro(); break;
     case State.QUESTION: viewQuestion(); break;
+    case State.TURN_IN: viewTurnIn(); break;
     case State.ROUND_END: viewRoundEnd(); break;
     case State.END: viewEnd(); break;
   }
@@ -1409,76 +1573,17 @@ window.addEventListener("resize", () => {
 // ============================================================
 function advance() {
   if (live.role === "display") return;   // mirroring screens are view-only
-  switch (game.state) {
-    case State.TITLE:
-      game.state = State.ROUND_INTRO;
-      game.roundIdx = 0;
-      game.questionIdx = 0;
-      break;
-    case State.ROUND_INTRO:
-      game.state = State.QUESTION;
-      game.questionIdx = 0;
-      break;
-    case State.QUESTION: {
-      const round = ROUNDS[game.roundIdx];
-      if (game.questionIdx < round.questions.length - 1) {
-        game.questionIdx++;
-      } else {
-        game.state = State.ROUND_END;
-      }
-      break;
-    }
-    case State.ROUND_END:
-      if (game.roundIdx < ROUNDS.length - 1) {
-        game.roundIdx++;
-        game.questionIdx = 0;
-        game.state = State.ROUND_INTRO;
-      } else {
-        game.state = State.END;
-      }
-      break;
-    case State.END:
-      break;
-  }
-  render();
+  gotoCursor(game.cursor + 1);
 }
 
 function goBack() {
   if (live.role === "display") return;   // mirroring screens are view-only
-  switch (game.state) {
-    case State.QUESTION:
-      if (game.questionIdx > 0) {
-        game.questionIdx--;
-      } else {
-        game.state = State.ROUND_INTRO;
-      }
-      break;
-    case State.ROUND_END:
-      game.state = State.QUESTION;
-      game.questionIdx = ROUNDS[game.roundIdx].questions.length - 1;
-      break;
-    case State.ROUND_INTRO:
-      if (game.roundIdx > 0) {
-        game.roundIdx--;
-        game.state = State.ROUND_END;
-      } else {
-        game.state = State.TITLE;
-      }
-      break;
-    case State.END:
-      game.state = State.ROUND_END;
-      game.roundIdx = ROUNDS.length - 1;
-      break;
-  }
-  render();
+  gotoCursor(game.cursor - 1);
 }
 
 function backToMenu() {
   if (confirm("Return to title screen? Progress will be lost.")) {
-    game.state = State.TITLE;
-    game.roundIdx = 0;
-    game.questionIdx = 0;
-    render();
+    gotoCursor(0);
   }
 }
 
@@ -1648,6 +1753,8 @@ function parseTextRounds(text) {
 function applyRounds(rounds) {
   saveRounds(rounds);
   ROUNDS = rounds;
+  buildSchedule();
+  gotoCursor(0);   // back to the title with the new question set
 }
 
 function templateJson() {
@@ -1829,6 +1936,39 @@ function escapeHtml(s) {
     .replace(/'/g, "&#39;");
 }
 
+// Make a near-white background in the logo transparent at runtime, so the logo
+// floats on the page with no white box even if the PNG isn't transparent.
+// (Works when the page is served over http — Netlify or a localhost preview.
+//  Over file:// the browser blocks reading the pixels, so it leaves it as-is.)
+function deWhiteLogo(img) {
+  if (!img || img.dataset.dewhited || !img.naturalWidth) return;
+  try {
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const px = ctx.getImageData(0, 0, c.width, c.height);
+    const d = px.data;
+    for (let i = 0; i < d.length; i += 4) {
+      // Only knock out pixels that are essentially white (keeps yellow/red/blue).
+      if (d[i] > 238 && d[i + 1] > 238 && d[i + 2] > 238) d[i + 3] = 0;
+    }
+    ctx.putImageData(px, 0, 0);
+    img.dataset.dewhited = "1";
+    img.src = c.toDataURL("image/png");
+  } catch (e) {
+    /* file:// or cross-origin — leave the logo untouched */
+  }
+}
+function processLogos() {
+  document.querySelectorAll(".brand-logo-img, .title-logo-img").forEach((im) => {
+    if (im.dataset.dewhited) return;
+    if (im.complete && im.naturalWidth) deWhiteLogo(im);
+    else im.addEventListener("load", () => deWhiteLogo(im), { once: true });
+  });
+}
+
 // ============================================================
 // LIVE MULTI-SCREEN SYNC (Supabase)
 // One screen "hosts" and controls the game; every screen opened with
@@ -1840,6 +1980,8 @@ const SUPABASE_URL      = "https://yfatjubmmnykwopnuoyk.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
 // ----------------------------------------------------------------
 const LIVE_TABLE = "sessions";
+// Remembers an active hosted room so a host refresh/crash can resume it.
+const HOST_RESUME_KEY = "pluckers-host-room";
 
 const live = {
   role: "off",      // "off" | "host" | "display"
@@ -1881,9 +2023,10 @@ function isLocalUrl() {
 function snapshot() {
   return {
     room_code: live.code,
-    state: game.state,
-    round_idx: game.roundIdx,
-    question_idx: game.questionIdx,
+    // `state` carries the screen name PLUS scoreboard/timer so displays mirror them.
+    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END }),
+    round_idx: game.roundIdx,   // cosmetic
+    question_idx: game.cursor,  // the real sync position: index into SCHEDULE
     rounds: ROUNDS,
     updated_at: new Date().toISOString()
   };
@@ -1910,25 +2053,57 @@ async function goLive() {
     alert("Couldn't start the live session:\n" + (err.message || err));
     return;
   }
+  rememberHostSession();
   showLiveBanner();
+}
+
+// Save the active hosted room so a refresh/crash can pick it back up.
+function rememberHostSession() {
+  try { localStorage.setItem(HOST_RESUME_KEY, JSON.stringify({ code: live.code, t: Date.now() })); } catch (e) {}
+}
+
+// On load, if this computer was recently hosting a room, rejoin it as host and
+// resume exactly where the game left off (read straight from Supabase).
+async function resumeHostIfAny() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(HOST_RESUME_KEY)); } catch (e) {}
+  // Only auto-resume a recent session (within 8 hours) to avoid stale rooms.
+  if (!saved || !saved.code || !liveConfigured() || (Date.now() - (saved.t || 0)) > 8 * 3600 * 1000) {
+    render();
+    return;
+  }
+  try {
+    const { data } = await liveClient().from(LIVE_TABLE).select("*").eq("room_code", saved.code).maybeSingle();
+    if (!data) { render(); return; }
+    live.role = "host";
+    live.code = saved.code;
+    // restore the exact position + questions + timer
+    if (Array.isArray(data.rounds) && data.rounds.length) { ROUNDS = data.rounds; buildSchedule(); }
+    try {
+      const ex = JSON.parse(data.state);
+      if (typeof ex.timerSecs === "number") TIMER_SECS = ex.timerSecs;
+    } catch (e) {}
+    game.cursor = Math.max(0, Math.min((data.question_idx | 0), SCHEDULE.length - 1));
+    applyFrame(SCHEDULE[game.cursor]);
+    rememberHostSession();
+    render();
+    showLiveBanner();
+  } catch (e) {
+    render();
+  }
 }
 
 async function pushState() {
   if (live.role !== "host" || !live.code) return;
   try {
-    await liveClient().from(LIVE_TABLE).update({
-      state: game.state,
-      round_idx: game.roundIdx,
-      question_idx: game.questionIdx,
-      rounds: ROUNDS,
-      updated_at: new Date().toISOString()
-    }).eq("room_code", live.code);
+    await liveClient().from(LIVE_TABLE).upsert(snapshot());
   } catch (e) { /* a dropped update will be corrected by the next one */ }
 }
 
 function stopLive() {
   if (live.channel && live.sb) live.sb.removeChannel(live.channel);
   live.role = "off"; live.code = null; live.channel = null;
+  try { localStorage.removeItem(HOST_RESUME_KEY); } catch (e) {}   // don't auto-resume after an intentional stop
   const el = document.getElementById("liveBanner");
   if (el) el.remove();
 }
@@ -1997,10 +2172,17 @@ async function connectAsDisplay(code) {
 
 function applyRemote(row) {
   live.applying = true;
-  if (Array.isArray(row.rounds) && row.rounds.length) ROUNDS = row.rounds;
-  game.state       = row.state;
-  game.roundIdx    = row.round_idx;
-  game.questionIdx = row.question_idx;
+  if (Array.isArray(row.rounds) && row.rounds.length) { ROUNDS = row.rounds; buildSchedule(); }
+  // The `state` field carries the timer alongside the screen name.
+  try {
+    const ex = JSON.parse(row.state);
+    if (ex && typeof ex === "object") {
+      if (typeof ex.timerSecs === "number") TIMER_SECS = ex.timerSecs;
+      TIMER_END = ex.timerEnd || 0;
+    }
+  } catch (e) { /* older/plain state string — ignore */ }
+  game.cursor = Math.max(0, Math.min((row.question_idx | 0), SCHEDULE.length - 1));
+  applyFrame(SCHEDULE[game.cursor]);
   live.applying = false;
   render();
 }
@@ -2011,10 +2193,20 @@ function showDisplayTag() {
   el.textContent = "MIRRORING • ROOM " + live.code;
 }
 
-// Inject the always-on TV chrome: an Instructions panel (right).
-// Lives in #app, outside <main>, so it persists across question re-renders.
+// Inject the always-on TV chrome: a WIN PRIZES badge (left) + Instructions (right).
+// Both live in #app, outside <main>, so they persist across question re-renders.
 function mountTvChrome() {
   const app = document.getElementById("app");
+
+  if (!document.getElementById("tvWinPrizes")) {
+    const wp = document.createElement("div");
+    wp.id = "tvWinPrizes";
+    wp.className = "win-prizes";
+    wp.innerHTML =
+      '<span class="wp-top">WIN</span>' +
+      '<span class="wp-big">PRIZES!</span>';
+    app.appendChild(wp);
+  }
 
   if (!document.getElementById("tvInstructions")) {
     const ins = document.createElement("div");
@@ -2032,14 +2224,16 @@ function mountTvChrome() {
   }
 }
 
-// On TVs, show the Instructions panel only on the title + round-intro screens
-// (hidden during questions and the answer review so it never covers content).
+// On TVs, show the WIN PRIZES badge + Instructions panel only on the title +
+// round-intro screens (hidden during questions / answers so content stays clear).
 function updateTvChromeVisibility() {
-  if (live.role !== "display") return;
+  if (!document.body.classList.contains("display-mode")) return;
   const s = game.state;
+  const show = (s === State.TITLE || s === State.ROUND_INTRO);
+  const wp  = document.getElementById("tvWinPrizes");
   const ins = document.getElementById("tvInstructions");
-  const showIns = (s === State.TITLE || s === State.ROUND_INTRO);
-  if (ins) ins.style.display = showIns ? "" : "none";
+  if (wp)  wp.style.display  = show ? "" : "none";
+  if (ins) ins.style.display = show ? "" : "none";
 }
 function showDisplayWaiting() {
   main.innerHTML =
@@ -2076,19 +2270,63 @@ function showCodeEntry() {
   inp.focus();
 }
 
+// Demo / preview of the TV point-of-view: no host, no Supabase, no code entry.
+// Auto-cycles through the TV screens using the built-in sample questions.
+function startDemo() {
+  document.body.classList.add("display-mode");
+  mountTvChrome();
+  let tag = document.getElementById("displayTag");
+  if (!tag) { tag = document.createElement("div"); tag.id = "displayTag"; document.body.appendChild(tag); }
+  tag.textContent = "TV PREVIEW (DEMO)";
+
+  TIMER_SECS = 30;
+  const steps = [
+    { d: 3500, fn: () => { game.state = State.TITLE; } },
+    { d: 3000, fn: () => { game.state = State.ROUND_INTRO; game.roundIdx = 0; game.questionIdx = 0; } },
+    { d: 5000, fn: () => { game.state = State.QUESTION; game.roundIdx = 0; game.questionIdx = 0; TIMER_END = Date.now() + 30000; } },
+    { d: 3500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 0; TIMER_END = 0; } },
+    { d: 3000, fn: () => { game.state = State.ROUND_INTRO; game.roundIdx = 1; game.questionIdx = 0; } },
+    { d: 4500, fn: () => { game.state = State.QUESTION; game.roundIdx = 1; game.questionIdx = 4; TIMER_END = Date.now() + 30000; } },
+    { d: 6500, fn: () => { game.state = State.ROUND_END; game.roundIdx = 1; game.answersIdx = 0; TIMER_END = 0; } },
+  ];
+  let i = 0;
+  (function tick() {
+    steps[i].fn();
+    render();
+    const wait = steps[i].d;
+    i = (i + 1) % steps.length;
+    setTimeout(tick, wait);
+  })();
+}
+
 // ============================================================
 // BOOT
 // ============================================================
+buildSchedule();
+applyFrame(SCHEDULE[0]);   // start on the title screen
+processLogos();            // strip any white box from the header logo
+
 const _params = new URLSearchParams(location.search);
 const _isTv = _params.has("tv") || _params.has("screen");
 const _roomParam = _params.get("room");
-if (_isTv && _roomParam) {
+if (_params.has("demo")) {
+  startDemo();                                  // TV point-of-view preview (no setup)
+} else if (_isTv && _roomParam) {
   connectAsDisplay(_roomParam.toUpperCase());   // TV opened with a code (or scanned)
 } else if (_isTv) {
   showCodeEntry();                              // permanent TV link → ask for the code
 } else {
-  render();                                     // host / admin (full controls + GO LIVE)
+  resumeHostIfAny();                            // host / admin — resume a live room if we were hosting
 }
+
+// Tick the question countdown timer (updates any visible .q-timer each second).
+setInterval(() => {
+  const el = document.getElementById("qTimer");
+  if (!el || !TIMER_END) return;
+  const left = Math.max(0, Math.ceil((TIMER_END - Date.now()) / 1000));
+  el.textContent = left > 0 ? left : "TIME!";
+  el.classList.toggle("q-timer-up", left <= 0);
+}, 250);
 </script>
 </body>
 </html>
