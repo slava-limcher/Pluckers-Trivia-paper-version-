@@ -2270,6 +2270,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
 const LIVE_TABLE = "sessions";
 // Remembers an active hosted room so a host refresh/crash can resume it.
 const HOST_RESUME_KEY = "pluckers-host-room";
+// Remembers the room a TV joined so refreshing the TV reconnects automatically.
+const TV_ROOM_KEY = "pluckers-tv-room";
 
 const live = {
   role: "off",      // "off" | "host" | "display"
@@ -2430,6 +2432,7 @@ async function connectAsDisplay(code) {
   live.role = "display";
   live.code = code;
   document.body.classList.add("display-mode");
+  try { localStorage.setItem(TV_ROOM_KEY, code); } catch (e) {}   // remember for refresh
 
   if (!liveConfigured()) {
     main.innerHTML =
@@ -2484,6 +2487,14 @@ function showDisplayTag() {
   let el = document.getElementById("displayTag");
   if (!el) { el = document.createElement("div"); el.id = "displayTag"; document.body.appendChild(el); }
   el.textContent = "MIRRORING • ROOM " + live.code;
+  el.title = "Click to change room";
+  el.style.cursor = "pointer";
+  el.onclick = function () {
+    if (confirm("Change room? This screen will ask for a new code.")) {
+      try { localStorage.removeItem(TV_ROOM_KEY); } catch (e) {}
+      location.href = location.origin + location.pathname + "?tv";
+    }
+  };
 }
 
 // Inject the always-on TV chrome: a WIN PRIZES badge (left) + Instructions (right).
@@ -2712,7 +2723,11 @@ if (_params.has("demo")) {
 } else if (_isTv && _roomParam) {
   connectAsDisplay(_roomParam.toUpperCase());   // TV opened with a code (or scanned)
 } else if (_isTv) {
-  showCodeEntry();                              // permanent TV link → ask for the code
+  // Refreshed TV: rejoin the saved room automatically; otherwise ask for the code.
+  let _savedRoom = null;
+  try { _savedRoom = localStorage.getItem(TV_ROOM_KEY); } catch (e) {}
+  if (_savedRoom) connectAsDisplay(_savedRoom);
+  else showCodeEntry();
 } else {
   resumeHostIfAny();                            // host / admin — resume a live room if we were hosting
 }
