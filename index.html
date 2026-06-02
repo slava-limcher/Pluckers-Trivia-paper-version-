@@ -475,10 +475,10 @@
     border-radius: 16px;
     padding: 16px 28px;
   }
-  .q-prev-label { color: var(--red); font-weight: 800; font-size: 22px; letter-spacing: 1px; margin-bottom: 4px; }
-  .q-prev-q { font-size: 30px; font-weight: 800; line-height: 1.15; }
-  .q-prev-a { font-size: 30px; color: var(--red); margin-top: 4px; line-height: 1.15; }
-  .q-prev-a b { color: var(--blue); font-size: .78em; letter-spacing: 1px; margin-right: 6px; }
+  .q-prev-label { color: var(--red); font-weight: 800; font-size: 30px; letter-spacing: 1px; margin-bottom: 6px; }
+  .q-prev-q { font-size: 50px; font-weight: 800; line-height: 1.12; }
+  .q-prev-a { font-size: 50px; color: var(--red); margin-top: 6px; line-height: 1.12; }
+  .q-prev-a b { color: var(--blue); font-size: .8em; letter-spacing: 1px; margin-right: 8px; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
@@ -1488,9 +1488,9 @@ function viewQuestion() {
           <div class="q-text">
             <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
           </div>
-          <div class="q-howto">📝 Just joined? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
         </div>
         ${prevHtml}
+        <div class="q-howto">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
         <div class="btn-row"><button class="btn" id="qNextBtn">NEXT QUESTION ▶</button></div>
         <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> or click NEXT to advance</div>
       </div>
