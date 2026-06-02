@@ -1129,11 +1129,28 @@
   body.display-mode #main .btn-row,
   body.display-mode #main .hint,
   body.display-mode #main .setup-row,
+  body.display-mode #main .loc-bar,
   body.display-mode #main .win-prizes,
   body.display-mode #main .instructions,
   body.display-mode #main .round-end-footer .btn,
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
+
+  /* Location-name bar (host title screen only) */
+  .loc-bar {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
+    background: rgba(0,0,0,.28); border: 2px solid var(--yellow);
+    padding: 12px 20px; border-radius: 16px; z-index: 6; max-width: 92vw;
+  }
+  .loc-label { color: var(--yellow); font-weight: 900; font-size: 18px; letter-spacing: 1.5px; }
+  .loc-input {
+    width: 320px; max-width: 60vw; font-size: 24px; font-weight: 800;
+    padding: 10px 14px; border-radius: 12px; border: 2px solid var(--yellow);
+    background: var(--cream); color: var(--blue-dark); text-align: center;
+  }
+  .loc-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 4px rgba(214,40,40,.25); }
+  .loc-hint { color: var(--cream); font-size: 13px; opacity: .8; width: 100%; text-align: center; }
 
   /* Persistent instructions panel injected on TVs (lives outside #main so it
      survives re-renders). Reuses the .instructions look. */
@@ -1650,15 +1667,21 @@ function viewTitle() {
     : `<b>${totalQuestions()}</b> questions total`;
   main.innerHTML = `
     <div class="view title-wrap">
+      <div class="loc-bar">
+        <label class="loc-label" for="locName">📍 PLUCKERS LOCATION</label>
+        <input id="locName" class="loc-input" type="text" maxlength="28" autocomplete="off"
+               placeholder="e.g. Round Rock" value="${escapeHtml(savedLocName())}" />
+        <span class="loc-hint">Name this game, then GO LIVE to open its TV screen.</span>
+      </div>
       <div class="title-scoreboard" id="titleScore"></div>
       <div class="instructions">
         <div class="instr-header">🎤 HOST GUIDE</div>
         <ol class="instr-list">
-          <li><b>📺 GO LIVE</b> → enter the code on each TV.</li>
+          <li><b>Name</b> your location up top, then <b>📺 GO LIVE</b>.</li>
+          <li>A <b>TV window</b> opens for that game — drag it to your TV.</li>
           <li><b>START</b>, then <b>SPACE/NEXT</b> for questions.</li>
           <li>After each round, collect sheets (<b>TURN IN</b>).</li>
-          <li>Open <b>🏆 SCOREBOARD</b>, enter team points.</li>
-          <li><b>📢 PUBLISH</b> → Top 3 shows on the TVs.</li>
+          <li>Open <b>🏆 SCOREBOARD</b>, enter points, <b>📢 PUBLISH</b>.</li>
         </ol>
       </div>
       <img class="title-logo-img" src="pluckers-logo.png?v=3" alt="Pluckers" onerror="this.style.display='none'" />
@@ -1683,6 +1706,11 @@ function viewTitle() {
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
+  const ln = document.getElementById("locName");
+  if (ln) {
+    ln.addEventListener("input", () => { try { localStorage.setItem(LOC_NAME_KEY, ln.value); } catch (e) {} });
+    ln.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); goLive(); } });
+  }
   const ti = document.getElementById("timerInput");
   if (ti) ti.addEventListener("change", () => {
     TIMER_SECS = Math.max(0, parseInt(ti.value, 10) || 0);
@@ -2410,14 +2438,27 @@ const LIVE_TABLE = "sessions";
 const HOST_RESUME_KEY = "pluckers-host-room";
 // Remembers the room a TV joined so refreshing the TV reconnects automatically.
 const TV_ROOM_KEY = "pluckers-tv-room";
+// Remembers the last location name the host typed (convenience only).
+const LOC_NAME_KEY = "pluckers-loc-name";
+// A game name counts as "in use" only while its host keeps it fresh (heartbeat).
+// Closing the host/TV window stops the heartbeat, so the name frees itself.
+const LIVE_TTL_MS = 40000;       // older than this = stale/free
+const HEARTBEAT_MS = 12000;      // host re-stamps the row this often while live
 
 const live = {
   role: "off",      // "off" | "host" | "display"
   code: null,
   sb: null,
   channel: null,
-  applying: false   // true while applying a remote update (prevents echo)
+  applying: false,  // true while applying a remote update (prevents echo)
+  tvWin: null,      // the TV-POV window opened on GO LIVE
+  tvWatch: null,    // interval watching for that window to close
+  heartbeat: null   // interval keeping this game's name "in use"
 };
+
+function savedLocName() {
+  try { return localStorage.getItem(LOC_NAME_KEY) || ""; } catch (e) { return ""; }
+}
 
 function liveConfigured() {
   return SUPABASE_URL && SUPABASE_ANON_KEY && typeof window.supabase !== "undefined";
@@ -2461,6 +2502,9 @@ function snapshot() {
 }
 
 // ---- Host ----
+// GO LIVE: take the location name typed on the title screen, make sure no one
+// else is live under that name, start hosting it, and pop open a TV-POV window.
+// Closing that window ends the game and frees the name (see watchTvWindow).
 async function goLive() {
   if (!liveConfigured()) {
     alert(
@@ -2471,19 +2515,113 @@ async function goLive() {
     );
     return;
   }
-  // Host the room named in the URL (?room=NAME), or MAIN for the bare link.
-  const room = (new URLSearchParams(location.search).get("room") || "MAIN").toUpperCase();
-  autoHost(room);
+  const inp = document.getElementById("locName");
+  const name = ((inp && inp.value) || "").trim().toUpperCase().replace(/\s+/g, " ");
+  if (!name) {
+    alert("Type your Pluckers location name at the top of the screen first.");
+    if (inp) inp.focus();
+    return;
+  }
+  if (name.length < 2) { alert("That name is too short — give the location a clearer name."); if (inp) inp.focus(); return; }
+
+  const lb = document.getElementById("liveBtn");
+  if (lb) { lb.disabled = true; lb.textContent = "CHECKING…"; }
+
+  // No two simultaneous games with the same name: a name is taken only while a
+  // host is actively keeping it fresh (within LIVE_TTL_MS). Stale rows are free.
+  try {
+    const { data } = await liveClient().from(LIVE_TABLE).select("updated_at").eq("room_code", name).maybeSingle();
+    const inUse = data && data.updated_at && (Date.now() - Date.parse(data.updated_at) < LIVE_TTL_MS);
+    if (inUse) {
+      alert('"' + name + '" is already live right now.\nPick a different location name (or close that game first).');
+      if (lb) { lb.disabled = false; lb.textContent = "📺 GO LIVE"; }
+      if (inp) inp.focus();
+      return;
+    }
+  } catch (e) { /* if the check fails, fall through and try to host anyway */ }
+
+  // Claim the name and start a fresh game at the title.
+  live.role = "host";
+  live.code = name;
+  game.cursor = 0;
+  applyFrame(SCHEDULE[0]);
+  try { localStorage.setItem(LOC_NAME_KEY, name); } catch (e) {}
+  try { await liveClient().from(LIVE_TABLE).upsert(snapshot()); } catch (e) {}
+  rememberHostSession();
+  startHeartbeat();
+  render();                 // render() keeps pushing state to this room while hosting
+  showNamedRoomBanner(name);
+  if (lb) { lb.disabled = false; lb.textContent = "📺 GO LIVE"; }
+  openTvWindow();
 }
 
-// Permanent per-location server: host a FIXED named room straight from the URL
-// (e.g. ?room=loc1) — no GO LIVE click, no code. TVs open ?tv&room=loc1.
+// Open the TV point-of-view for the current game in a new window, and watch it:
+// when the host closes it, the game ends and the name becomes available again.
+function openTvWindow() {
+  if (!live.code) return;
+  const win = window.open(tvUrl(), "pluckers_tv_" + live.code.replace(/[^A-Z0-9]/gi, "_"),
+                          "width=1280,height=720");
+  if (!win) {
+    alert("Your browser blocked the TV window.\nAllow pop-ups for this page, then press GO LIVE again.");
+    return;
+  }
+  live.tvWin = win;
+  try { win.focus(); } catch (e) {}
+  watchTvWindow();
+}
+
+// Poll the opened TV window; the moment it's closed, tear the game down.
+function watchTvWindow() {
+  if (live.tvWatch) clearInterval(live.tvWatch);
+  live.tvWatch = setInterval(() => {
+    if (live.tvWin && live.tvWin.closed) {
+      clearInterval(live.tvWatch);
+      live.tvWatch = null;
+      endLiveGame();
+    }
+  }, 1000);
+}
+
+// Keep this game's name "in use" while it's live, so the uniqueness check sees it.
+function startHeartbeat() {
+  stopHeartbeat();
+  live.heartbeat = setInterval(() => {
+    if (live.role === "host" && live.code) {
+      try { liveClient().from(LIVE_TABLE).update({ updated_at: new Date().toISOString() }).eq("room_code", live.code); } catch (e) {}
+    }
+  }, HEARTBEAT_MS);
+}
+function stopHeartbeat() {
+  if (live.heartbeat) { clearInterval(live.heartbeat); live.heartbeat = null; }
+}
+
+// End the live game: stop the heartbeat, mark the row stale so the name frees
+// immediately, drop hosting, and return the host screen to the title.
+function endLiveGame() {
+  const code = live.code;
+  stopHeartbeat();
+  if (live.tvWatch) { clearInterval(live.tvWatch); live.tvWatch = null; }
+  live.tvWin = null;
+  if (code) {
+    // Stamp it far in the past → instantly "stale" → the name is available again.
+    try { liveClient().from(LIVE_TABLE).update({ updated_at: new Date(0).toISOString() }).eq("room_code", code); } catch (e) {}
+  }
+  if (live.channel && live.sb) { try { live.sb.removeChannel(live.channel); } catch (e) {} }
+  live.role = "off"; live.code = null; live.channel = null;
+  try { localStorage.removeItem(HOST_RESUME_KEY); } catch (e) {}
+  const el = document.getElementById("liveBanner");
+  if (el) el.remove();
+  game.cursor = 0;
+  applyFrame(SCHEDULE[0]);
+  render();
+}
+
+// (legacy) direct-host a fixed named room from a ?room=NAME URL.
 async function autoHost(roomName) {
   live.code = roomName;
   if (!liveConfigured()) { render(); return; }   // still plays locally if Supabase is off
   live.role = "host";
   try {
-    // If this room was active recently, resume right where it left off (refresh-safe).
     const { data } = await liveClient().from(LIVE_TABLE).select("*").eq("room_code", roomName).maybeSingle();
     const recent = data && data.updated_at && (Date.now() - Date.parse(data.updated_at) < 8 * 3600 * 1000);
     if (recent) {
@@ -2495,7 +2633,8 @@ async function autoHost(roomName) {
     await liveClient().from(LIVE_TABLE).upsert(snapshot());
   } catch (e) {}
   rememberHostSession();
-  render();                 // render() pushes state to this room while hosting
+  startHeartbeat();
+  render();
   showNamedRoomBanner(roomName);
 }
 
@@ -2507,8 +2646,17 @@ function showNamedRoomBanner(roomName) {
     '<div class="lb-dot"></div>' +
     '<div class="lb-info">' +
       '<div class="lb-title">● LIVE — ' + escapeHtml(roomName) + '</div>' +
-      '<div class="lb-howto">This screen controls the TVs at this location.<br>TVs open: <b>' + escapeHtml(tvUrl()) + '</b></div>' +
-    '</div>';
+      '<div class="lb-howto">This screen controls the TV window for this game.<br>' +
+        'Closing the TV window ends the game &amp; frees the name.</div>' +
+    '</div>' +
+    '<button class="lb-stop" id="lbStopBtn">END</button>';
+  const sb = document.getElementById("lbStopBtn");
+  if (sb) sb.addEventListener("click", () => {
+    if (confirm('End the "' + roomName + '" game? The TV window will close and the name frees up.')) {
+      try { if (live.tvWin && !live.tvWin.closed) live.tvWin.close(); } catch (e) {}
+      endLiveGame();
+    }
+  });
 }
 
 // Save the active hosted room so a refresh/crash can pick it back up.
@@ -2885,20 +3033,29 @@ processLogos();            // strip any white box from the header logo
   if (sb) sb.addEventListener("click", openScoreboardModal);
 })();
 
-// Each location is a named room baked into its URL — no codes, no QR.
-//   Host TV control:  …/?room=NAME
-//   A TV at that spot: …/?tv&room=NAME
-// (Bare links default to room MAIN.)
+// Flow:
+//   Host:  open the bare link → name the location → GO LIVE (pops a TV window).
+//   TV:    the GO LIVE window opens …/?tv&room=NAME automatically.
+//   (?room=NAME still direct-hosts a fixed room for power users.)
 const _params = new URLSearchParams(location.search);
 const _isTv = _params.has("tv") || _params.has("screen");
-const _room = (_params.get("room") || "MAIN").toUpperCase();
+const _room = _params.get("room");
 if (_params.has("demo")) {
-  startDemo();                 // TV point-of-view preview (no setup)
+  startDemo();                                   // TV point-of-view preview (no setup)
 } else if (_isTv) {
-  connectAsDisplay(_room);     // TV — paste & go, auto-connects to its room
+  connectAsDisplay((_room || "MAIN").toUpperCase());   // TV window — mirrors its game
+} else if (_room) {
+  autoHost(_room.toUpperCase());                 // power user: direct-host a fixed name
 } else {
-  autoHost(_room);             // host — paste & go, controls that room's TVs
+  render();                                      // host title — name a location, then GO LIVE
 }
+
+// If the host window itself is closed, free the name right away.
+window.addEventListener("beforeunload", () => {
+  if (live.role === "host" && live.code) {
+    try { liveClient().from(LIVE_TABLE).update({ updated_at: new Date(0).toISOString() }).eq("room_code", live.code); } catch (e) {}
+  }
+});
 
 // Tick the question countdown timer (updates any visible .q-timer each second).
 setInterval(() => {
