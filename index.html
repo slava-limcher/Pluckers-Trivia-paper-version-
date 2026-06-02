@@ -496,6 +496,10 @@
     justify-content: center;
     gap: 14px;
   }
+  /* Keep the question clear of the overlays: the SCOREBOARD pill on the host,
+     and (when a timer is running) the timer that sits under the Top-3 on the TVs. */
+  body:not(.display-mode) .q-main { padding-top: 110px; }
+  body.display-mode .q-screen.has-timer .q-main { padding-top: 270px; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
@@ -1740,7 +1744,7 @@ function viewQuestion() {
 
   main.innerHTML = `
     <div class="view">
-      <div class="q-screen">
+      <div class="q-screen ${TIMER_SECS > 0 ? 'has-timer' : ''}">
         ${qScore}
         <div class="q-topbar">
           <div class="q-topbar-left">
