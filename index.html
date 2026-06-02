@@ -471,20 +471,6 @@
     justify-content: center;
     gap: 14px;
   }
-  /* Previous round's matching question + answer, shown at the bottom (host + TVs). */
-  .q-prev {
-    display: block;
-    text-align: left;
-    background: var(--cream);
-    color: var(--blue-dark);
-    border: 4px solid var(--blue);
-    border-radius: 16px;
-    padding: 16px 28px;
-  }
-  .q-prev-label { color: var(--red); font-weight: 800; font-size: 30px; letter-spacing: 1px; margin-bottom: 6px; }
-  .q-prev-q { font-size: 50px; font-weight: 800; line-height: 1.12; }
-  .q-prev-a { font-size: 50px; color: var(--red); margin-top: 6px; line-height: 1.12; }
-  .q-prev-a b { color: var(--blue); font-size: .8em; letter-spacing: 1px; margin-right: 8px; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
@@ -1229,6 +1215,45 @@
   #lbOverlay .lbo-name { flex: 1; font-size: 32px; font-weight: 800; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #lbOverlay .lbo-score { font-size: 36px; font-weight: 900; color: var(--blue); }
   #lbOverlay .lbo-empty { text-align: center; color: var(--blue-dark); font-size: 22px; padding: 16px; }
+  /* Single answer-reveal screen (shown one at a time after each round) */
+  .ans-q {
+    font-size: 56px;
+    line-height: 1.18;
+    color: var(--cream);
+    background: linear-gradient(180deg, var(--blue-dark), #0a1234);
+    border: 5px solid var(--yellow);
+    border-radius: 22px;
+    padding: 26px 40px;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .ans-q .q-num {
+    display: inline-block;
+    background: var(--yellow); color: var(--red);
+    border: 3px solid var(--black); border-radius: 12px;
+    padding: 2px 14px; margin-right: 14px; font-size: 44px; vertical-align: middle;
+  }
+  .ans-a {
+    margin-top: 24px;
+    font-size: 72px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--blue-dark);
+    background: var(--yellow);
+    border: 5px solid var(--black);
+    border-radius: 18px;
+    padding: 24px 40px;
+    box-shadow: 0 14px 0 var(--red);
+    text-align: center;
+  }
+  .ans-a .ans-label {
+    display: block;
+    font-size: 26px;
+    letter-spacing: 5px;
+    font-weight: 900;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -1409,7 +1434,8 @@ const State = {
   ROUND_INTRO: "round_intro",
   QUESTION: "question",
   TURN_IN: "turn_in",     // "TURN IN YOUR ANSWER SHEET!" after a round's last question
-  ROUND_END: "round_end", // answer review (shown mid-NEXT-round; last round at the end)
+  ANSWER: "answer",       // one question + its answer, revealed one screen at a time
+  ROUND_END: "round_end", // (legacy full answer list — no longer scheduled)
   END: "end"
 };
 
@@ -1417,13 +1443,13 @@ const game = {
   state: State.TITLE,
   roundIdx: 0,
   questionIdx: 0,
-  answersIdx: 0,   // which round's answers the ROUND_END screen shows
+  answersIdx: 0,
   cursor: 0        // position in SCHEDULE (the full ordered list of screens)
 };
 
 // The whole game is a flat, ordered list of screens, computed from ROUNDS.
-// Answers for round R are revealed in the MIDDLE of round R+1 (after Q5);
-// the final round's answers are shown at the very end.
+// Each round: intro → its questions → TURN IN → that round's answers shown
+// ONE AT A TIME (before the next round). Last round's answers come before the end.
 let SCHEDULE = [];
 function buildSchedule() {
   const s = [{ state: State.TITLE }];
@@ -1435,8 +1461,8 @@ function buildSchedule() {
       s.push({ state: State.QUESTION, roundIdx: r, questionIdx: qi });
     }
     s.push({ state: State.TURN_IN, roundIdx: r });
-    if (r === N - 1) {
-      s.push({ state: State.ROUND_END, roundIdx: r, answersIdx: r });
+    for (let qi = 0; qi < len; qi++) {   // reveal each answer of this round, one screen each
+      s.push({ state: State.ANSWER, roundIdx: r, questionIdx: qi });
     }
   }
   s.push({ state: State.END });
@@ -1588,25 +1614,6 @@ function viewQuestion() {
   const q = round.questions[game.questionIdx];
   const qText = typeof q === "string" ? q : q.q;
 
-  // On the TVs, rounds 2+ show the matching question's answer from the
-  // PREVIOUS round at the bottom (its question text + answer).
-  let prevHtml = "";
-  if (game.roundIdx >= 1) {
-    const pr = ROUNDS[game.roundIdx - 1];
-    const pq = pr && pr.questions[game.questionIdx];
-    if (pq) {
-      const pqText = typeof pq === "string" ? pq : (pq.q || "");
-      const paText = typeof pq === "string" ? "" : (pq.a || "");
-      prevHtml =
-        '<div class="q-prev">' +
-          '<div class="q-prev-label">ROUND ' + game.roundIdx + ' • QUESTION ' + (game.questionIdx + 1) + '</div>' +
-          '<div class="q-prev-q">' + escapeHtml(pqText) + '</div>' +
-          '<div class="q-prev-a"><b>ANSWER:</b> ' +
-            (paText ? escapeHtml(paText) : '<em style="opacity:.6">(not provided)</em>') + '</div>' +
-        '</div>';
-    }
-  }
-
   main.innerHTML = `
     <div class="view">
       <div class="q-screen">
@@ -1620,7 +1627,6 @@ function viewQuestion() {
             <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
           </div>
         </div>
-        ${prevHtml}
         <div class="q-howto">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
         <div class="btn-row"><button class="btn" id="qNextBtn">NEXT QUESTION ▶</button></div>
         <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> or click NEXT to advance</div>
@@ -1628,6 +1634,32 @@ function viewQuestion() {
     </div>
   `;
   const nb = document.getElementById("qNextBtn");
+  if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
+}
+
+// One answer at a time — shown after a round's TURN IN, before the next round.
+function viewAnswer() {
+  const round = ROUNDS[game.roundIdx];
+  const q = round.questions[game.questionIdx];
+  const qText = typeof q === "string" ? q : (q.q || "");
+  const aText = typeof q === "string" ? "" : (q.a || "");
+  main.innerHTML = `
+    <div class="view">
+      <div class="q-screen">
+        <div class="q-topbar">
+          <div class="q-badge">ROUND ${game.roundIdx + 1} ANSWERS</div>
+          <div class="q-category">ANSWER ${game.questionIdx + 1} OF ${round.questions.length}</div>
+        </div>
+        <div class="q-main">
+          <div class="ans-q"><span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}</div>
+          <div class="ans-a"><span class="ans-label">ANSWER</span>${aText ? escapeHtml(aText) : "—"}</div>
+        </div>
+        <div class="btn-row"><button class="btn" id="ansNextBtn">NEXT ▶</button></div>
+        <div class="hint">Press <kbd>SPACE</kbd> or click NEXT for the next answer</div>
+      </div>
+    </div>
+  `;
+  const nb = document.getElementById("ansNextBtn");
   if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
 }
 
@@ -1727,6 +1759,7 @@ function render() {
     case State.ROUND_INTRO: viewRoundIntro(); break;
     case State.QUESTION: viewQuestion(); break;
     case State.TURN_IN: viewTurnIn(); break;
+    case State.ANSWER: viewAnswer(); break;
     case State.ROUND_END: viewRoundEnd(); break;
     case State.END: viewEnd(); break;
   }
@@ -2560,7 +2593,8 @@ function startDemo() {
     { d: 3500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 0; TIMER_END = 0; } },
     { d: 3000, fn: () => { game.state = State.ROUND_INTRO; game.roundIdx = 1; game.questionIdx = 0; } },
     { d: 4500, fn: () => { game.state = State.QUESTION; game.roundIdx = 1; game.questionIdx = 4; TIMER_END = Date.now() + 30000; } },
-    { d: 5000, fn: () => { game.state = State.ROUND_END; game.roundIdx = 1; game.answersIdx = 0; TIMER_END = 0; } },
+    { d: 4500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 1; TIMER_END = 0; } },
+    { d: 5000, fn: () => { game.state = State.ANSWER; game.roundIdx = 1; game.questionIdx = 0; } },
     { d: 5500, fn: () => { LB_SHOWN = true; } },   // host published the leaderboard → TV takeover
   ];
   let i = 0;
