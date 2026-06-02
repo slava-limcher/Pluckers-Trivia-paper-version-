@@ -66,6 +66,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 18px 36px;
+    min-height: 108px;   /* logo is now centered/absolute, so anchor the height here */
     background: var(--blue-dark);
     box-shadow: 0 8px 30px rgba(0,0,0,.5);
   }
@@ -83,8 +84,12 @@
       var(--red) 66.66%,
       var(--red) 100%);
   }
-  header .brand, header .meta { position: relative; z-index: 2; }
+  header .meta { position: relative; z-index: 2; }
   .brand {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -126,11 +131,11 @@
     margin-top: 4px;
     text-shadow: 1px 1px 0 rgba(0,0,0,.2);
   }
-  /* "DON'T CHEAT!" badge — centered in the header, shows on every screen. */
+  /* "DON'T CHEAT!" badge — now on the left of the header (logo took the center). */
   .dont-cheat {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%) rotate(-2deg);
+    position: relative;
+    z-index: 2;
+    transform: rotate(-2deg);
     background: var(--red);
     color: var(--yellow);
     border: 3px solid var(--black);
