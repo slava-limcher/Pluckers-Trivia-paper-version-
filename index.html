@@ -1259,7 +1259,11 @@
   }
 
   /* End-of-game: full-screen Top 3 */
-  .final-board { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; height: 100%; }
+  .final-board {
+    position: fixed; inset: 0; z-index: 70;
+    background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  }
   .final-board .fb-title { font-size: 80px; color: var(--yellow); margin: 0; letter-spacing: 4px; text-shadow: 4px 4px 0 var(--red), 8px 8px 0 var(--black); }
   .final-board .fb-list { width: min(1000px, 90vw); display: flex; flex-direction: column; gap: 16px; }
   .final-board .fb-row { display: flex; align-items: center; gap: 24px; background: var(--cream); color: var(--blue-dark); border: 5px solid var(--blue); border-radius: 18px; padding: 18px 34px; }
@@ -1270,7 +1274,11 @@
   .final-board .fb-empty { font-size: 34px; color: var(--cream); }
 
   /* End-of-game: winner reveal */
-  .winner-screen { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; height: 100%; }
+  .winner-screen {
+    position: fixed; inset: 0; z-index: 70;
+    background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  }
   .winner-screen .win-burst { font-size: 90px; animation: turnin-pop .5s cubic-bezier(.2,.8,.3,1.2) both; }
   .winner-screen .win-label { font-size: 46px; color: var(--cream); letter-spacing: 6px; }
   .winner-screen .win-name {
