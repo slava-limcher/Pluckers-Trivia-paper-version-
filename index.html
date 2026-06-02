@@ -1770,6 +1770,7 @@ function viewAnswer() {
   main.innerHTML = `
     <div class="view">
       <div class="q-screen">
+        <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
         <div class="q-topbar">
           <div class="q-badge">ROUND ${game.roundIdx + 1} ANSWERS</div>
           <div class="q-category">ANSWER ${game.questionIdx + 1} OF ${round.questions.length}</div>
@@ -1785,6 +1786,8 @@ function viewAnswer() {
   `;
   const nb = document.getElementById("ansNextBtn");
   if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
+  const qs = document.getElementById("qScore");
+  if (qs) qs.addEventListener("click", openScoreboardModal);
 }
 
 // Full-screen Top 3 at the end of the game.
