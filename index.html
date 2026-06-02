@@ -1257,6 +1257,33 @@
     color: var(--red);
     margin-bottom: 10px;
   }
+
+  /* End-of-game: full-screen Top 3 */
+  .final-board { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; height: 100%; }
+  .final-board .fb-title { font-size: 80px; color: var(--yellow); margin: 0; letter-spacing: 4px; text-shadow: 4px 4px 0 var(--red), 8px 8px 0 var(--black); }
+  .final-board .fb-list { width: min(1000px, 90vw); display: flex; flex-direction: column; gap: 16px; }
+  .final-board .fb-row { display: flex; align-items: center; gap: 24px; background: var(--cream); color: var(--blue-dark); border: 5px solid var(--blue); border-radius: 18px; padding: 18px 34px; }
+  .final-board .fb-row.fb-first { background: var(--yellow); border-color: var(--red); }
+  .final-board .fb-rank { font-size: 56px; min-width: 72px; }
+  .final-board .fb-name { flex: 1; font-size: 52px; font-weight: 800; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .final-board .fb-score { font-size: 58px; font-weight: 900; color: var(--blue); }
+  .final-board .fb-empty { font-size: 34px; color: var(--cream); }
+
+  /* End-of-game: winner reveal */
+  .winner-screen { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; height: 100%; }
+  .winner-screen .win-burst { font-size: 90px; animation: turnin-pop .5s cubic-bezier(.2,.8,.3,1.2) both; }
+  .winner-screen .win-label { font-size: 46px; color: var(--cream); letter-spacing: 6px; }
+  .winner-screen .win-name {
+    font-size: 120px; font-weight: 900; line-height: 1.04; color: var(--yellow);
+    text-shadow: 5px 5px 0 var(--red), 10px 10px 0 var(--black);
+    animation: turnin-pop .55s cubic-bezier(.2,.8,.3,1.2) both;
+    max-width: 92vw;
+  }
+  .winner-screen .win-prize {
+    font-size: 42px; font-weight: 900; color: var(--red);
+    background: var(--yellow); border: 4px solid var(--black); border-radius: 16px;
+    padding: 16px 30px; margin-top: 6px;
+  }
 </style>
 </head>
 <body>
@@ -1438,6 +1465,8 @@ const State = {
   QUESTION: "question",
   TURN_IN: "turn_in",     // "TURN IN YOUR ANSWER SHEET!" after a round's last question
   ANSWER: "answer",       // one question + its answer, revealed one screen at a time
+  FINAL_BOARD: "final_board", // full-screen Top 3 at the very end
+  WINNER: "winner",       // winning team + "collect your prize"
   ROUND_END: "round_end", // (legacy full answer list — no longer scheduled)
   END: "end"
 };
@@ -1468,6 +1497,8 @@ function buildSchedule() {
       s.push({ state: State.ANSWER, roundIdx: r, questionIdx: qi });
     }
   }
+  s.push({ state: State.FINAL_BOARD });   // full-screen Top 3
+  s.push({ state: State.WINNER });        // winning team + prize
   s.push({ state: State.END });
   SCHEDULE = s;
 }
@@ -1503,7 +1534,8 @@ function questionGlobalIndex() {
 }
 
 function renderMeta() {
-  if (game.state === State.TITLE || game.state === State.END) {
+  if (game.state === State.TITLE || game.state === State.END ||
+      game.state === State.FINAL_BOARD || game.state === State.WINNER) {
     meta.innerHTML = "";
     return;
   }
@@ -1666,6 +1698,51 @@ function viewAnswer() {
   if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
 }
 
+// Full-screen Top 3 at the end of the game.
+function viewFinalBoard() {
+  const medals = ["🥇", "🥈", "🥉"];
+  const top = standings().slice(0, 3);
+  const rows = top.length
+    ? top.map((t, i) =>
+        '<div class="fb-row' + (i === 0 ? ' fb-first' : '') + '">' +
+          '<span class="fb-rank">' + medals[i] + '</span>' +
+          '<span class="fb-name">' + escapeHtml(t.name || "—") + '</span>' +
+          '<span class="fb-score">' + t.score + '</span>' +
+        '</div>'
+      ).join("")
+    : '<div class="fb-empty">No teams entered — add them in 🏆 SCOREBOARD.</div>';
+  main.innerHTML = `
+    <div class="view final-board">
+      <h2 class="fb-title">🏆 TOP 3 TEAMS</h2>
+      <div class="fb-list">${rows}</div>
+      <div class="btn-row"><button class="btn" id="fbNext">SHOW WINNER ▶</button></div>
+      <div class="hint">Press <kbd>SPACE</kbd> or click to reveal the winner</div>
+    </div>
+  `;
+  const b = document.getElementById("fbNext");
+  if (b) b.addEventListener("click", () => { b.blur(); advance(); });
+}
+
+// Winning team (highest score) + prize call-to-action.
+function viewWinner() {
+  const w = standings()[0];
+  const name = w ? (w.name || "—") : "";
+  const body = name
+    ? '<div class="win-label">THE WINNER IS</div>' +
+      '<div class="win-name">' + escapeHtml(name) + '</div>' +
+      '<div class="win-prize">🏆 Come see the host to collect your prize!</div>'
+    : '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
+  main.innerHTML = `
+    <div class="view winner-screen">
+      <div class="win-burst">🎉</div>
+      ${body}
+      <div class="btn-row"><button class="btn" id="winDone">FINISH</button></div>
+    </div>
+  `;
+  const b = document.getElementById("winDone");
+  if (b) b.addEventListener("click", () => { b.blur(); advance(); });
+}
+
 function viewRoundEnd() {
   const round = ROUNDS[game.answersIdx];
   const isFinalAnswers = game.answersIdx >= ROUNDS.length - 1;
@@ -1763,6 +1840,8 @@ function render() {
     case State.QUESTION: viewQuestion(); break;
     case State.TURN_IN: viewTurnIn(); break;
     case State.ANSWER: viewAnswer(); break;
+    case State.FINAL_BOARD: viewFinalBoard(); break;
+    case State.WINNER: viewWinner(); break;
     case State.ROUND_END: viewRoundEnd(); break;
     case State.END: viewEnd(); break;
   }
@@ -2598,7 +2677,9 @@ function startDemo() {
     { d: 4500, fn: () => { game.state = State.QUESTION; game.roundIdx = 1; game.questionIdx = 4; TIMER_END = Date.now() + 30000; } },
     { d: 4500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 1; TIMER_END = 0; } },
     { d: 5000, fn: () => { game.state = State.ANSWER; game.roundIdx = 1; game.questionIdx = 0; } },
-    { d: 5500, fn: () => { LB_SHOWN = true; } },   // host published the leaderboard → TV takeover
+    { d: 4500, fn: () => { LB_SHOWN = true; } },   // host published the leaderboard → TV banner
+    { d: 5000, fn: () => { LB_SHOWN = false; game.state = State.FINAL_BOARD; } },
+    { d: 6000, fn: () => { game.state = State.WINNER; } },
   ];
   let i = 0;
   (function tick() {
