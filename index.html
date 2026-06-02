@@ -822,6 +822,13 @@
   .status-pill.custom b { color: var(--blue); }
 
   /* Modal */
+  /* Go-live dialog helpers */
+  .gl-warn { background:#fdecea; border:2px solid var(--red); color:#9b1c1c; font-weight:800;
+             border-radius:10px; padding:10px 14px; margin:6px 0 2px; }
+  .gl-ok   { background:#e7f6ec; border:2px solid #2e7d32; color:#1b5e20; font-weight:800;
+             border-radius:10px; padding:10px 14px; margin:6px 0 2px; }
+  .gl-foot { font-size:13px; opacity:.75; margin:14px 0 0; }
+  #glUrl { font-weight:800; letter-spacing:.3px; }
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -906,7 +913,19 @@
     resize: vertical;
     line-height: 1.5;
   }
-  .modal textarea:focus, .modal input[type="file"]:focus {
+  .modal input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    background: #fff;
+    border: 2px solid var(--blue);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--blue-dark);
+    box-sizing: border-box;
+  }
+  .modal textarea:focus, .modal input[type="file"]:focus, .modal input[type="text"]:focus {
     outline: none;
     border-color: var(--red);
   }
@@ -1112,6 +1131,10 @@
   #liveBanner .lb-stop {
     flex: 0 0 auto; padding: 8px 12px; border: none; border-radius: 8px;
     background: var(--red); color: #fff; font-weight: 800; cursor: pointer; font-size: 12px;
+  }
+  #liveBanner .lb-link {
+    flex: 0 0 auto; padding: 8px 12px; border: none; border-radius: 8px;
+    background: var(--yellow); color: var(--blue-dark); font-weight: 800; cursor: pointer; font-size: 12px;
   }
   #displayTag {
     position: fixed;
@@ -1667,18 +1690,12 @@ function viewTitle() {
     : `<b>${totalQuestions()}</b> questions total`;
   main.innerHTML = `
     <div class="view title-wrap">
-      <div class="loc-bar">
-        <label class="loc-label" for="locName">📍 PLUCKERS LOCATION</label>
-        <input id="locName" class="loc-input" type="text" maxlength="28" autocomplete="off"
-               placeholder="e.g. Round Rock" value="${escapeHtml(savedLocName())}" />
-        <span class="loc-hint">Name this game, then GO LIVE to open its TV screen.</span>
-      </div>
       <div class="title-scoreboard" id="titleScore"></div>
       <div class="instructions">
         <div class="instr-header">🎤 HOST GUIDE</div>
         <ol class="instr-list">
-          <li><b>Name</b> your location up top, then <b>📺 GO LIVE</b>.</li>
-          <li>A <b>TV window</b> opens for that game — drag it to your TV.</li>
+          <li><b>📺 GO LIVE</b> → name this location.</li>
+          <li>Copy the <b>TV link</b> it gives you → open on each TV (or send to your scheduler).</li>
           <li><b>START</b>, then <b>SPACE/NEXT</b> for questions.</li>
           <li>After each round, collect sheets (<b>TURN IN</b>).</li>
           <li>Open <b>🏆 SCOREBOARD</b>, enter points, <b>📢 PUBLISH</b>.</li>
@@ -1706,11 +1723,6 @@ function viewTitle() {
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
-  const ln = document.getElementById("locName");
-  if (ln) {
-    ln.addEventListener("input", () => { try { localStorage.setItem(LOC_NAME_KEY, ln.value); } catch (e) {} });
-    ln.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); goLive(); } });
-  }
   const ti = document.getElementById("timerInput");
   if (ti) ti.addEventListener("change", () => {
     TIMER_SECS = Math.max(0, parseInt(ti.value, 10) || 0);
@@ -2502,10 +2514,9 @@ function snapshot() {
 }
 
 // ---- Host ----
-// GO LIVE: take the location name typed on the title screen, make sure no one
-// else is live under that name, start hosting it, and pop open a TV-POV window.
-// Closing that window ends the game and frees the name (see watchTvWindow).
-async function goLive() {
+// GO LIVE → open the naming dialog. Once named, we host that game and hand back
+// a TV link the host can paste into a browser or send to their TV scheduler.
+function goLive() {
   if (!liveConfigured()) {
     alert(
       "Live screens aren't set up yet.\n\n" +
@@ -2515,32 +2526,72 @@ async function goLive() {
     );
     return;
   }
-  const inp = document.getElementById("locName");
-  const name = ((inp && inp.value) || "").trim().toUpperCase().replace(/\s+/g, " ");
-  if (!name) {
-    alert("Type your Pluckers location name at the top of the screen first.");
-    if (inp) inp.focus();
+  openGoLiveModal();
+}
+
+// The naming dialog. Step 1: type a location name. Step 2: shows the TV link.
+function openGoLiveModal() {
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="goLiveModal">
+      <div class="modal" role="dialog" aria-label="Go live">
+        <button class="close-x" id="glClose" aria-label="Close">×</button>
+        <h2>📺 GO LIVE</h2>
+        <p class="modal-lead">Name this Pluckers location. We'll start the game and give you a <b>TV link</b> to open on your screens (or paste into your scheduler). Names must be unique while live.</p>
+        <div class="field">
+          <label for="glName">PLUCKERS LOCATION NAME</label>
+          <input type="text" id="glName" maxlength="28" autocomplete="off" placeholder="e.g. Round Rock"
+                 value="${escapeHtml(savedLocName())}" />
+        </div>
+        <div id="glMsg"></div>
+        <div class="modal-actions">
+          <button class="btn secondary" id="glCancel">CANCEL</button>
+          <button class="btn" id="glGo">🔴 GO LIVE</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ""; };
+  document.getElementById("glClose").addEventListener("click", close);
+  document.getElementById("glCancel").addEventListener("click", close);
+  document.getElementById("goLiveModal").addEventListener("click", (e) => { if (e.target.id === "goLiveModal") close(); });
+  const nameEl = document.getElementById("glName");
+  const submit = () => goLiveSubmit();
+  document.getElementById("glGo").addEventListener("click", submit);
+  nameEl.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } });
+  setTimeout(() => { try { nameEl.focus(); nameEl.select(); } catch (e) {} }, 30);
+}
+
+// Step 2 of the dialog: validate the name, start hosting, then show the TV link.
+async function goLiveSubmit() {
+  const nameEl = document.getElementById("glName");
+  const msg = document.getElementById("glMsg");
+  const goBtn = document.getElementById("glGo");
+  const name = ((nameEl && nameEl.value) || "").trim().toUpperCase().replace(/\s+/g, " ");
+  const warn = (t) => { if (msg) msg.innerHTML = '<div class="gl-warn">' + escapeHtml(t) + '</div>'; };
+  if (!name)            { warn("Type a location name first."); if (nameEl) nameEl.focus(); return; }
+  if (name.length < 2)  { warn("That name is too short — give it a clearer name."); if (nameEl) nameEl.focus(); return; }
+
+  if (goBtn) { goBtn.disabled = true; goBtn.textContent = "CHECKING…"; }
+  const res = await startHosting(name);
+  if (!res.ok) {
+    warn(res.reason || "Couldn't go live — try again.");
+    if (goBtn) { goBtn.disabled = false; goBtn.textContent = "🔴 GO LIVE"; }
+    if (nameEl) nameEl.focus();
     return;
   }
-  if (name.length < 2) { alert("That name is too short — give the location a clearer name."); if (inp) inp.focus(); return; }
+  showGoLiveLink(name);
+}
 
-  const lb = document.getElementById("liveBtn");
-  if (lb) { lb.disabled = true; lb.textContent = "CHECKING…"; }
-
-  // No two simultaneous games with the same name: a name is taken only while a
-  // host is actively keeping it fresh (within LIVE_TTL_MS). Stale rows are free.
+// Reserve the name (no duplicates while live), start hosting, begin the heartbeat.
+// Returns { ok:true } or { ok:false, reason }.
+async function startHosting(name) {
+  // A name is taken only while a host keeps it fresh (within LIVE_TTL_MS); stale = free.
   try {
     const { data } = await liveClient().from(LIVE_TABLE).select("updated_at").eq("room_code", name).maybeSingle();
     const inUse = data && data.updated_at && (Date.now() - Date.parse(data.updated_at) < LIVE_TTL_MS);
-    if (inUse) {
-      alert('"' + name + '" is already live right now.\nPick a different location name (or close that game first).');
-      if (lb) { lb.disabled = false; lb.textContent = "📺 GO LIVE"; }
-      if (inp) inp.focus();
-      return;
-    }
-  } catch (e) { /* if the check fails, fall through and try to host anyway */ }
+    if (inUse) return { ok: false, reason: '"' + name + '" is already live right now. Pick another name (or end that game first).' };
+  } catch (e) { /* if the check fails, fall through and host anyway */ }
 
-  // Claim the name and start a fresh game at the title.
   live.role = "host";
   live.code = name;
   game.cursor = 0;
@@ -2551,35 +2602,60 @@ async function goLive() {
   startHeartbeat();
   render();                 // render() keeps pushing state to this room while hosting
   showNamedRoomBanner(name);
-  if (lb) { lb.disabled = false; lb.textContent = "📺 GO LIVE"; }
-  openTvWindow();
+  return { ok: true };
 }
 
-// Open the TV point-of-view for the current game in a new window, and watch it:
-// when the host closes it, the game ends and the name becomes available again.
+// Final dialog step: the copyable TV link + open/close buttons.
+function showGoLiveLink(name) {
+  const root = document.getElementById("modalRoot");
+  const url = tvUrl();
+  root.innerHTML = `
+    <div class="modal-backdrop" id="goLiveModal">
+      <div class="modal" role="dialog" aria-label="TV link">
+        <button class="close-x" id="glClose" aria-label="Close">×</button>
+        <h2>● LIVE — ${escapeHtml(name)}</h2>
+        <p class="modal-lead">This game is live. Open this link on each TV, or paste it into your TV scheduler:</p>
+        <div class="field">
+          <label for="glUrl">TV LINK</label>
+          <input type="text" id="glUrl" readonly value="${escapeHtml(url)}" />
+        </div>
+        <div id="glCopyMsg"></div>
+        <div class="modal-actions">
+          <button class="btn secondary" id="glOpen">OPEN TV VIEW</button>
+          <button class="btn" id="glCopy">📋 COPY LINK</button>
+          <button class="btn secondary" id="glDone">DONE</button>
+        </div>
+        <p class="gl-foot">⏱ Heads-up: this name stays reserved while you're hosting. Ending the game (or closing this host screen) frees it for reuse.</p>
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ""; };
+  const urlEl = document.getElementById("glUrl");
+  document.getElementById("glClose").addEventListener("click", close);
+  document.getElementById("glDone").addEventListener("click", close);
+  document.getElementById("goLiveModal").addEventListener("click", (e) => { if (e.target.id === "goLiveModal") close(); });
+  document.getElementById("glOpen").addEventListener("click", () => { openTvWindow(); });
+  document.getElementById("glCopy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(url); }
+    catch (e) { try { urlEl.focus(); urlEl.select(); document.execCommand("copy"); } catch (e2) {} }
+    const m = document.getElementById("glCopyMsg");
+    if (m) m.innerHTML = '<div class="gl-ok">✓ Copied! Paste it on your TVs or into your scheduler.</div>';
+  });
+  setTimeout(() => { try { urlEl.focus(); urlEl.select(); } catch (e) {} }, 30);
+}
+
+// Open the TV point-of-view as a preview window (same link the TVs/scheduler use).
+// This is just a convenience preview — closing it does NOT end the game, since the
+// real TVs run off the link. The game ends from END, or when the host screen closes.
 function openTvWindow() {
   if (!live.code) return;
   const win = window.open(tvUrl(), "pluckers_tv_" + live.code.replace(/[^A-Z0-9]/gi, "_"),
                           "width=1280,height=720");
   if (!win) {
-    alert("Your browser blocked the TV window.\nAllow pop-ups for this page, then press GO LIVE again.");
+    alert("Your browser blocked the TV window.\nAllow pop-ups for this page, then press OPEN TV VIEW again.\n(You can also just copy the link and open it yourself.)");
     return;
   }
   live.tvWin = win;
   try { win.focus(); } catch (e) {}
-  watchTvWindow();
-}
-
-// Poll the opened TV window; the moment it's closed, tear the game down.
-function watchTvWindow() {
-  if (live.tvWatch) clearInterval(live.tvWatch);
-  live.tvWatch = setInterval(() => {
-    if (live.tvWin && live.tvWin.closed) {
-      clearInterval(live.tvWatch);
-      live.tvWatch = null;
-      endLiveGame();
-    }
-  }, 1000);
 }
 
 // Keep this game's name "in use" while it's live, so the uniqueness check sees it.
@@ -2646,13 +2722,16 @@ function showNamedRoomBanner(roomName) {
     '<div class="lb-dot"></div>' +
     '<div class="lb-info">' +
       '<div class="lb-title">● LIVE — ' + escapeHtml(roomName) + '</div>' +
-      '<div class="lb-howto">This screen controls the TV window for this game.<br>' +
-        'Closing the TV window ends the game &amp; frees the name.</div>' +
+      '<div class="lb-howto">This screen runs the game. Press <b>LINK</b> for the TV URL.<br>' +
+        '<b>END</b> (or closing this screen) frees the name.</div>' +
     '</div>' +
+    '<button class="lb-link" id="lbLinkBtn">LINK</button>' +
     '<button class="lb-stop" id="lbStopBtn">END</button>';
+  const lk = document.getElementById("lbLinkBtn");
+  if (lk) lk.addEventListener("click", () => showGoLiveLink(roomName));
   const sb = document.getElementById("lbStopBtn");
   if (sb) sb.addEventListener("click", () => {
-    if (confirm('End the "' + roomName + '" game? The TV window will close and the name frees up.')) {
+    if (confirm('End the "' + roomName + '" game? This frees the name for reuse.')) {
       try { if (live.tvWin && !live.tvWin.closed) live.tvWin.close(); } catch (e) {}
       endLiveGame();
     }
