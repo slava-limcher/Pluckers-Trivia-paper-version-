@@ -1136,6 +1136,71 @@
     min-width: 96px; text-align: center;
   }
   .q-timer.q-timer-up { background: var(--red); color: #fff; }
+  /* Host title-screen scoreboard box (replaces WIN PRIZES on the host; TVs keep WIN PRIZES) */
+  .title-scoreboard {
+    position: fixed;
+    left: 36px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 330px;
+    max-height: 72vh;
+    overflow: auto;
+    background: var(--cream);
+    color: var(--blue-dark);
+    border: 6px solid var(--red);
+    box-shadow: 0 0 0 7px var(--blue), 0 18px 40px rgba(0,0,0,.55);
+    border-radius: 16px;
+    padding: 16px 18px;
+    cursor: pointer;
+    z-index: 5;
+  }
+  body.display-mode .title-scoreboard { display: none; }  /* host only */
+  .title-scoreboard .ts-head { font-size: 30px; font-weight: 900; color: var(--red); text-align: center; letter-spacing: 1px; margin-bottom: 10px; }
+  .title-scoreboard .ts-empty { font-size: 18px; text-align: center; line-height: 1.45; }
+  .title-scoreboard .ts-list { display: flex; flex-direction: column; }
+  .title-scoreboard .ts-row { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; padding: 6px 0; border-bottom: 1px dashed rgba(29,58,138,.2); }
+  .title-scoreboard .ts-row:last-child { border-bottom: 0; }
+  .title-scoreboard .ts-rank { color: var(--red); min-width: 30px; }
+  .title-scoreboard .ts-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title-scoreboard .ts-score { color: var(--blue); font-weight: 900; }
+  .title-scoreboard .ts-hint { margin-top: 10px; text-align: center; font-size: 13px; color: rgba(12,12,12,.5); }
+
+  /* Header right cluster + host scoreboard button */
+  .header-right { display: flex; align-items: center; gap: 16px; position: relative; z-index: 2; }
+  .scorebtn {
+    padding: 10px 18px; border-radius: 10px; border: 3px solid var(--black);
+    background: var(--yellow); color: var(--red); font-weight: 900;
+    font-size: 18px; letter-spacing: 1px; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 4px 0 var(--blue-dark);
+  }
+  .scorebtn:hover { filter: brightness(1.05); }
+  body.display-mode .scorebtn { display: none; }   /* TVs never show host controls */
+
+  /* Scoreboard modal rows */
+  .sb-status { margin: 6px 0 10px; font-size: 16px; }
+  .sb-rows { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow: auto; }
+  .sb-row { display: flex; gap: 8px; align-items: center; }
+  .sb-name { flex: 1; padding: 10px 12px; border-radius: 8px; border: 2px solid #2a3a4d; background: #0e1826; color: #fff; font: inherit; font-size: 18px; }
+  .sb-score { width: 90px; padding: 10px; border-radius: 8px; border: 2px solid var(--yellow); background: var(--cream); color: var(--blue-dark); text-align: center; font-weight: 800; font-size: 18px; }
+  .sb-del { width: 40px; height: 40px; border: none; border-radius: 8px; background: var(--red); color: #fff; font-weight: 900; cursor: pointer; }
+  .sb-empty { color: #9fb6c8; }
+
+  /* Published leaderboard overlay (TVs) */
+  #lbOverlay { display: none; }
+  #lbOverlay.show {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 60;
+    background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+  }
+  #lbOverlay .lbo-card { width: min(1100px, 92vw); max-height: 92vh; display: flex; flex-direction: column; gap: 20px; }
+  #lbOverlay .lbo-title { text-align: center; font-size: 80px; font-weight: 900; color: var(--yellow); letter-spacing: 4px; text-shadow: 4px 4px 0 var(--red), 8px 8px 0 var(--black); }
+  #lbOverlay .lbo-list { display: flex; flex-direction: column; gap: 14px; overflow: auto; }
+  #lbOverlay .lbo-row { display: flex; align-items: center; gap: 24px; background: var(--cream); color: var(--blue-dark); border: 5px solid var(--blue); border-radius: 16px; padding: 16px 30px; }
+  #lbOverlay .lbo-row.lbo-first { background: var(--yellow); border-color: var(--red); }
+  #lbOverlay .lbo-rank { font-size: 48px; font-weight: 900; color: var(--red); min-width: 64px; }
+  #lbOverlay .lbo-name { flex: 1; font-size: 48px; font-weight: 800; text-align: left; }
+  #lbOverlay .lbo-score { font-size: 52px; font-weight: 900; color: var(--blue); }
+  #lbOverlay .lbo-empty { text-align: center; color: var(--cream); font-size: 36px; }
 </style>
 </head>
 <body>
@@ -1146,7 +1211,10 @@
       <div class="name">TRIVIA<small>NIGHT</small></div>
     </div>
     <div class="dont-cheat">👀 DON'T CHEAT!</div>
-    <div class="meta" id="meta"></div>
+    <div class="header-right">
+      <button class="scorebtn" id="scoreBtn">🏆 SCOREBOARD</button>
+      <div class="meta" id="meta"></div>
+    </div>
   </header>
 
   <main id="main"></main>
@@ -1290,6 +1358,21 @@ let TIMER_SECS = (function () { const n = parseInt(localStorage.getItem(TIMER_KE
 let TIMER_END = 0;                 // epoch ms the current question's timer ends (0 = none)
 function saveTimer() { try { localStorage.setItem(TIMER_KEY, String(TIMER_SECS)); } catch (e) {} }
 
+// ---- Scoreboard / leaderboard ----
+// Host enters team names + scores, then PUBLISHES to show a leaderboard on the TVs.
+const TEAMS_KEY = "pluckers-trivia-teams";
+function loadTeams() {
+  try {
+    const t = JSON.parse(localStorage.getItem(TEAMS_KEY));
+    if (Array.isArray(t)) return t.map(x => ({ name: String(x.name || ""), score: Number(x.score) || 0 }));
+  } catch (e) {}
+  return [];
+}
+function saveTeams() { try { localStorage.setItem(TEAMS_KEY, JSON.stringify(TEAMS)); } catch (e) {} }
+let TEAMS = loadTeams();      // [{ name, score }]
+let LB_SHOWN = false;         // is the leaderboard currently published to the TVs?
+function standings() { return TEAMS.slice().sort((a, b) => b.score - a.score); }
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1390,10 +1473,7 @@ function viewTitle() {
     : `<b>${totalQuestions()}</b> questions total`;
   main.innerHTML = `
     <div class="view title-wrap">
-      <div class="win-prizes">
-        <span class="wp-top">WIN</span>
-        <span class="wp-big">PRIZES!</span>
-      </div>
+      <div class="title-scoreboard" id="titleScore"></div>
       <div class="instructions">
         <div class="instr-header">INSTRUCTIONS</div>
         <ol class="instr-list">
@@ -1432,7 +1512,29 @@ function viewTitle() {
     saveTimer();
     if (live.role === "host") pushState();
   });
+  renderTitleScoreboard();
   processLogos();
+}
+
+// Fill the host's title-screen scoreboard box (clicking it opens the editor).
+function renderTitleScoreboard() {
+  const el = document.getElementById("titleScore");
+  if (!el) return;
+  let inner = '<div class="ts-head">🏆 SCOREBOARD</div>';
+  if (!TEAMS.length) {
+    inner += '<div class="ts-empty">No teams yet.<br>Click to add teams &amp; scores.</div>';
+  } else {
+    inner += '<div class="ts-list">' + standings().map((t, i) =>
+      '<div class="ts-row">' +
+        '<span class="ts-rank">' + (i + 1) + '.</span>' +
+        '<span class="ts-name">' + escapeHtml(t.name || "—") + '</span>' +
+        '<span class="ts-score">' + t.score + '</span>' +
+      '</div>'
+    ).join("") + '</div>';
+  }
+  inner += '<div class="ts-hint">Click to edit / publish</div>';
+  el.innerHTML = inner;
+  el.addEventListener("click", openScoreboardModal);
 }
 
 function viewRoundIntro() {
@@ -2065,8 +2167,8 @@ function isLocalUrl() {
 function snapshot() {
   return {
     room_code: live.code,
-    // `state` carries the screen name PLUS scoreboard/timer so displays mirror them.
-    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END }),
+    // `state` carries the screen name PLUS timer + published leaderboard so displays mirror them.
+    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END, lb: { shown: LB_SHOWN, teams: TEAMS } }),
     round_idx: game.roundIdx,   // cosmetic
     question_idx: game.cursor,  // the real sync position: index into SCHEDULE
     rounds: ROUNDS,
@@ -2221,12 +2323,17 @@ function applyRemote(row) {
     if (ex && typeof ex === "object") {
       if (typeof ex.timerSecs === "number") TIMER_SECS = ex.timerSecs;
       TIMER_END = ex.timerEnd || 0;
+      if (ex.lb && typeof ex.lb === "object") {
+        if (Array.isArray(ex.lb.teams)) TEAMS = ex.lb.teams.map(t => ({ name: String(t.name || ""), score: Number(t.score) || 0 }));
+        LB_SHOWN = !!ex.lb.shown;
+      }
     }
   } catch (e) { /* older/plain state string — ignore */ }
   game.cursor = Math.max(0, Math.min((row.question_idx | 0), SCHEDULE.length - 1));
   applyFrame(SCHEDULE[game.cursor]);
   live.applying = false;
   render();
+  updateLeaderboardOverlay();   // show/refresh/hide the published leaderboard on this TV
 }
 
 function showDisplayTag() {
@@ -2264,6 +2371,100 @@ function mountTvChrome() {
       '</ol>';
     app.appendChild(ins);
   }
+
+  if (!document.getElementById("lbOverlay")) {
+    const ov = document.createElement("div");
+    ov.id = "lbOverlay";
+    document.body.appendChild(ov);   // full-screen takeover when the host publishes
+  }
+}
+
+// Show/hide + populate the published leaderboard on a TV. Called when remote
+// state arrives. Renders nothing unless the host has published it.
+function updateLeaderboardOverlay() {
+  const ov = document.getElementById("lbOverlay");
+  if (!ov) return;
+  if (!LB_SHOWN) { ov.classList.remove("show"); return; }
+  const medals = ["🥇", "🥈", "🥉"];
+  const rows = standings().slice(0, 3).map((t, i) =>   // top 3 only
+    '<div class="lbo-row' + (i === 0 ? ' lbo-first' : '') + '">' +
+      '<span class="lbo-rank">' + medals[i] + '</span>' +
+      '<span class="lbo-name">' + escapeHtml(t.name) + '</span>' +
+      '<span class="lbo-score">' + t.score + '</span>' +
+    '</div>'
+  ).join("");
+  ov.innerHTML =
+    '<div class="lbo-card">' +
+      '<div class="lbo-title">🏆 TOP 3 TEAMS</div>' +
+      '<div class="lbo-list">' + (rows || '<div class="lbo-empty">No teams yet</div>') + '</div>' +
+    '</div>';
+  ov.classList.add("show");
+}
+
+// Host-only scoreboard manager: enter team names + scores, then publish to TVs.
+function openScoreboardModal() {
+  const root = document.getElementById("modalRoot");
+  function statusHtml() {
+    return LB_SHOWN
+      ? '<span style="color:#2ed573;font-weight:800">● Showing on the TVs</span>'
+      : '<span style="color:#9fb6c8">Hidden from the TVs</span>';
+  }
+  function rowsHtml() {
+    if (!TEAMS.length) return '<p class="sb-empty">No teams yet — add one below.</p>';
+    return TEAMS.map((t, i) =>
+      '<div class="sb-row">' +
+        '<input class="sb-name" data-i="' + i + '" value="' + escapeHtml(t.name) + '" placeholder="Team name" />' +
+        '<input class="sb-score" type="number" inputmode="numeric" data-i="' + i + '" value="' + t.score + '" />' +
+        '<button class="sb-del" data-i="' + i + '" title="Remove">✕</button>' +
+      '</div>'
+    ).join("");
+  }
+  function draw() {
+    root.innerHTML =
+      '<div class="modal-backdrop" id="loadModal">' +
+        '<div class="modal" role="dialog" aria-label="Scoreboard">' +
+          '<button class="close-x" id="closeX" aria-label="Close">×</button>' +
+          '<h2>🏆 Scoreboard</h2>' +
+          '<p class="modal-lead">Enter team names and scores. Press <b>PUBLISH</b> to show the leaderboard on the TVs (press again anytime to refresh it). <b>HIDE</b> takes it back off.</p>' +
+          '<div class="sb-status">' + statusHtml() + '</div>' +
+          '<div id="sbRows" class="sb-rows">' + rowsHtml() + '</div>' +
+          '<button class="btn secondary" id="sbAdd" style="margin-top:6px">➕ Add team</button>' +
+          '<div class="modal-actions">' +
+            '<button class="btn secondary" id="sbHide">HIDE FROM TVs</button>' +
+            '<button class="btn" id="sbPublish">📢 PUBLISH TO TVs</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    wire();
+  }
+  function wire() {
+    document.getElementById("closeX").addEventListener("click", closeLoadModal);
+    document.getElementById("sbAdd").addEventListener("click", function () {
+      TEAMS.push({ name: "", score: 0 }); saveTeams(); draw();
+      const last = root.querySelector('.sb-name[data-i="' + (TEAMS.length - 1) + '"]');
+      if (last) last.focus();
+    });
+    document.getElementById("sbPublish").addEventListener("click", function () {
+      LB_SHOWN = true; saveTeams();
+      if (live.role === "host") pushState();
+      draw();
+    });
+    document.getElementById("sbHide").addEventListener("click", function () {
+      LB_SHOWN = false;
+      if (live.role === "host") pushState();
+      draw();
+    });
+    root.querySelectorAll(".sb-name").forEach(function (inp) {
+      inp.addEventListener("input", function () { TEAMS[+inp.dataset.i].name = inp.value; saveTeams(); });
+    });
+    root.querySelectorAll(".sb-score").forEach(function (inp) {
+      inp.addEventListener("input", function () { TEAMS[+inp.dataset.i].score = Number(inp.value) || 0; saveTeams(); });
+    });
+    root.querySelectorAll(".sb-del").forEach(function (btn) {
+      btn.addEventListener("click", function () { TEAMS.splice(+btn.dataset.i, 1); saveTeams(); draw(); });
+    });
+  }
+  draw();
 }
 
 // On TVs, show the WIN PRIZES badge + Instructions panel only on the title +
@@ -2322,19 +2523,22 @@ function startDemo() {
   tag.textContent = "TV PREVIEW (DEMO)";
 
   TIMER_SECS = 30;
+  TEAMS = [{ name: "The Wingers", score: 42 }, { name: "Cluckers", score: 38 }, { name: "Sauce Bosses", score: 31 }, { name: "Drumstick Dynasty", score: 27 }];
   const steps = [
-    { d: 3500, fn: () => { game.state = State.TITLE; } },
+    { d: 3500, fn: () => { LB_SHOWN = false; game.state = State.TITLE; } },
     { d: 3000, fn: () => { game.state = State.ROUND_INTRO; game.roundIdx = 0; game.questionIdx = 0; } },
     { d: 5000, fn: () => { game.state = State.QUESTION; game.roundIdx = 0; game.questionIdx = 0; TIMER_END = Date.now() + 30000; } },
     { d: 3500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 0; TIMER_END = 0; } },
     { d: 3000, fn: () => { game.state = State.ROUND_INTRO; game.roundIdx = 1; game.questionIdx = 0; } },
     { d: 4500, fn: () => { game.state = State.QUESTION; game.roundIdx = 1; game.questionIdx = 4; TIMER_END = Date.now() + 30000; } },
-    { d: 6500, fn: () => { game.state = State.ROUND_END; game.roundIdx = 1; game.answersIdx = 0; TIMER_END = 0; } },
+    { d: 5000, fn: () => { game.state = State.ROUND_END; game.roundIdx = 1; game.answersIdx = 0; TIMER_END = 0; } },
+    { d: 5500, fn: () => { LB_SHOWN = true; } },   // host published the leaderboard → TV takeover
   ];
   let i = 0;
   (function tick() {
     steps[i].fn();
     render();
+    updateLeaderboardOverlay();
     const wait = steps[i].d;
     i = (i + 1) % steps.length;
     setTimeout(tick, wait);
@@ -2347,6 +2551,12 @@ function startDemo() {
 buildSchedule();
 applyFrame(SCHEDULE[0]);   // start on the title screen
 processLogos();            // strip any white box from the header logo
+
+// Host scoreboard button (in the header; hidden on TVs via CSS).
+(function () {
+  const sb = document.getElementById("scoreBtn");
+  if (sb) sb.addEventListener("click", openScoreboardModal);
+})();
 
 const _params = new URLSearchParams(location.search);
 const _isTv = _params.has("tv") || _params.has("screen");
