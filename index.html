@@ -2573,7 +2573,9 @@ function mountTvChrome() {
 function updateLeaderboardOverlay() {
   const ov = document.getElementById("lbOverlay");
   if (!ov) return;
-  if (!LB_SHOWN) { ov.classList.remove("show"); return; }
+  // The full-screen board/winner take over completely — never show the banner there.
+  const finale = (game.state === State.FINAL_BOARD || game.state === State.WINNER);
+  if (!LB_SHOWN || finale) { ov.classList.remove("show"); return; }
   const medals = ["🥇", "🥈", "🥉"];
   const rows = standings().slice(0, 3).map((t, i) =>   // top 3 only
     '<div class="lbo-row' + (i === 0 ? ' lbo-first' : '') + '">' +
@@ -2661,10 +2663,13 @@ function updateTvChromeVisibility() {
   if (!document.body.classList.contains("display-mode")) return;
   const s = game.state;
   const show = (s === State.TITLE || s === State.ROUND_INTRO);
+  const finale = (s === State.FINAL_BOARD || s === State.WINNER);
   const wp  = document.getElementById("tvWinPrizes");
   const ins = document.getElementById("tvInstructions");
+  const tag = document.getElementById("displayTag");
   if (wp)  wp.style.display  = show ? "" : "none";
   if (ins) ins.style.display = show ? "" : "none";
+  if (tag) tag.style.display = finale ? "none" : "";   // nothing over the full-screen finale
 }
 function showDisplayWaiting() {
   main.innerHTML =
