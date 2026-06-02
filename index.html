@@ -322,8 +322,8 @@
   /* Host's HOST GUIDE panel — more compact than the TVs' player instructions */
   #main .instructions {
     width: 440px;
-    top: 138px; bottom: 36px; height: auto;     /* clears the header stripe; no translateY */
-    transform: rotate(2deg);
+    top: 128px; bottom: 64px; height: auto;   /* sits between the header & footer stripes */
+    transform: none;                          /* no tilt → corners can't poke into the lines */
     display: flex; flex-direction: column; padding-bottom: 0;
   }
   #main .instructions .instr-header { font-size: 44px; padding: 22px 16px; flex: 0 0 auto; }
