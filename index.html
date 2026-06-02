@@ -2513,6 +2513,19 @@ function snapshot() {
   };
 }
 
+// Opening a fresh host link starts clean: clear any teams, leaderboard, and timer
+// left over from a previous night so every game begins from a blank slate.
+function resetHostSession() {
+  TEAMS = [];
+  LB_SHOWN = false;
+  TIMER_SECS = 0;
+  TIMER_END = 0;
+  game.cursor = 0;
+  applyFrame(SCHEDULE[0]);
+  try { localStorage.removeItem(TEAMS_KEY); } catch (e) {}
+  try { localStorage.removeItem(TIMER_KEY); } catch (e) {}
+}
+
 // ---- Host ----
 // GO LIVE → open the naming dialog. Once named, we host that game and hand back
 // a TV link the host can paste into a browser or send to their TV scheduler.
@@ -2687,8 +2700,7 @@ function endLiveGame() {
   try { localStorage.removeItem(HOST_RESUME_KEY); } catch (e) {}
   const el = document.getElementById("liveBanner");
   if (el) el.remove();
-  game.cursor = 0;
-  applyFrame(SCHEDULE[0]);
+  resetHostSession();   // clean slate for the next game (no leftover teams/timer)
   render();
 }
 
@@ -3126,6 +3138,7 @@ if (_params.has("demo")) {
 } else if (_room) {
   autoHost(_room.toUpperCase());                 // power user: direct-host a fixed name
 } else {
+  resetHostSession();                            // fresh host link = clean slate (no teams, no timer)
   render();                                      // host title — name a location, then GO LIVE
 }
 
