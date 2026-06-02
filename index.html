@@ -320,10 +320,15 @@
   .instructions .instr-list li b { color: var(--red); }
 
   /* Host's HOST GUIDE panel — more compact than the TVs' player instructions */
-  #main .instructions { width: 430px; height: 80vh; display: flex; flex-direction: column; padding-bottom: 0; }
-  #main .instructions .instr-header { font-size: 38px; padding: 18px 16px; flex: 0 0 auto; }
-  #main .instructions .instr-list { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; margin: 0; padding: 12px 28px 12px 56px; }
-  #main .instructions .instr-list li { font-size: 30px; margin: 0; line-height: 1.3; }
+  #main .instructions {
+    width: 440px;
+    top: 138px; bottom: 36px; height: auto;     /* clears the header stripe; no translateY */
+    transform: rotate(2deg);
+    display: flex; flex-direction: column; padding-bottom: 0;
+  }
+  #main .instructions .instr-header { font-size: 44px; padding: 22px 16px; flex: 0 0 auto; }
+  #main .instructions .instr-list { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; margin: 0; padding: 16px 30px 16px 58px; }
+  #main .instructions .instr-list li { font-size: 36px; margin: 0; line-height: 1.25; }
 
   @media (max-width: 1100px) {
     .win-prizes { width: 150px; height: 150px; left: 16px; border-width: 6px; }
@@ -1484,6 +1489,7 @@ const game = {
   roundIdx: 0,
   questionIdx: 0,
   answersIdx: 0,
+  isFinal: false,  // board/winner: true = all-time (end), false = after a round
   cursor: 0        // position in SCHEDULE (the full ordered list of screens)
 };
 
@@ -1504,9 +1510,16 @@ function buildSchedule() {
     for (let qi = 0; qi < len; qi++) {   // reveal each answer of this round, one screen each
       s.push({ state: State.ANSWER, roundIdx: r, questionIdx: qi });
     }
+    if (r < N - 1) {
+      // After each round (except the last): standings + the leader so far.
+      s.push({ state: State.FINAL_BOARD, roundIdx: r, final: false });
+      s.push({ state: State.WINNER, roundIdx: r, final: false });
+    } else {
+      // After the final round: all-time Top 3 + the overall champion.
+      s.push({ state: State.FINAL_BOARD, final: true });
+      s.push({ state: State.WINNER, final: true });
+    }
   }
-  s.push({ state: State.FINAL_BOARD });   // full-screen Top 3
-  s.push({ state: State.WINNER });        // winning team + prize
   s.push({ state: State.END });
   SCHEDULE = s;
 }
@@ -1516,6 +1529,7 @@ function applyFrame(f) {
   game.roundIdx    = f.roundIdx    || 0;
   game.questionIdx = f.questionIdx || 0;
   game.answersIdx  = (f.answersIdx != null) ? f.answersIdx : 0;
+  game.isFinal     = !!f.final;
 }
 function gotoCursor(n) {
   game.cursor = Math.max(0, Math.min(n, SCHEDULE.length - 1));
@@ -1719,32 +1733,42 @@ function viewFinalBoard() {
         '</div>'
       ).join("")
     : '<div class="fb-empty">No teams entered — add them in 🏆 SCOREBOARD.</div>';
+  const title = game.isFinal ? "🏆 FINAL — TOP 3 TEAMS" : ("🏆 STANDINGS — AFTER ROUND " + (game.roundIdx + 1));
   main.innerHTML = `
     <div class="view final-board">
-      <h2 class="fb-title">🏆 TOP 3 TEAMS</h2>
+      <h2 class="fb-title">${title}</h2>
       <div class="fb-list">${rows}</div>
-      <div class="btn-row"><button class="btn" id="fbNext">SHOW WINNER ▶</button></div>
-      <div class="hint">Press <kbd>SPACE</kbd> or click to reveal the winner</div>
+      <div class="btn-row"><button class="btn" id="fbNext">${game.isFinal ? "SHOW WINNER ▶" : "SEE THE LEADER ▶"}</button></div>
+      <div class="hint">Press <kbd>SPACE</kbd> or click to continue</div>
     </div>
   `;
   const b = document.getElementById("fbNext");
   if (b) b.addEventListener("click", () => { b.blur(); advance(); });
 }
 
-// Winning team (highest score) + prize call-to-action.
+// Winner slide. After a round = current leader (no prize). At the end = champion (+ prize).
 function viewWinner() {
   const w = standings()[0];
   const name = w ? (w.name || "—") : "";
-  const body = name
-    ? '<div class="win-label">THE WINNER IS</div>' +
+  let body;
+  if (!name) {
+    body = '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
+  } else if (game.isFinal) {
+    body =
+      '<div class="win-label">🏆 THE WINNER IS</div>' +
       '<div class="win-name">' + escapeHtml(name) + '</div>' +
-      '<div class="win-prize">🏆 Come see the host to collect your prize!</div>'
-    : '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
+      '<div class="win-prize">Come see the host to collect your prize!</div>';
+  } else {
+    body =
+      '<div class="win-label">ROUND ' + (game.roundIdx + 1) + ' WINNER</div>' +
+      '<div class="win-name">' + escapeHtml(name) + '</div>' +
+      '<div class="win-prize" style="background:var(--blue);color:var(--cream);">In the lead! Keep playing 🔥</div>';
+  }
   main.innerHTML = `
     <div class="view winner-screen">
       <div class="win-burst">🎉</div>
       ${body}
-      <div class="btn-row"><button class="btn" id="winDone">FINISH</button></div>
+      <div class="btn-row"><button class="btn" id="winDone">${game.isFinal ? "FINISH" : "NEXT ROUND ▶"}</button></div>
     </div>
   `;
   const b = document.getElementById("winDone");
@@ -2695,9 +2719,10 @@ function startDemo() {
     { d: 4500, fn: () => { game.state = State.QUESTION; game.roundIdx = 1; game.questionIdx = 4; TIMER_END = Date.now() + 30000; } },
     { d: 4500, fn: () => { game.state = State.TURN_IN; game.roundIdx = 1; TIMER_END = 0; } },
     { d: 5000, fn: () => { game.state = State.ANSWER; game.roundIdx = 1; game.questionIdx = 0; } },
-    { d: 4500, fn: () => { LB_SHOWN = true; } },   // host published the leaderboard → TV banner
-    { d: 5000, fn: () => { LB_SHOWN = false; game.state = State.FINAL_BOARD; } },
-    { d: 6000, fn: () => { game.state = State.WINNER; } },
+    { d: 4500, fn: () => { game.state = State.FINAL_BOARD; game.isFinal = false; game.roundIdx = 0; } },  // after-round standings
+    { d: 4500, fn: () => { game.state = State.WINNER; game.isFinal = false; game.roundIdx = 0; } },        // round leader
+    { d: 5000, fn: () => { game.state = State.FINAL_BOARD; game.isFinal = true; } },                       // all-time top 3
+    { d: 6000, fn: () => { game.state = State.WINNER; game.isFinal = true; } },                            // champion
   ];
   let i = 0;
   (function tick() {
