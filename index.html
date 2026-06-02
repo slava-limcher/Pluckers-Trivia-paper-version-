@@ -467,7 +467,27 @@
     flex-direction: column;
     gap: 18px;
     height: 100%;
+    position: relative;   /* anchor for the host scoreboard panel */
   }
+  /* Host-only scoreboard panel — top-center of the question screen (between the
+     QUESTION badge and the category). Hidden on the TVs. */
+  .q-score {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    z-index: 6;
+    width: 360px; max-height: 60vh; overflow: auto;
+    background: #ffffff; color: var(--blue-dark);
+    border: 4px solid var(--red); border-radius: 14px;
+    box-shadow: 0 0 0 5px var(--blue), 0 14px 30px rgba(0,0,0,.5);
+    padding: 0 0 8px; cursor: pointer;
+  }
+  body.display-mode .q-score { display: none; }
+  .q-score .qs-head { background: var(--red); color: var(--yellow); font-weight: 900; font-size: 24px; letter-spacing: 2px; text-align: center; padding: 8px; border-bottom: 4px solid var(--black); }
+  .q-score .qs-row { display: flex; gap: 8px; align-items: center; font-size: 22px; font-weight: 800; padding: 6px 16px; border-bottom: 1px dashed rgba(29,58,138,.2); }
+  .q-score .qs-row:last-child { border-bottom: 0; }
+  .q-score .qs-rank { color: var(--red); min-width: 26px; }
+  .q-score .qs-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-score .qs-score { color: var(--blue); font-weight: 900; }
   .q-main {
     flex: 1;
     min-height: 0;
@@ -1711,9 +1731,21 @@ function viewQuestion() {
   const q = round.questions[game.questionIdx];
   const qText = typeof q === "string" ? q : q.q;
 
+  // Host-only scoreboard panel (top-center). Shown only if teams exist; click to edit.
+  const qScore = TEAMS.length
+    ? '<div class="q-score" id="qScore"><div class="qs-head">🏆 SCOREBOARD</div>' +
+        standings().map((t, i) =>
+          '<div class="qs-row"><span class="qs-rank">' + (i + 1) + '.</span>' +
+          '<span class="qs-name">' + escapeHtml(t.name || "—") + '</span>' +
+          '<span class="qs-score">' + t.score + '</span></div>'
+        ).join("") +
+      '</div>'
+    : '';
+
   main.innerHTML = `
     <div class="view">
       <div class="q-screen">
+        ${qScore}
         <div class="q-topbar">
           <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
           ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
@@ -1732,6 +1764,8 @@ function viewQuestion() {
   `;
   const nb = document.getElementById("qNextBtn");
   if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
+  const qs = document.getElementById("qScore");
+  if (qs) qs.addEventListener("click", openScoreboardModal);
 }
 
 // One answer at a time — shown after a round's TURN IN, before the next round.
