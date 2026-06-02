@@ -452,12 +452,34 @@
 
   /* Question screen */
   .q-screen {
-    display: grid;
-    grid-template-rows: auto auto 1fr auto;
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
     height: 100%;
-    align-content: stretch;
   }
+  .q-main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+  }
+  /* Previous round's matching question + answer, shown at the bottom on TVs only. */
+  .q-prev { display: none; }
+  body.display-mode .q-prev {
+    display: block;
+    text-align: left;
+    background: var(--cream);
+    color: var(--blue-dark);
+    border: 4px solid var(--blue);
+    border-radius: 16px;
+    padding: 16px 28px;
+  }
+  .q-prev-label { color: var(--red); font-weight: 800; font-size: 22px; letter-spacing: 1px; margin-bottom: 4px; }
+  .q-prev-q { font-size: 30px; font-weight: 800; line-height: 1.15; }
+  .q-prev-a { font-size: 30px; color: var(--red); margin-top: 4px; line-height: 1.15; }
+  .q-prev-a b { color: var(--blue); font-size: .78em; letter-spacing: 1px; margin-right: 6px; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
@@ -1035,8 +1057,7 @@
   .q-howto { display: none; }
   body.display-mode .q-howto {
     display: block;
-    align-self: start;
-    justify-self: center;
+    align-self: center;
     max-width: 1280px;
     margin-top: 6px;
     font-size: 40px;
@@ -1088,7 +1109,7 @@
   /* Hide every interactive / host-only element inside the mirrored views. */
   body.display-mode #main .btn-row,
   body.display-mode #main .hint,
-  body.display-mode #main .status-pill,
+  body.display-mode #main .setup-row,
   body.display-mode #main .win-prizes,
   body.display-mode #main .instructions,
   body.display-mode #main .round-end-footer .btn,
@@ -1299,13 +1320,9 @@ function buildSchedule() {
   const N = ROUNDS.length;
   for (let r = 0; r < N; r++) {
     const len = ROUNDS[r].questions.length;
-    const mid = Math.min(4, len - 1);   // after the 5th question (or last, if fewer)
     s.push({ state: State.ROUND_INTRO, roundIdx: r });
     for (let qi = 0; qi < len; qi++) {
       s.push({ state: State.QUESTION, roundIdx: r, questionIdx: qi });
-      if (qi === mid && r >= 1) {
-        s.push({ state: State.ROUND_END, roundIdx: r, answersIdx: r - 1 });
-      }
     }
     s.push({ state: State.TURN_IN, roundIdx: r });
     if (r === N - 1) {
@@ -1441,6 +1458,25 @@ function viewQuestion() {
   const q = round.questions[game.questionIdx];
   const qText = typeof q === "string" ? q : q.q;
 
+  // On the TVs, rounds 2+ show the matching question's answer from the
+  // PREVIOUS round at the bottom (its question text + answer).
+  let prevHtml = "";
+  if (game.roundIdx >= 1) {
+    const pr = ROUNDS[game.roundIdx - 1];
+    const pq = pr && pr.questions[game.questionIdx];
+    if (pq) {
+      const pqText = typeof pq === "string" ? pq : (pq.q || "");
+      const paText = typeof pq === "string" ? "" : (pq.a || "");
+      prevHtml =
+        '<div class="q-prev">' +
+          '<div class="q-prev-label">ROUND ' + game.roundIdx + ' • QUESTION ' + (game.questionIdx + 1) + '</div>' +
+          '<div class="q-prev-q">' + escapeHtml(pqText) + '</div>' +
+          '<div class="q-prev-a"><b>ANSWER:</b> ' +
+            (paText ? escapeHtml(paText) : '<em style="opacity:.6">(not provided)</em>') + '</div>' +
+        '</div>';
+    }
+  }
+
   main.innerHTML = `
     <div class="view">
       <div class="q-screen">
@@ -1449,10 +1485,13 @@ function viewQuestion() {
           ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
         </div>
-        <div class="q-text">
-          <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
+        <div class="q-main">
+          <div class="q-text">
+            <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
+          </div>
+          <div class="q-howto">📝 Just joined? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
         </div>
-        <div class="q-howto">📝 Just joined? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
+        ${prevHtml}
         <div class="btn-row"><button class="btn" id="qNextBtn">NEXT QUESTION ▶</button></div>
         <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> or click NEXT to advance</div>
       </div>
