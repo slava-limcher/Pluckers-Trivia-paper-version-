@@ -1188,33 +1188,36 @@
   .sb-del { width: 40px; height: 40px; border: none; border-radius: 8px; background: var(--red); color: #fff; font-weight: 900; cursor: pointer; }
   .sb-empty { color: #9fb6c8; }
 
-  /* Published leaderboard overlay (TVs) */
-  /* Leaderboard = a panel ON the screen (top-right), not a full takeover. */
+  /* Published leaderboard = a HORIZONTAL banner across the top (fills the empty
+     space, sits above the question so it doesn't cover anything). */
   #lbOverlay { display: none; }
   #lbOverlay.show {
     display: block;
-    position: fixed; top: 96px; right: 28px; z-index: 60;
-    width: 420px; max-width: 42vw;
+    position: fixed; top: 100px; left: 28px; right: 28px; z-index: 60;
   }
-  #lbOverlay .lbo-card {
-    background: #ffffff; color: var(--blue-dark);
-    border: 5px solid var(--red); border-radius: 16px;
-    box-shadow: 0 0 0 6px var(--blue), 0 18px 44px rgba(0,0,0,.6);
-    overflow: hidden;
-  }
+  #lbOverlay .lbo-card { display: flex; flex-direction: row; align-items: stretch; gap: 16px; }
   #lbOverlay .lbo-title {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; text-align: center;
     background: var(--red); color: var(--yellow);
-    text-align: center; font-size: 34px; font-weight: 900; letter-spacing: 2px;
-    padding: 12px 14px; text-shadow: 2px 2px 0 var(--black);
-    border-bottom: 5px solid var(--black);
+    border: 4px solid var(--black); border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    padding: 0 26px; font-size: 36px; font-weight: 900; letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--black); line-height: 1.05; max-width: 320px;
   }
-  #lbOverlay .lbo-list { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
-  #lbOverlay .lbo-row { display: flex; align-items: center; gap: 14px; background: var(--cream); border: 3px solid var(--blue); border-radius: 12px; padding: 10px 16px; }
+  #lbOverlay .lbo-list { flex: 1; display: flex; flex-direction: row; gap: 16px; }
+  #lbOverlay .lbo-row {
+    flex: 1; display: flex; align-items: center; gap: 14px;
+    background: #ffffff; color: var(--blue-dark);
+    border: 4px solid var(--blue); border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.45);
+    padding: 14px 24px; min-width: 0;
+  }
   #lbOverlay .lbo-row.lbo-first { background: var(--yellow); border-color: var(--red); }
-  #lbOverlay .lbo-rank { font-size: 34px; min-width: 44px; }
-  #lbOverlay .lbo-name { flex: 1; font-size: 32px; font-weight: 800; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #lbOverlay .lbo-score { font-size: 36px; font-weight: 900; color: var(--blue); }
-  #lbOverlay .lbo-empty { text-align: center; color: var(--blue-dark); font-size: 22px; padding: 16px; }
+  #lbOverlay .lbo-rank { font-size: 52px; line-height: 1; }
+  #lbOverlay .lbo-name { flex: 1; font-size: 42px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #lbOverlay .lbo-score { font-size: 54px; font-weight: 900; color: var(--blue); }
+  #lbOverlay .lbo-empty { flex: 1; background: #fff; border: 4px solid var(--blue); border-radius: 16px; text-align: center; color: var(--blue-dark); font-size: 28px; padding: 18px; }
   /* Single answer-reveal screen (shown one at a time after each round) */
   .ans-q {
     font-size: 56px;
