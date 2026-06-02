@@ -2471,18 +2471,44 @@ async function goLive() {
     );
     return;
   }
+  // Host the room named in the URL (?room=NAME), or MAIN for the bare link.
+  const room = (new URLSearchParams(location.search).get("room") || "MAIN").toUpperCase();
+  autoHost(room);
+}
+
+// Permanent per-location server: host a FIXED named room straight from the URL
+// (e.g. ?room=loc1) — no GO LIVE click, no code. TVs open ?tv&room=loc1.
+async function autoHost(roomName) {
+  live.code = roomName;
+  if (!liveConfigured()) { render(); return; }   // still plays locally if Supabase is off
   live.role = "host";
-  live.code = makeRoomCode();
   try {
-    const { error } = await liveClient().from(LIVE_TABLE).upsert(snapshot());
-    if (error) throw error;
-  } catch (err) {
-    live.role = "off"; live.code = null;
-    alert("Couldn't start the live session:\n" + (err.message || err));
-    return;
-  }
+    // If this room was active recently, resume right where it left off (refresh-safe).
+    const { data } = await liveClient().from(LIVE_TABLE).select("*").eq("room_code", roomName).maybeSingle();
+    const recent = data && data.updated_at && (Date.now() - Date.parse(data.updated_at) < 8 * 3600 * 1000);
+    if (recent) {
+      if (Array.isArray(data.rounds) && data.rounds.length) { ROUNDS = data.rounds; buildSchedule(); }
+      try { const ex = JSON.parse(data.state); if (typeof ex.timerSecs === "number") TIMER_SECS = ex.timerSecs; } catch (e) {}
+      game.cursor = Math.max(0, Math.min((data.question_idx | 0), SCHEDULE.length - 1));
+      applyFrame(SCHEDULE[game.cursor]);
+    }
+    await liveClient().from(LIVE_TABLE).upsert(snapshot());
+  } catch (e) {}
   rememberHostSession();
-  showLiveBanner();
+  render();                 // render() pushes state to this room while hosting
+  showNamedRoomBanner(roomName);
+}
+
+// Small "live" indicator for a named-room host (no code / no QR — the TVs use the URL).
+function showNamedRoomBanner(roomName) {
+  let el = document.getElementById("liveBanner");
+  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; document.body.appendChild(el); }
+  el.innerHTML =
+    '<div class="lb-dot"></div>' +
+    '<div class="lb-info">' +
+      '<div class="lb-title">● LIVE — ' + escapeHtml(roomName) + '</div>' +
+      '<div class="lb-howto">This screen controls the TVs at this location.<br>TVs open: <b>' + escapeHtml(tvUrl()) + '</b></div>' +
+    '</div>';
 }
 
 // Save the active hosted room so a refresh/crash can pick it back up.
@@ -2859,21 +2885,19 @@ processLogos();            // strip any white box from the header logo
   if (sb) sb.addEventListener("click", openScoreboardModal);
 })();
 
+// Each location is a named room baked into its URL — no codes, no QR.
+//   Host TV control:  …/?room=NAME
+//   A TV at that spot: …/?tv&room=NAME
+// (Bare links default to room MAIN.)
 const _params = new URLSearchParams(location.search);
 const _isTv = _params.has("tv") || _params.has("screen");
-const _roomParam = _params.get("room");
+const _room = (_params.get("room") || "MAIN").toUpperCase();
 if (_params.has("demo")) {
-  startDemo();                                  // TV point-of-view preview (no setup)
-} else if (_isTv && _roomParam) {
-  connectAsDisplay(_roomParam.toUpperCase());   // TV opened with a code (or scanned)
+  startDemo();                 // TV point-of-view preview (no setup)
 } else if (_isTv) {
-  // Refreshed TV: rejoin the saved room automatically; otherwise ask for the code.
-  let _savedRoom = null;
-  try { _savedRoom = localStorage.getItem(TV_ROOM_KEY); } catch (e) {}
-  if (_savedRoom) connectAsDisplay(_savedRoom);
-  else showCodeEntry();
+  connectAsDisplay(_room);     // TV — paste & go, auto-connects to its room
 } else {
-  resumeHostIfAny();                            // host / admin — resume a live room if we were hosting
+  autoHost(_room);             // host — paste & go, controls that room's TVs
 }
 
 // Tick the question countdown timer (updates any visible .q-timer each second).
