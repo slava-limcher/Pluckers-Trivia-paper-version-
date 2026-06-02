@@ -479,7 +479,7 @@
   .q-topbar-left { display: flex; align-items: center; gap: 16px; }
   .q-score {
     position: absolute;
-    top: -16px; left: 50%; transform: translateX(-50%);
+    top: 84px; left: 50%; transform: translateX(-50%);
     z-index: 6;
     background: var(--yellow); color: var(--red);
     border: 4px solid var(--black); border-radius: 12px;
@@ -1147,12 +1147,17 @@
 
   /* Question countdown timer */
   .q-timer {
+    position: absolute;
+    top: -12px; left: 50%; transform: translateX(-50%);
+    z-index: 7;
     background: var(--yellow); color: var(--blue-dark);
-    border: 4px solid var(--black); border-radius: 14px;
-    padding: 6px 18px; font-size: 40px; font-weight: 900; line-height: 1;
-    min-width: 96px; text-align: center;
+    border: 5px solid var(--black); border-radius: 16px;
+    padding: 8px 34px; font-size: 58px; font-weight: 900; line-height: 1;
+    min-width: 140px; text-align: center;
   }
   .q-timer.q-timer-up { background: var(--red); color: #fff; }
+  /* On the TVs, drop the timer below the published Top-3 banner instead. */
+  body.display-mode .q-timer { top: 252px; }
   /* Host title-screen scoreboard box (replaces WIN PRIZES on the host; TVs keep WIN PRIZES) */
   .title-scoreboard {
     position: fixed;
