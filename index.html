@@ -4,6 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pluckers Trivia</title>
+<!-- Load the fonts so the host computer and the TVs render text identically
+     (TVs usually don't have Impact, so we ship a web font instead). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --red: #c8102e;
@@ -30,7 +35,7 @@
     background:
       radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
     color: var(--ink);
-    font-family: "Impact", "Oswald", "Bebas Neue", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    font-family: "Anton", "Oswald", "Impact", "Bebas Neue", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
@@ -1135,7 +1140,6 @@
       <span><kbd>F</kbd> Fullscreen</span>
       <span><kbd>ESC</kbd> Menu</span>
     </div>
-    <div>WRITE YOUR ANSWERS ON THE PAPER PROVIDED</div>
   </footer>
 </div>
 
@@ -1496,7 +1500,7 @@ function viewTurnIn() {
   main.innerHTML = `
     <div class="view turn-in">
       <div class="turn-in-big">TURN IN YOUR<br>ANSWER SHEET!</div>
-      <div class="turn-in-sub">End of Round ${game.roundIdx + 1} — hand your sheet to the host</div>
+      <div class="turn-in-sub">End of Round ${game.roundIdx + 1} — hand your sheet to the Host.</div>
       <div class="btn-row">
         <button class="btn" id="turnInBtn">CONTINUE</button>
       </div>
