@@ -497,9 +497,10 @@
     gap: 14px;
   }
   /* Keep the question clear of the overlays: the SCOREBOARD pill on the host,
-     and (when a timer is running) the timer that sits under the Top-3 on the TVs. */
-  body:not(.display-mode) .q-main { padding-top: 110px; }
-  body.display-mode .q-screen.has-timer .q-main { padding-top: 270px; }
+     and (when a timer is running) the timer that sits under the Top-3 on the TVs.
+     flex-start so a tall question can't creep back up under them. */
+  body:not(.display-mode) .q-main { padding-top: 150px; justify-content: flex-start; }
+  body.display-mode .q-screen.has-timer .q-main { padding-top: 270px; justify-content: flex-start; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
