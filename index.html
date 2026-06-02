@@ -1266,6 +1266,7 @@
   /* End-of-game: full-screen Top 3 */
   .final-board {
     position: fixed; inset: 0; z-index: 70;
+    width: auto; max-width: none;   /* override .view's 1500px cap so it fills the whole screen */
     background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
     text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
   }
@@ -1281,6 +1282,7 @@
   /* End-of-game: winner reveal */
   .winner-screen {
     position: fixed; inset: 0; z-index: 70;
+    width: auto; max-width: none;   /* override .view's 1500px cap so it fills the whole screen */
     background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
     text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   }
