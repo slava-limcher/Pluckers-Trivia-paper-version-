@@ -471,14 +471,15 @@
   }
   /* Host-only scoreboard panel — top-center of the question screen (between the
      QUESTION badge and the category). Hidden on the TVs. */
+  .q-topbar-left { display: flex; align-items: center; gap: 16px; }
   .q-score {
     position: absolute;
-    top: -18px; left: 50%; transform: translateX(-50%);
+    top: -16px; left: 50%; transform: translateX(-50%);
     z-index: 6;
     background: var(--yellow); color: var(--red);
     border: 4px solid var(--black); border-radius: 12px;
-    font-size: 30px; font-weight: 900; letter-spacing: 2px;
-    padding: 10px 28px; white-space: nowrap; cursor: pointer;
+    font-size: 32px; font-weight: 900; letter-spacing: 2px;
+    padding: 16px 80px; white-space: nowrap; cursor: pointer;
     box-shadow: 0 8px 20px rgba(0,0,0,.45);
   }
   body.display-mode .q-score { display: none; }
@@ -1733,8 +1734,10 @@ function viewQuestion() {
       <div class="q-screen">
         ${qScore}
         <div class="q-topbar">
-          <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
-          ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
+          <div class="q-topbar-left">
+            <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+            ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
+          </div>
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
         </div>
         <div class="q-main">
