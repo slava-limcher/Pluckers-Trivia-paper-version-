@@ -478,13 +478,10 @@
      QUESTION badge and the category). Hidden on the TVs. */
   .q-topbar-left { display: flex; align-items: center; gap: 16px; }
   .q-score {
-    position: absolute;
-    top: 84px; left: 50%; transform: translateX(-50%);
-    z-index: 6;
     background: var(--yellow); color: var(--red);
     border: 4px solid var(--black); border-radius: 12px;
-    font-size: 32px; font-weight: 900; letter-spacing: 2px;
-    padding: 16px 80px; white-space: nowrap; cursor: pointer;
+    font-size: 30px; font-weight: 900; letter-spacing: 2px;
+    padding: 12px 64px; white-space: nowrap; cursor: pointer;
     box-shadow: 0 8px 20px rgba(0,0,0,.45);
   }
   body.display-mode .q-score { display: none; }
@@ -496,18 +493,19 @@
     justify-content: center;
     gap: 14px;
   }
-  /* Keep the question clear of the overlays: the SCOREBOARD pill on the host,
-     and (when a timer is running) the timer that sits under the Top-3 on the TVs.
-     flex-start so a tall question can't creep back up under them. */
-  body:not(.display-mode) .q-main { padding-top: 150px; justify-content: flex-start; }
+  /* On the TVs, when a timer is running, drop the question below the timer
+     (which sits under the Top-3 banner). The host doesn't need this — its
+     timer + pill live inside the top bar, so the question flows below naturally. */
   body.display-mode .q-screen.has-timer .q-main { padding-top: 270px; justify-content: flex-start; }
   .q-topbar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 24px;
     animation: q-badge-drop .3s ease-out both;
   }
+  /* Timer + SCOREBOARD pill stacked in the top-center, above the question. */
+  .q-topcenter { display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .q-badge {
     background: var(--blue);
     border: 4px solid var(--black);
@@ -1150,19 +1148,18 @@
   }
   .timer-input:focus { outline: none; border-color: var(--red); }
 
-  /* Question countdown timer */
+  /* Question countdown timer — on the host it sits in the top bar (above the
+     SCOREBOARD pill); on the TVs it drops below the Top-3 banner (absolute). */
   .q-timer {
-    position: absolute;
-    top: -12px; left: 50%; transform: translateX(-50%);
-    z-index: 7;
     background: var(--yellow); color: var(--blue-dark);
     border: 5px solid var(--black); border-radius: 16px;
-    padding: 8px 34px; font-size: 58px; font-weight: 900; line-height: 1;
-    min-width: 140px; text-align: center;
+    padding: 6px 30px; font-size: 50px; font-weight: 900; line-height: 1;
+    min-width: 120px; text-align: center;
   }
   .q-timer.q-timer-up { background: var(--red); color: #fff; }
-  /* On the TVs, drop the timer below the published Top-3 banner instead. */
-  body.display-mode .q-timer { top: 252px; }
+  body.display-mode .q-timer {
+    position: absolute; top: 252px; left: 50%; transform: translateX(-50%); z-index: 7;
+  }
   /* Host title-screen scoreboard box (replaces WIN PRIZES on the host; TVs keep WIN PRIZES) */
   .title-scoreboard {
     position: fixed;
@@ -1740,17 +1737,14 @@ function viewQuestion() {
   const q = round.questions[game.questionIdx];
   const qText = typeof q === "string" ? q : q.q;
 
-  // Host-only SCOREBOARD button (top-center). Click to open the scoreboard editor.
-  const qScore = '<div class="q-score" id="qScore">🏆 SCOREBOARD</div>';
-
   main.innerHTML = `
     <div class="view">
       <div class="q-screen ${TIMER_SECS > 0 ? 'has-timer' : ''}">
-        ${qScore}
         <div class="q-topbar">
-          <div class="q-topbar-left">
-            <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          <div class="q-topcenter">
             ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
+            <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
           </div>
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
         </div>
@@ -1780,9 +1774,11 @@ function viewAnswer() {
   main.innerHTML = `
     <div class="view">
       <div class="q-screen">
-        <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
         <div class="q-topbar">
           <div class="q-badge">ROUND ${game.roundIdx + 1} ANSWERS</div>
+          <div class="q-topcenter">
+            <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
+          </div>
           <div class="q-category">ANSWER ${game.questionIdx + 1} OF ${round.questions.length}</div>
         </div>
         <div class="q-main">
