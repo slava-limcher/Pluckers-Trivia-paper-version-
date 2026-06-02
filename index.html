@@ -1141,29 +1141,40 @@
     position: fixed;
     left: 36px;
     top: 50%;
-    transform: translateY(-50%);
-    width: 330px;
+    transform: translateY(-50%) rotate(-2deg);
+    width: 380px;
     max-height: 72vh;
-    overflow: auto;
-    background: var(--cream);
+    overflow: hidden;
+    background: #ffffff;
     color: var(--blue-dark);
     border: 6px solid var(--red);
-    box-shadow: 0 0 0 7px var(--blue), 0 18px 40px rgba(0,0,0,.55);
-    border-radius: 16px;
-    padding: 16px 18px;
+    border-radius: 18px;
+    box-shadow: 0 0 0 7px var(--blue), 0 20px 46px rgba(0,0,0,.55);
+    padding: 0 0 14px;
+    text-align: left;
     cursor: pointer;
     z-index: 5;
   }
   body.display-mode .title-scoreboard { display: none; }  /* host only */
-  .title-scoreboard .ts-head { font-size: 30px; font-weight: 900; color: var(--red); text-align: center; letter-spacing: 1px; margin-bottom: 10px; }
-  .title-scoreboard .ts-empty { font-size: 18px; text-align: center; line-height: 1.45; }
-  .title-scoreboard .ts-list { display: flex; flex-direction: column; }
-  .title-scoreboard .ts-row { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; padding: 6px 0; border-bottom: 1px dashed rgba(29,58,138,.2); }
+  .title-scoreboard .ts-head {
+    background: var(--red);
+    color: var(--yellow);
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 14px 16px;
+    text-align: center;
+    text-shadow: 2px 2px 0 var(--black);
+    border-bottom: 5px solid var(--black);
+  }
+  .title-scoreboard .ts-empty { font-size: 19px; text-align: center; line-height: 1.45; padding: 22px 22px 6px; }
+  .title-scoreboard .ts-list { display: flex; flex-direction: column; padding: 14px 22px 0; max-height: 50vh; overflow: auto; }
+  .title-scoreboard .ts-row { display: flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; padding: 8px 0; border-bottom: 1px dashed rgba(29,58,138,.2); }
   .title-scoreboard .ts-row:last-child { border-bottom: 0; }
-  .title-scoreboard .ts-rank { color: var(--red); min-width: 30px; }
+  .title-scoreboard .ts-rank { color: var(--red); min-width: 32px; }
   .title-scoreboard .ts-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .title-scoreboard .ts-score { color: var(--blue); font-weight: 900; }
-  .title-scoreboard .ts-hint { margin-top: 10px; text-align: center; font-size: 13px; color: rgba(12,12,12,.5); }
+  .title-scoreboard .ts-hint { margin-top: 12px; text-align: center; font-size: 13px; color: rgba(12,12,12,.5); padding: 0 16px; }
 
   /* Header right cluster + host scoreboard button */
   .header-right { display: flex; align-items: center; gap: 16px; position: relative; z-index: 2; }
