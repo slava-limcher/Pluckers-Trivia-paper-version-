@@ -475,17 +475,21 @@
     position: absolute;
     top: 0; left: 50%; transform: translateX(-50%);
     z-index: 6;
-    width: 360px; max-height: 60vh; overflow: auto;
+    width: 440px; max-height: 72vh; overflow: auto;
     background: #ffffff; color: var(--blue-dark);
-    border: 4px solid var(--red); border-radius: 14px;
-    box-shadow: 0 0 0 5px var(--blue), 0 14px 30px rgba(0,0,0,.5);
-    padding: 0 0 8px; cursor: pointer;
+    border: 5px solid var(--black); border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(0,0,0,.55);
+    padding: 0 0 12px; cursor: pointer;
   }
   body.display-mode .q-score { display: none; }
-  .q-score .qs-head { background: var(--red); color: var(--yellow); font-weight: 900; font-size: 24px; letter-spacing: 2px; text-align: center; padding: 8px; border-bottom: 4px solid var(--black); }
-  .q-score .qs-row { display: flex; gap: 8px; align-items: center; font-size: 22px; font-weight: 800; padding: 6px 16px; border-bottom: 1px dashed rgba(29,58,138,.2); }
+  .q-score .qs-head {
+    background: var(--yellow); color: var(--red);
+    font-weight: 900; font-size: 34px; letter-spacing: 2px;
+    text-align: center; padding: 14px 16px; border-bottom: 4px solid var(--black);
+  }
+  .q-score .qs-row { display: flex; gap: 8px; align-items: center; font-size: 27px; font-weight: 800; padding: 9px 22px; border-bottom: 1px dashed rgba(29,58,138,.2); }
   .q-score .qs-row:last-child { border-bottom: 0; }
-  .q-score .qs-rank { color: var(--red); min-width: 26px; }
+  .q-score .qs-rank { color: var(--red); min-width: 30px; }
   .q-score .qs-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .q-score .qs-score { color: var(--blue); font-weight: 900; }
   .q-main {
@@ -1021,8 +1025,8 @@
   /* ---- Live multi-screen sync ---- */
   #liveBanner {
     position: fixed;
-    top: 120px;
-    left: 36px;
+    bottom: 18px;
+    left: 18px;
     z-index: 50;
     display: flex;
     align-items: center;
