@@ -493,10 +493,9 @@
     justify-content: center;
     gap: 14px;
   }
-  /* On the TVs, when a timer is running, drop the question below the timer
-     (which sits under the Top-3 banner). The host doesn't need this — its
-     timer + pill live inside the top bar, so the question flows below naturally. */
-  body.display-mode .q-screen.has-timer .q-main { padding-top: 270px; justify-content: flex-start; }
+  /* TVs match the host: the timer lives inside the top bar (between the QUESTION
+     badge and the category), so the question flows below naturally — no extra
+     padding, no dropping the question down. */
   .q-topbar {
     display: flex;
     justify-content: space-between;
@@ -1197,9 +1196,8 @@
     min-width: 120px; text-align: center;
   }
   .q-timer.q-timer-up { background: var(--red); color: #fff; }
-  body.display-mode .q-timer {
-    position: absolute; top: 252px; left: 50%; transform: translateX(-50%); z-index: 7;
-  }
+  /* On the TV the timer stays in-flow in the top bar (same as the host), centered
+     between the QUESTION badge and the category. */
   /* Host title-screen scoreboard box (replaces WIN PRIZES on the host; TVs keep WIN PRIZES) */
   .title-scoreboard {
     position: fixed;
