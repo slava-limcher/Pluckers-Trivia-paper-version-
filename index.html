@@ -1885,7 +1885,8 @@ function viewWinner() {
     const body = name
       ? '<div class="win-label">ROUND ' + (game.roundIdx + 1) + ' WINNER</div>' +
         '<div class="win-name">' + escapeHtml(name) + '</div>' +
-        '<div class="win-prize" style="background:var(--blue);color:var(--cream);">In the lead! Keep playing 🔥</div>'
+        '<div class="win-prize">🎟️ Go to the host to claim your prize!</div>' +
+        '<div class="win-prize" style="background:var(--blue);color:var(--cream);font-size:30px;">In the lead! Keep playing 🔥</div>'
       : '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
     main.innerHTML = `
       <div class="view winner-screen">
