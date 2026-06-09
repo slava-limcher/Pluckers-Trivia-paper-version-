@@ -1240,6 +1240,20 @@
 
   /* Header right cluster + host scoreboard button */
   .header-right { display: flex; align-items: center; gap: 16px; position: relative; z-index: 2; }
+  .host-badge {
+    background: var(--yellow);
+    color: var(--red);
+    border: 3px solid var(--black);
+    border-radius: 10px;
+    padding: 6px 16px;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-shadow: 1px 1px 0 rgba(255,255,255,.4);
+    box-shadow: 0 3px 10px rgba(0,0,0,.35);
+  }
+  body.display-mode .host-badge { display: none; }   /* host only — never on TVs */
   .scorebtn {
     padding: 10px 18px; border-radius: 10px; border: 3px solid var(--black);
     background: var(--yellow); color: var(--red); font-weight: 900;
@@ -1413,6 +1427,7 @@
     </div>
     <div class="dont-cheat">👀 DON'T CHEAT!</div>
     <div class="header-right">
+      <div class="host-badge">🎤 Host's Screen</div>
       <div class="meta" id="meta"></div>
     </div>
   </header>
