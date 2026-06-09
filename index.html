@@ -972,6 +972,32 @@
     padding-top: 20px;
     border-top: 2px solid rgba(29, 58, 138, .2);
   }
+  /* ---- BUILD-YOUR-OWN sheet ---- */
+  .bld-controls {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px;
+    background: rgba(29, 58, 138, .07); border: 2px solid rgba(29,58,138,.25);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+  }
+  .bld-num { display: flex; flex-direction: column; }
+  .bld-num label { margin-bottom: 6px; font-size: 13px; }
+  .bld-num input[type="number"] {
+    width: 120px; padding: 10px 12px; font-size: 22px; font-weight: 900;
+    border: 2px solid var(--blue); border-radius: 8px; background: #fff;
+    color: var(--blue-dark); box-sizing: border-box; text-align: center;
+  }
+  .bld-num input[type="number"]:focus { outline: none; border-color: var(--red); }
+  .bld-total { margin-left: auto; align-self: center; font-weight: 900; color: var(--red);
+    letter-spacing: 1px; font-size: 15px; }
+  #builderGrid { display: flex; flex-direction: column; gap: 16px; }
+  .bld-cat { border: 2px solid var(--blue); border-radius: 12px; padding: 14px; background: #fff; }
+  .bld-cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .bld-cat-no { background: var(--red); color: var(--cream); font-weight: 900; border-radius: 8px;
+    padding: 8px 12px; white-space: nowrap; letter-spacing: 1px; font-size: 13px; }
+  .bld-qrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bld-qn { width: 28px; text-align: right; font-weight: 900; color: var(--blue); flex: 0 0 auto; }
+  .modal input[type="text"].bld-catname { flex: 1; padding: 10px 12px; font-size: 18px; }
+  .modal input[type="text"].bld-q { flex: 2; padding: 9px 11px; font-size: 15px; font-weight: 600; }
+  .modal input[type="text"].bld-a { flex: 1; padding: 9px 11px; font-size: 15px; font-weight: 600; }
   .modal .btn {
     padding: 14px 28px;
     font-size: 18px;
@@ -2250,7 +2276,126 @@ function templateText() {
 // ============================================================
 // LOAD MODAL
 // ============================================================
-let modalFormat = "text"; // "text" | "json"
+let modalFormat = "build"; // "build" | "text" | "json"
+let BUILDER_DATA = null;   // [{category, questions:[{q,a}]}] — the in-menu sheet builder state
+
+// ---- BUILD-YOUR-OWN sheet (set # of categories & questions, type them in) ----
+function blankQ() { return { q: "", a: "" }; }
+function clampInt(v, lo, hi) { let n = parseInt(v, 10); if (isNaN(n)) n = lo; return Math.max(lo, Math.min(hi, n)); }
+
+function seedBuilderData() {
+  // Seed from the questions currently in play so the host can tweak them,
+  // falling back to the built-in defaults.
+  const src = (ROUNDS && ROUNDS.length) ? ROUNDS : DEFAULT_ROUNDS;
+  BUILDER_DATA = src.map(r => ({
+    category: r.category || "",
+    questions: (r.questions || []).map(q => ({ q: q.q || "", a: q.a || "" }))
+  }));
+  if (!BUILDER_DATA.length) BUILDER_DATA = [{ category: "", questions: [blankQ()] }];
+}
+
+// Read the live grid inputs back into BUILDER_DATA (so edits survive a resize/apply).
+function readBuilderDOM() {
+  const grid = document.getElementById("builderGrid");
+  if (!grid) return;
+  BUILDER_DATA = [...grid.querySelectorAll(".bld-cat")].map(catEl => ({
+    category: catEl.querySelector(".bld-catname").value,
+    questions: [...catEl.querySelectorAll(".bld-qrow")].map(row => ({
+      q: row.querySelector(".bld-q").value,
+      a: row.querySelector(".bld-a").value
+    }))
+  }));
+}
+
+function syncCountInputs() {
+  const ci = document.getElementById("bldCats"), qi = document.getElementById("bldQs");
+  if (!ci || !qi || !BUILDER_DATA) return;
+  ci.value = BUILDER_DATA.length || 1;
+  qi.value = BUILDER_DATA.reduce((m, c) => Math.max(m, c.questions ? c.questions.length : 0), 0) || 1;
+}
+
+// Apply the two number inputs: add/remove categories & question rows, keeping what's there.
+function resizeBuilder() {
+  readBuilderDOM();
+  if (!BUILDER_DATA) BUILDER_DATA = [];
+  const nCats = clampInt(document.getElementById("bldCats").value, 1, 40);
+  const nQs = clampInt(document.getElementById("bldQs").value, 1, 100);
+  document.getElementById("bldCats").value = nCats;
+  document.getElementById("bldQs").value = nQs;
+  while (BUILDER_DATA.length < nCats) BUILDER_DATA.push({ category: "", questions: [] });
+  BUILDER_DATA.length = nCats;
+  BUILDER_DATA.forEach(c => {
+    if (!c.questions) c.questions = [];
+    while (c.questions.length < nQs) c.questions.push(blankQ());
+    c.questions.length = nQs;
+  });
+  renderBuilder();
+}
+
+function updateBuilderTotal() {
+  const el = document.getElementById("bldTotal");
+  if (!el || !BUILDER_DATA) return;
+  const cats = BUILDER_DATA.length;
+  const total = BUILDER_DATA.reduce((n, c) => n + (c.questions ? c.questions.length : 0), 0);
+  el.textContent = "= " + total + " question" + (total === 1 ? "" : "s") + " · " + cats + " categor" + (cats === 1 ? "y" : "ies");
+}
+
+function renderBuilder() {
+  const grid = document.getElementById("builderGrid");
+  if (!grid || !BUILDER_DATA) return;
+  grid.innerHTML = BUILDER_DATA.map((c, ci) =>
+    '<div class="bld-cat">' +
+      '<div class="bld-cat-head">' +
+        '<span class="bld-cat-no">CATEGORY ' + (ci + 1) + '</span>' +
+        '<input type="text" class="bld-catname" placeholder="Category name (e.g. Sports)" value="' + escapeHtml(c.category) + '" />' +
+      '</div>' +
+      (c.questions || []).map((q, qi) =>
+        '<div class="bld-qrow">' +
+          '<span class="bld-qn">' + (qi + 1) + '.</span>' +
+          '<input type="text" class="bld-q" placeholder="Question" value="' + escapeHtml(q.q) + '" />' +
+          '<input type="text" class="bld-a" placeholder="Answer (optional)" value="' + escapeHtml(q.a) + '" />' +
+        '</div>'
+      ).join("") +
+    '</div>'
+  ).join("");
+  syncCountInputs();
+  updateBuilderTotal();
+}
+
+// Turn the grid into a clean rounds array (drops blank rows / empty categories).
+function collectBuilderRounds() {
+  readBuilderDOM();
+  const rounds = (BUILDER_DATA || []).map(c => ({
+    category: (c.category || "").trim(),
+    questions: (c.questions || [])
+      .map(q => ({ q: (q.q || "").trim(), a: (q.a || "").trim() }))
+      .filter(q => q.q)
+  })).filter(c => c.category || c.questions.length);
+  if (!rounds.length) throw new Error("Add at least one category with one question.");
+  for (const c of rounds) {
+    if (!c.category) throw new Error("Every category needs a name.");
+    if (!c.questions.length) throw new Error('Category "' + c.category + '" needs at least one question.');
+  }
+  return rounds;
+}
+
+// Toggle between the builder grid and the upload/paste area based on the active tab.
+function setModalMode() {
+  const build = modalFormat === "build";
+  const ua = document.getElementById("uploadArea");
+  const ba = document.getElementById("builderArea");
+  const fh = document.getElementById("formatHelp");
+  if (ua) ua.style.display = build ? "none" : "";
+  if (fh) fh.style.display = build ? "none" : "";
+  if (ba) ba.style.display = build ? "" : "none";
+  if (build) {
+    const grid = document.getElementById("builderGrid");
+    if (grid && !grid.children.length) {
+      if (!BUILDER_DATA) seedBuilderData();
+      renderBuilder();
+    }
+  }
+}
 
 function openLoadModal() {
   const root = document.getElementById("modalRoot");
@@ -2260,11 +2405,12 @@ function openLoadModal() {
         <button class="close-x" id="closeX" aria-label="Close">×</button>
         <h2>LOAD QUESTIONS</h2>
         <p class="modal-lead">
-          Upload a file or paste below. Include each answer after a <b>|</b> &mdash; answers stay hidden until the end of the round.
-          Custom questions are saved in this browser until you reset.
+          <b>Build your own</b> sheet below &mdash; pick how many categories and how many questions each, then type them in.
+          Or switch tabs to upload / paste a file. Answers stay hidden until the end of the round and are saved in this browser until you reset.
         </p>
 
         <div class="format-tabs" role="tablist">
+          <button class="format-tab ${modalFormat === "build" ? "active" : ""}" data-fmt="build" role="tab">BUILD YOUR OWN</button>
           <button class="format-tab ${modalFormat === "text" ? "active" : ""}" data-fmt="text" role="tab">PLAIN TEXT</button>
           <button class="format-tab ${modalFormat === "json" ? "active" : ""}" data-fmt="json" role="tab">JSON</button>
         </div>
@@ -2272,14 +2418,32 @@ function openLoadModal() {
 
         <div id="msgArea"></div>
 
-        <div class="field">
-          <label for="fileInput">UPLOAD A FILE (.txt or .json)</label>
-          <input type="file" id="fileInput" accept=".txt,.json,text/plain,application/json" />
+        <div id="builderArea">
+          <div class="bld-controls">
+            <div class="bld-num">
+              <label for="bldCats">CATEGORIES</label>
+              <input type="number" id="bldCats" min="1" max="40" value="5" />
+            </div>
+            <div class="bld-num">
+              <label for="bldQs">QUESTIONS&nbsp;EACH</label>
+              <input type="number" id="bldQs" min="1" max="100" value="10" />
+            </div>
+            <button class="btn secondary" id="bldResize" type="button">CREATE / RESIZE SHEET</button>
+            <div class="bld-total" id="bldTotal"></div>
+          </div>
+          <div id="builderGrid"></div>
         </div>
 
-        <div class="field">
-          <label for="pasteArea">OR PASTE YOUR QUESTIONS</label>
-          <textarea id="pasteArea" placeholder="Paste your questions here..."></textarea>
+        <div id="uploadArea">
+          <div class="field">
+            <label for="fileInput">UPLOAD A FILE (.txt or .json)</label>
+            <input type="file" id="fileInput" accept=".txt,.json,text/plain,application/json" />
+          </div>
+
+          <div class="field">
+            <label for="pasteArea">OR PASTE YOUR QUESTIONS</label>
+            <textarea id="pasteArea" placeholder="Paste your questions here..."></textarea>
+          </div>
         </div>
 
         <div class="modal-actions">
@@ -2291,6 +2455,7 @@ function openLoadModal() {
     </div>
   `;
   updateFormatHelp();
+  setModalMode();
   document.getElementById("closeX").addEventListener("click", closeLoadModal);
   document.getElementById("cancelBtn").addEventListener("click", closeLoadModal);
   document.getElementById("applyBtn").addEventListener("click", applyFromModal);
@@ -2298,16 +2463,19 @@ function openLoadModal() {
     if (confirm("Reset to the built-in default questions?")) {
       clearStoredRounds();
       ROUNDS = DEFAULT_ROUNDS.slice();
+      BUILDER_DATA = null;
       closeLoadModal();
       render();
     }
   });
   document.getElementById("fileInput").addEventListener("change", handleFilePicked);
+  document.getElementById("bldResize").addEventListener("click", resizeBuilder);
   document.querySelectorAll(".format-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       modalFormat = tab.dataset.fmt;
       document.querySelectorAll(".format-tab").forEach(t => t.classList.toggle("active", t === tab));
       updateFormatHelp();
+      setModalMode();
     });
   });
   document.getElementById("loadModal").addEventListener("click", (e) => {
@@ -2367,6 +2535,7 @@ function handleFilePicked(e) {
       t.classList.toggle("active", t.dataset.fmt === modalFormat);
     });
     updateFormatHelp();
+    setModalMode();
     showModalMsg(`Loaded "${file.name}". Review and click APPLY to use these questions.`, "ok");
   };
   reader.onerror = () => showModalMsg("Could not read that file.", "err");
@@ -2374,6 +2543,19 @@ function handleFilePicked(e) {
 }
 
 function applyFromModal() {
+  if (modalFormat === "build") {
+    try {
+      const parsed = normalizeRounds(collectBuilderRounds());
+      validateRounds(parsed);
+      applyRounds(parsed);
+      const total = parsed.reduce((n, r) => n + r.questions.length, 0);
+      showModalMsg("Built " + parsed.length + " categories, " + total + " questions.", "ok");
+      setTimeout(() => { closeLoadModal(); render(); }, 600);
+    } catch (err) {
+      showModalMsg("Could not build: " + err.message, "err");
+    }
+    return;
+  }
   const text = document.getElementById("pasteArea").value.trim();
   if (!text) {
     showModalMsg("Paste questions or pick a file first.", "err");
