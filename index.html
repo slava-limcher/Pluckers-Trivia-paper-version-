@@ -2256,6 +2256,64 @@ function parseTextRounds(text) {
   return normalizeRounds(rounds);
 }
 
+// CSV format (one question per row):
+//   Category,Question,Answer
+//   Sports,How many players on a soccer team?,11
+//   Sports,"What sport uses ""love"" for zero?",Tennis
+// A header row (Category/Question/Answer) is optional and auto-detected.
+// Rows are grouped into categories in the order they first appear. Answer is optional.
+function parseCsvCells(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }   // escaped quote ""
+        else inQuotes = false;
+      } else { field += c; }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      row.push(field); field = "";
+    } else if (c === "\r") {
+      // ignore — newline handled on \n
+    } else if (c === "\n") {
+      row.push(field); rows.push(row); row = []; field = "";
+    } else {
+      field += c;
+    }
+  }
+  row.push(field); rows.push(row);
+  // Drop rows that are completely empty.
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+
+function parseCsvRounds(text) {
+  const rows = parseCsvCells(text);
+  if (!rows.length) throw new Error("The CSV is empty.");
+  // Auto-detect and skip a header row.
+  let start = 0;
+  const first = rows[0].map(s => s.trim().toLowerCase());
+  if (first.some(h => /^(category|categories|cat|question|questions|q|answer|answers|a)$/.test(h))) start = 1;
+  const byCat = new Map();
+  const order = [];
+  for (let i = start; i < rows.length; i++) {
+    const r = rows[i];
+    const category = (r[0] || "").trim();
+    const q = (r[1] || "").trim();
+    const a = (r[2] || "").trim();
+    if (!category && !q) continue;             // blank line
+    if (!category) throw new Error("Row " + (i + 1) + ': needs a category in the first column.');
+    if (!q) continue;                          // category but no question — skip the row
+    if (!byCat.has(category)) { byCat.set(category, []); order.push(category); }
+    byCat.get(category).push({ q, a });
+  }
+  const rounds = order.map(cat => ({ category: cat, questions: byCat.get(cat) }));
+  validateRounds(rounds);
+  return normalizeRounds(rounds);
+}
+
 function applyRounds(rounds) {
   saveRounds(rounds);
   ROUNDS = rounds;
@@ -2412,6 +2470,7 @@ function openLoadModal() {
         <div class="format-tabs" role="tablist">
           <button class="format-tab ${modalFormat === "build" ? "active" : ""}" data-fmt="build" role="tab">BUILD YOUR OWN</button>
           <button class="format-tab ${modalFormat === "text" ? "active" : ""}" data-fmt="text" role="tab">PLAIN TEXT</button>
+          <button class="format-tab ${modalFormat === "csv" ? "active" : ""}" data-fmt="csv" role="tab">CSV</button>
           <button class="format-tab ${modalFormat === "json" ? "active" : ""}" data-fmt="json" role="tab">JSON</button>
         </div>
         <div class="format-help" id="formatHelp"></div>
@@ -2436,8 +2495,8 @@ function openLoadModal() {
 
         <div id="uploadArea">
           <div class="field">
-            <label for="fileInput">UPLOAD A FILE (.txt or .json)</label>
-            <input type="file" id="fileInput" accept=".txt,.json,text/plain,application/json" />
+            <label for="fileInput">UPLOAD A FILE (.txt, .csv, or .json)</label>
+            <input type="file" id="fileInput" accept=".txt,.csv,.json,text/plain,text/csv,application/json" />
           </div>
 
           <div class="field">
@@ -2500,6 +2559,15 @@ function updateFormatHelp() {
       "Question? | Answer\n" +
       "\n" +
       "(Use \" | \" to separate question and answer. Answer is optional.)";
+  } else if (modalFormat === "csv") {
+    el.textContent =
+      "Category,Question,Answer\n" +
+      "Sports,How many players on a soccer team?,11\n" +
+      'Sports,"What sport uses ""love"" for zero?",Tennis\n' +
+      "Music,Who is the King of Pop?,Michael Jackson\n" +
+      "\n" +
+      "(One question per row: Category, Question, Answer. Header row optional; answer optional.\n" +
+      ' Wrap a field in quotes if it contains a comma.)';
   } else {
     el.textContent =
       '[\n' +
@@ -2528,6 +2596,8 @@ function handleFilePicked(e) {
     document.getElementById("pasteArea").value = ev.target.result;
     if (file.name.toLowerCase().endsWith(".json")) {
       modalFormat = "json";
+    } else if (file.name.toLowerCase().endsWith(".csv")) {
+      modalFormat = "csv";
     } else if (file.name.toLowerCase().endsWith(".txt")) {
       modalFormat = "text";
     }
@@ -2565,6 +2635,8 @@ function applyFromModal() {
     let parsed;
     if (modalFormat === "json") {
       parsed = parseJsonRounds(text);
+    } else if (modalFormat === "csv") {
+      parsed = parseCsvRounds(text);
     } else {
       // Auto-detect JSON if text starts with [
       if (text.startsWith("[")) {
