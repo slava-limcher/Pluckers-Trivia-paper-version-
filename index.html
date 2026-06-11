@@ -51,12 +51,25 @@
     pointer-events: none;
     z-index: 0;
   }
+  /* The whole UI is laid out on a fixed 1920×1080 "stage" and scaled uniformly to
+     fit any screen (1080p TV = 1×, 720p TV = 0.667×, laptops = proportional).
+     This keeps every element in the exact same place at every resolution, so
+     nothing overlaps no matter the screen size. */
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   #app {
     position: relative;
-    height: 100%;
+    width: 1920px;
+    height: 1080px;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     z-index: 1;
+    transform: scale(var(--scale, 1));
+    transform-origin: center center;
   }
 
   /* Header bar */
@@ -2069,6 +2082,21 @@ function render() {
   updateTvChromeVisibility();
 }
 
+// The element that hosts all on-screen UI (the scaled 1920×1080 stage). Overlays
+// (live banner, room tag, leaderboard takeover) are appended here, not to <body>,
+// so they scale and position with everything else.
+function stageEl() { return document.getElementById("app") || document.body; }
+
+// Scale the 1920×1080 stage to fit the current screen — keeps the layout identical
+// (and overlap-free) on a laptop, a 1080p TV, or a 720p TV.
+function fitStage() {
+  const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  document.documentElement.style.setProperty("--scale", String(s));
+}
+window.addEventListener("resize", fitStage);
+window.addEventListener("orientationchange", fitStage);
+fitStage();
+
 // Re-fit the answer list when the window/preview is resized.
 window.addEventListener("resize", () => {
   if (game.state === State.ROUND_END) fitAnswers();
@@ -2997,7 +3025,7 @@ async function autoHost(roomName) {
 // Small "live" indicator for a named-room host (no code / no QR — the TVs use the URL).
 function showNamedRoomBanner(roomName) {
   let el = document.getElementById("liveBanner");
-  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; document.body.appendChild(el); }
+  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; stageEl().appendChild(el); }
   el.innerHTML =
     '<div class="lb-dot"></div>' +
     '<div class="lb-info">' +
@@ -3071,7 +3099,7 @@ function stopLive() {
 
 function showLiveBanner() {
   let el = document.getElementById("liveBanner");
-  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; document.body.appendChild(el); }
+  if (!el) { el = document.createElement("div"); el.id = "liveBanner"; stageEl().appendChild(el); }
   const url = tvUrl();
   const local = isLocalUrl();
   const warn = local
@@ -3156,7 +3184,7 @@ function applyRemote(row) {
 
 function showDisplayTag() {
   let el = document.getElementById("displayTag");
-  if (!el) { el = document.createElement("div"); el.id = "displayTag"; document.body.appendChild(el); }
+  if (!el) { el = document.createElement("div"); el.id = "displayTag"; stageEl().appendChild(el); }
   el.textContent = "MIRRORING • ROOM " + live.code;
   el.title = "Click to change room";
   el.style.cursor = "pointer";
@@ -3201,7 +3229,7 @@ function mountTvChrome() {
   if (!document.getElementById("lbOverlay")) {
     const ov = document.createElement("div");
     ov.id = "lbOverlay";
-    document.body.appendChild(ov);   // full-screen takeover when the host publishes
+    stageEl().appendChild(ov);   // full-screen takeover when the host publishes
   }
 }
 
@@ -3349,7 +3377,7 @@ function startDemo() {
   document.body.classList.add("display-mode");
   mountTvChrome();
   let tag = document.getElementById("displayTag");
-  if (!tag) { tag = document.createElement("div"); tag.id = "displayTag"; document.body.appendChild(tag); }
+  if (!tag) { tag = document.createElement("div"); tag.id = "displayTag"; stageEl().appendChild(tag); }
   tag.textContent = "TV PREVIEW (DEMO)";
 
   TIMER_SECS = 30;
