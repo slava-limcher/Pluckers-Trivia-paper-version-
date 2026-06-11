@@ -1197,6 +1197,13 @@
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
 
+  /* TV header = a clean colored-stripe bar that mirrors the footer: no logo, no
+     DON'T CHEAT, no room tag — just the tri-color line, same height as the bottom. */
+  body.display-mode header { min-height: 0; padding: 14px 32px; }
+  body.display-mode .brand,
+  body.display-mode .dont-cheat,
+  body.display-mode #displayTag { display: none; }
+
   /* Location-name bar (host title screen only) */
   .loc-bar {
     position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
