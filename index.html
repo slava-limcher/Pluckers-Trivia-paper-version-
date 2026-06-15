@@ -20,6 +20,8 @@
     --blue-dark: #142764;
     --blue-bright: #2a52be;
     --cream: #f7f1e3;
+    --bg-mid: #0a1234;   /* page background mid/outer (derived from brand bg color) */
+    --bg-bot: #060a1f;
     --black: #0c0c0c;
     --charcoal: #1a1a1a;
     --panel: #222;
@@ -33,7 +35,7 @@
     margin: 0;
     height: 100%;
     background:
-      radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+      radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, var(--bg-mid) 60%, var(--bg-bot) 100%);
     color: var(--ink);
     font-family: "Anton", "Oswald", "Impact", "Bebas Neue", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
     overflow: hidden;
@@ -1021,6 +1023,19 @@
   .modal input[type="text"].bld-catname { flex: 1; padding: 10px 12px; font-size: 18px; }
   .modal input[type="text"].bld-q { flex: 2; padding: 9px 11px; font-size: 15px; font-weight: 600; }
   .modal input[type="text"].bld-a { flex: 1; padding: 9px 11px; font-size: 15px; font-weight: 600; }
+  /* ---- Branding modal ---- */
+  .brand-colors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .brand-color { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: #fff; border: 2px solid var(--blue); border-radius: 10px; padding: 8px 14px;
+    font-size: 15px; font-weight: 800; color: var(--blue-dark); }
+  .brand-color input[type="color"] { width: 56px; height: 40px; border: 2px solid var(--blue);
+    border-radius: 8px; background: #fff; cursor: pointer; padding: 2px; flex: 0 0 auto; }
+  .brand-logo-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .brand-logo-preview { width: 210px; min-height: 96px; display: flex; align-items: center;
+    justify-content: center; background: var(--blue-dark); border: 2px solid var(--blue);
+    border-radius: 10px; padding: 10px; color: var(--cream); flex: 0 0 auto; }
+  .brand-logo-btns { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px; }
+  .brand-logo-btns .btn { padding: 10px 14px; font-size: 15px; }
   .modal .btn {
     padding: 14px 28px;
     font-size: 18px;
@@ -1635,6 +1650,59 @@ let TIMER_SECS = (function () { const n = parseInt(localStorage.getItem(TIMER_KE
 let TIMER_END = 0;                 // epoch ms the current question's timer ends (0 = none)
 function saveTimer() { try { localStorage.setItem(TIMER_KEY, String(TIMER_SECS)); } catch (e) {} }
 
+// ============================================================
+// BRANDING / THEME — title text, colors, and logo are customizable per brand.
+// A few key colors are picked; the rest of the palette is derived from them.
+// ============================================================
+const THEME_KEY = "trivia-brand-theme";
+const DEFAULT_THEME = {
+  title1: "TRIVIA",
+  title2: "NIGHT",
+  logo: "",            // "" = built-in logo · "none" = no logo (text only) · else a data URL
+  primary: "#c8102e",  // brand main  (drives the red family)
+  accent:  "#f4c430",  // highlight   (drives the yellow family)
+  deep:    "#1d3a8a",  // background  (drives the blue family + page background)
+  light:   "#f7f1e3"   // light text  (drives the cream/ink family)
+};
+function loadTheme() {
+  try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
+  return Object.assign({}, DEFAULT_THEME);
+}
+function saveTheme() { try { localStorage.setItem(THEME_KEY, JSON.stringify(THEME)); } catch (e) {} }
+let THEME = loadTheme();
+
+// --- color helpers: derive darker/lighter shades from the chosen colors ---
+function _hexToRgb(c) { c = String(c || "").replace("#", ""); if (c.length === 3) c = c.split("").map(x => x + x).join(""); const n = parseInt(c, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function _rgbToHex(a) { return "#" + a.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join(""); }
+function _darken(hex, amt) { return _rgbToHex(_hexToRgb(hex).map(x => x * (1 - amt))); }
+function _lighten(hex, amt) { return _rgbToHex(_hexToRgb(hex).map(x => x + (255 - x) * amt)); }
+
+// Push the theme into the CSS custom properties the whole UI is built on.
+function applyTheme(t) {
+  const s = document.documentElement.style;
+  s.setProperty("--red", t.primary);
+  s.setProperty("--red-dark", _darken(t.primary, .18));
+  s.setProperty("--red-deep", _darken(t.primary, .42));
+  s.setProperty("--yellow", t.accent);
+  s.setProperty("--yellow-bright", _lighten(t.accent, .14));
+  s.setProperty("--blue", t.deep);
+  s.setProperty("--blue-dark", _darken(t.deep, .34));
+  s.setProperty("--blue-bright", _lighten(t.deep, .18));
+  s.setProperty("--cream", t.light);
+  s.setProperty("--ink", t.light);
+  s.setProperty("--ink-dim", _darken(t.light, .18));
+  s.setProperty("--bg-mid", _darken(t.deep, .58));
+  s.setProperty("--bg-bot", _darken(t.deep, .74));
+}
+applyTheme(THEME);
+
+// Where the brand logo image comes from (custom data URL, built-in, or none).
+function brandLogoSrc() {
+  if (THEME.logo === "none") return "";
+  if (THEME.logo) return THEME.logo;
+  return "pluckers-logo.png?v=3";
+}
+
 // ---- Scoreboard / leaderboard ----
 // Host enters team names + scores, then PUBLISHES to show a leaderboard on the TVs.
 const TEAMS_KEY = "pluckers-trivia-teams";
@@ -1776,12 +1844,13 @@ function viewTitle() {
           <li>Open <b>🏆 SCOREBOARD</b>, enter points, <b>📢 PUBLISH</b>.</li>
         </ol>
       </div>
-      <img class="title-logo-img" src="pluckers-logo.png?v=3" alt="Pluckers" onerror="this.style.display='none'" />
-      <h1 class="title">TRIVIA<span class="sub">NIGHT</span></h1>
+      ${brandLogoSrc() ? `<img class="title-logo-img" src="${brandLogoSrc()}" alt="${escapeHtml(THEME.title1)}" onerror="this.style.display='none'" />` : ""}
+      <h1 class="title">${escapeHtml(THEME.title1)}<span class="sub">${escapeHtml(THEME.title2)}</span></h1>
       <div class="${statusClass}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
+        <button class="btn secondary" id="brandBtn" style="background:var(--cream);color:var(--blue);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">🎨 BRANDING</button>
         <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">📺 GO LIVE</button>
       </div>
       <div class="setup-row">
@@ -1796,6 +1865,8 @@ function viewTitle() {
   `;
   document.getElementById("startBtn").addEventListener("click", advance);
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
+  const bb = document.getElementById("brandBtn");
+  if (bb) bb.addEventListener("click", openBrandingModal);
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
   const ti = document.getElementById("timerInput");
@@ -2540,6 +2611,144 @@ function setModalMode() {
   }
 }
 
+// ============================================================
+// BRANDING MODAL — set title text, theme colors, and logo.
+// ============================================================
+function _colorField(id, label, val) {
+  return '<div class="brand-color"><span>' + label + '</span>' +
+    '<input type="color" id="' + id + '" value="' + val + '" /></div>';
+}
+// Read an uploaded image, shrink it to <=maxDim px, return a PNG data URL.
+function _downscaleImage(file, maxDim, cb) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      w = Math.max(1, Math.round(w * scale));
+      h = Math.max(1, Math.round(h * scale));
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      try { cb(c.toDataURL("image/png")); } catch (err) { cb(null); }
+    };
+    img.onerror = () => cb(null);
+    img.src = e.target.result;
+  };
+  reader.onerror = () => cb(null);
+  reader.readAsDataURL(file);
+}
+
+function openBrandingModal() {
+  const root = document.getElementById("modalRoot");
+  const t = THEME;
+  let pendingLogo = t.logo;   // "", "none", or a data URL — committed on APPLY
+
+  const logoPreviewHtml = (src) => src
+    ? '<img src="' + src + '" alt="logo" style="max-width:100%;max-height:120px;display:block;margin:0 auto;" />'
+    : '<div style="opacity:.65;font-weight:800;letter-spacing:1px;">TEXT ONLY</div>';
+
+  root.innerHTML = `
+    <div class="modal-backdrop" id="loadModal">
+      <div class="modal" role="dialog" aria-label="Branding">
+        <button class="close-x" id="closeX" aria-label="Close">×</button>
+        <h2>🎨 BRANDING</h2>
+        <p class="modal-lead">Make the game your own — set the title, colors, and logo. Saved in this browser and pushed live to the TVs.</p>
+        <div id="msgArea"></div>
+
+        <div class="field">
+          <label>TITLE TEXT (two lines)</label>
+          <div style="display:flex; gap:12px;">
+            <input type="text" id="brTitle1" value="${escapeHtml(t.title1)}" placeholder="TRIVIA" />
+            <input type="text" id="brTitle2" value="${escapeHtml(t.title2)}" placeholder="NIGHT" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>THEME COLORS <span style="font-weight:600;color:var(--blue);opacity:.7;font-size:13px;">(updates live as you pick)</span></label>
+          <div class="brand-colors">
+            ${_colorField("brPrimary", "Primary", t.primary)}
+            ${_colorField("brAccent", "Accent / Highlight", t.accent)}
+            ${_colorField("brDeep", "Background", t.deep)}
+            ${_colorField("brLight", "Text / Light", t.light)}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>LOGO</label>
+          <div class="brand-logo-row">
+            <div class="brand-logo-preview" id="brLogoPreview">${logoPreviewHtml(brandLogoSrc())}</div>
+            <div class="brand-logo-btns">
+              <input type="file" id="brLogoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+              <button class="btn secondary" id="brLogoDefault" type="button">Use built-in logo</button>
+              <button class="btn secondary" id="brLogoNone" type="button">No logo (text only)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn danger" id="brReset">RESET TO DEFAULT</button>
+          <button class="btn secondary" id="cancelBtn">CANCEL</button>
+          <button class="btn" id="brApply">APPLY</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const $ = (id) => document.getElementById(id);
+  // Live color preview (applies to CSS vars without committing).
+  const previewColors = () => applyTheme({
+    primary: $("brPrimary").value, accent: $("brAccent").value,
+    deep: $("brDeep").value, light: $("brLight").value
+  });
+  ["brPrimary", "brAccent", "brDeep", "brLight"].forEach(id => $(id).addEventListener("input", previewColors));
+
+  const setLogoPreview = () => {
+    const src = pendingLogo === "none" ? "" : (pendingLogo || "pluckers-logo.png?v=3");
+    $("brLogoPreview").innerHTML = logoPreviewHtml(src);
+  };
+  $("brLogoFile").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    _downscaleImage(file, 360, (dataUrl) => {
+      if (!dataUrl) { showModalMsg("Could not read that image.", "err"); return; }
+      pendingLogo = dataUrl; setLogoPreview();
+      showModalMsg("Logo loaded. Click APPLY to use it.", "ok");
+    });
+  });
+  $("brLogoDefault").addEventListener("click", () => { pendingLogo = ""; setLogoPreview(); });
+  $("brLogoNone").addEventListener("click", () => { pendingLogo = "none"; setLogoPreview(); });
+
+  const revertAndClose = () => { applyTheme(THEME); closeLoadModal(); };   // discard live preview
+  $("closeX").addEventListener("click", revertAndClose);
+  $("cancelBtn").addEventListener("click", revertAndClose);
+  $("loadModal").addEventListener("click", (e) => { if (e.target.id === "loadModal") revertAndClose(); });
+
+  $("brReset").addEventListener("click", () => {
+    if (!confirm("Reset branding to the default Pluckers theme?")) return;
+    THEME = Object.assign({}, DEFAULT_THEME);
+    saveTheme(); applyTheme(THEME);
+    closeLoadModal(); render();
+    if (live.role === "host") pushState();
+  });
+
+  $("brApply").addEventListener("click", () => {
+    THEME = {
+      title1: ($("brTitle1").value || "TRIVIA").trim() || "TRIVIA",
+      title2: ($("brTitle2").value || "NIGHT").trim(),
+      logo: pendingLogo,
+      primary: $("brPrimary").value,
+      accent: $("brAccent").value,
+      deep: $("brDeep").value,
+      light: $("brLight").value
+    };
+    saveTheme(); applyTheme(THEME);
+    closeLoadModal(); render();
+    if (live.role === "host") pushState();
+  });
+}
+
 function openLoadModal() {
   const root = document.getElementById("modalRoot");
   root.innerHTML = `
@@ -2783,6 +2992,9 @@ function deWhiteLogo(img) {
 function processLogos() {
   document.querySelectorAll(".brand-logo-img, .title-logo-img").forEach((im) => {
     if (im.dataset.dewhited) return;
+    // Only auto-knock-out white on the built-in logo. Custom brand logos are left
+    // exactly as uploaded (their white may be intentional, e.g. white lettering).
+    if (!/pluckers-logo/.test(im.getAttribute("src") || "")) return;
     if (im.complete && im.naturalWidth) deWhiteLogo(im);
     else im.addEventListener("load", () => deWhiteLogo(im), { once: true });
   });
@@ -2858,7 +3070,7 @@ function snapshot() {
   return {
     room_code: live.code,
     // `state` carries the screen name PLUS timer + published leaderboard so displays mirror them.
-    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END, lb: { shown: LB_SHOWN, teams: TEAMS } }),
+    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END, lb: { shown: LB_SHOWN, teams: TEAMS }, theme: THEME }),
     round_idx: game.roundIdx,   // cosmetic
     question_idx: game.cursor,  // the real sync position: index into SCHEDULE
     rounds: ROUNDS,
@@ -3229,6 +3441,10 @@ function applyRemote(row) {
       if (ex.lb && typeof ex.lb === "object") {
         if (Array.isArray(ex.lb.teams)) TEAMS = ex.lb.teams.map(t => ({ name: String(t.name || ""), score: Number(t.score) || 0 }));
         LB_SHOWN = !!ex.lb.shown;
+      }
+      if (ex.theme && typeof ex.theme === "object") {
+        THEME = Object.assign({}, DEFAULT_THEME, ex.theme);   // mirror the host's brand
+        applyTheme(THEME);
       }
     }
   } catch (e) { /* older/plain state string — ignore */ }
