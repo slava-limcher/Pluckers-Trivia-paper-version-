@@ -576,7 +576,7 @@
     border-radius: 12px;
     padding: 4px 18px;
     margin-right: 18px;
-    font-size: 88px;
+    font-size: 0.8em;          /* scales with the auto-fitted question text */
     vertical-align: middle;
     text-shadow: 2px 2px 0 rgba(0,0,0,.15);
   }
@@ -1872,6 +1872,8 @@ function viewQuestion() {
   if (nb) nb.addEventListener("click", () => { nb.blur(); advance(); });
   const qs = document.getElementById("qScore");
   if (qs) qs.addEventListener("click", openScoreboardModal);
+  fitQuestion();
+  requestAnimationFrame(fitQuestion);   // re-fit once layout settles
 }
 
 // One answer at a time — shown after a round's TURN IN, before the next round.
@@ -2062,6 +2064,30 @@ function fitAnswers() {
   box.style.fontSize = best + "px";
 }
 
+// Scale the question text so it fills the big question box (large font for short
+// questions, smaller for long ones) — keeps the box from looking empty.
+function fitQuestion() {
+  const box = main.querySelector(".q-text");
+  if (!box) return;
+  const body = box.querySelector(".q-text-body");
+  if (!body) return;
+  const cs = getComputedStyle(box);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const fits = () =>
+    body.scrollWidth <= (box.clientWidth - padX) + 1 &&
+    body.scrollHeight <= (box.clientHeight - padY) + 1;
+
+  const MIN = 34, MAX = 240;
+  let lo = MIN, hi = MAX, best = MIN;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    box.style.fontSize = mid + "px";
+    if (fits()) { best = mid; lo = mid; } else { hi = mid; }
+  }
+  box.style.fontSize = best + "px";
+}
+
 function viewEnd() {
   main.innerHTML = `
     <div class="view end">
@@ -2114,10 +2140,18 @@ window.addEventListener("resize", fitStage);
 window.addEventListener("orientationchange", fitStage);
 fitStage();
 
-// Re-fit the answer list when the window/preview is resized.
+// Re-fit the answer list / question text when the window/preview is resized.
 window.addEventListener("resize", () => {
   if (game.state === State.ROUND_END) fitAnswers();
+  if (game.state === State.QUESTION) fitQuestion();
 });
+// Re-fit once the custom web font has loaded (its metrics differ from the fallback).
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    if (game.state === State.QUESTION) fitQuestion();
+    if (game.state === State.ROUND_END) fitAnswers();
+  });
+}
 
 // ============================================================
 // FLOW
