@@ -78,8 +78,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 36px;
-    min-height: 108px;   /* logo is now centered/absolute, so anchor the height here */
+    padding: 14px 32px;   /* slim bar that mirrors the footer */
+    min-height: 0;
     background: var(--blue-dark);
     box-shadow: 0 8px 30px rgba(0,0,0,.5);
   }
@@ -1207,12 +1207,12 @@
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
 
-  /* TV header = a clean colored-stripe bar that mirrors the footer: no logo, no
-     DON'T CHEAT, no room tag — just the tri-color line, same height as the bottom. */
-  body.display-mode header { min-height: 0; padding: 14px 32px; }
-  body.display-mode .brand,
-  body.display-mode .dont-cheat,
-  body.display-mode #displayTag { display: none; }
+  /* Header (host AND TV) = a clean colored-stripe bar that mirrors the footer:
+     no logo, no DON'T CHEAT, no round/question meta, no room tag — just the line. */
+  .brand,
+  .dont-cheat,
+  #meta,
+  #displayTag { display: none; }
 
   /* Location-name bar (host title screen only) */
   .loc-bar {
@@ -1297,6 +1297,10 @@
   /* Header right cluster + host scoreboard button */
   .header-right { display: flex; align-items: center; gap: 16px; position: relative; z-index: 2; }
   .host-badge {
+    position: fixed;        /* floats in the top-right corner, below the stripe */
+    top: 46px;
+    right: 22px;
+    z-index: 50;
     background: var(--yellow);
     color: var(--red);
     border: 3px solid var(--black);
