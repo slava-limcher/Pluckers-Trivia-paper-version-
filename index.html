@@ -195,6 +195,11 @@
     max-width: 1500px;
     text-align: center;
   }
+  /* Question/answer screens fill the whole board height so the content (badge,
+     category, question box, "just walked in") spans ~85% of the screen instead
+     of floating compactly in the middle. */
+  .view.view-fill { height: 100%; max-width: 1600px; }
+  .view-fill .q-screen { padding: 34px 0; }   /* a little breathing room top/bottom (~85% fill) */
 
   /* Title screen */
   .title-wrap { padding: 40px 0; }
@@ -547,6 +552,10 @@
     100% { opacity: 1; transform: translateY(0); }
   }
   .q-text {
+    flex: 1;                       /* grow to fill the middle of the board */
+    display: flex;
+    align-items: center;
+    justify-content: center;       /* center the question text inside the big box */
     animation: q-enter .3s cubic-bezier(.2,.7,.3,1) both;
     font-size: 104px;
     line-height: 1.16;
@@ -558,6 +567,7 @@
     box-shadow: var(--shadow);
     letter-spacing: 1px;
   }
+  .q-text-body { width: 100%; }
   .q-text .q-num {
     display: inline-block;
     background: var(--yellow);
@@ -1837,7 +1847,7 @@ function viewQuestion() {
   const qText = typeof q === "string" ? q : q.q;
 
   main.innerHTML = `
-    <div class="view">
+    <div class="view view-fill">
       <div class="q-screen ${TIMER_SECS > 0 ? 'has-timer' : ''}">
         <div class="q-topbar">
           <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
@@ -1849,7 +1859,7 @@ function viewQuestion() {
         </div>
         <div class="q-main">
           <div class="q-text">
-            <span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}
+            <div class="q-text-body"><span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}</div>
           </div>
         </div>
         <div class="q-howto">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
