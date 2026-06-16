@@ -273,6 +273,10 @@
           </div>
           <p class="help">Off = the box matches your theme automatically. On = pick its own fill &amp; border.</p>
         </div>
+        <div class="group">
+          <label class="lbl" for="boxWidth">Question box width — <span id="boxWidthVal">100%</span></label>
+          <input type="range" id="boxWidth" min="55" max="100" value="100" style="width:100%;accent-color:var(--accent)">
+        </div>
       </div>
 
       <div class="sec">
@@ -314,6 +318,14 @@
         <div class="group">
           <label class="lbl" for="titleFont">Title font</label>
           <select class="inp" id="titleFont"></select>
+        </div>
+        <div class="group">
+          <label class="lbl" for="qFont">Question &amp; answer font</label>
+          <select class="inp" id="qFont"></select>
+        </div>
+        <div class="group">
+          <label class="lbl" for="labelFont">Category &amp; badge font</label>
+          <select class="inp" id="labelFont"></select>
         </div>
         <button class="btn copy" type="button" id="randomBtn">🎲 Randomize fonts &amp; background</button>
       </div>
@@ -389,7 +401,7 @@
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
-  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:"") });
+  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100) });
   let published = false;
   function markEdited(){ if(published){ const st=$("pubStatus"); if(st){ st.textContent="✱ Edited — click Publish to update the live link."; st.className="pubstatus warn"; } } }
   function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} markEdited(); }
@@ -437,6 +449,9 @@
     if($("bgSel")) $("bgSel").value=bgStyle;
     $("bgimg").value=t.bgimg||""; if($("bgImgWrap")) $("bgImgWrap").style.display=bgStyle==="image"?"block":"none";
     if($("titleFont")) $("titleFont").value=t.font||"";
+    if($("qFont")) $("qFont").value=t.qfont||"";
+    if($("labelFont")) $("labelFont").value=t.labelfont||"";
+    if($("boxWidth")){ $("boxWidth").value=t.boxW||100; $("boxWidthVal").textContent=($("boxWidth").value)+"%"; }
     if($("boxCustom")){
       const has=!!(t.boxBg||t.boxBorder);
       $("boxCustom").checked=has; $("boxColors").style.display=has?"grid":"none";
@@ -505,18 +520,22 @@
     const bxOn=boxOn();
     const boxFill=bxOn?`linear-gradient(180deg,${$("boxBg").value},${darken($("boxBg").value,.32)})`:`linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)})`;
     const boxBorder=bxOn?$("boxBorder").value:accent;
+    const qf=($("qFont")&&$("qFont").value)?`font-family:${$("qFont").value};`:"";
+    const lf=($("labelFont")&&$("labelFont").value)?`font-family:${$("labelFont").value};`:"";
+    const bw=$("boxWidth")?+$("boxWidth").value:100;
+    const boxStyle=`background:${boxFill};border-color:${boxBorder};color:${light};${qf}max-width:${bw}%;width:100%;margin:0 auto`;
     let html="";
     if(screen==="title"){
       html=`<div class="sc">${logoTag()}<div class="sc-t1" style="${tf}color:${light};text-shadow:${sh1}">${esc(t1)}</div>${t2?`<div class="sc-t2" style="${tf}color:${accent};text-shadow:${sh2}">${esc(t2)}</div>`:""}</div>`;
     } else if(screen==="question"){
       html=`<div class="sc" style="justify-content:flex-start;gap:10px">
-        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">QUESTION 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
-        <div class="sc-box" style="background:${boxFill};border-color:${boxBorder};color:${light}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
+        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent};${lf}">QUESTION 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent};${lf}">${cat}</span></div>
+        <div class="sc-box" style="${boxStyle}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
         <div class="sc-howto" style="color:${light}">📝 Just walked in? Grab an answer sheet.</div></div>`;
     } else {
       html=`<div class="sc" style="justify-content:flex-start;gap:10px">
-        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">ANSWER 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
-        <div class="sc-box" style="background:${boxFill};border-color:${boxBorder};color:${light};flex:0 0 auto"><span>${q}</span></div>
+        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent};${lf}">ANSWER 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent};${lf}">${cat}</span></div>
+        <div class="sc-box" style="${boxStyle};flex:0 0 auto"><span>${q}</span></div>
         <div class="sc-ans" style="background:${accent};color:${darken(primary,.1)}">✓ ${a}</div></div>`;
     }
     $("pvScreen").innerHTML=html;
@@ -606,15 +625,19 @@
   $("bgImgFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,1280,d=>{if(d){$("bgimg").value=d;refresh();}});});
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
+  $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
+  $("labelFont").innerHTML=fontOptions(""); $("labelFont").addEventListener("change",refresh);
+  $("boxWidth").addEventListener("input",()=>{ $("boxWidthVal").textContent=$("boxWidth").value+"%"; refresh(); });
   $("boxCustom").addEventListener("change",()=>{ $("boxColors").style.display=$("boxCustom").checked?"grid":"none"; refresh(); });
   $("boxBg").addEventListener("input",refresh);
   $("boxBorder").addEventListener("input",refresh);
+  const randFont=()=>FONTS[Math.floor(Math.random()*FONTS.length)].f;
   $("randomBtn").addEventListener("click",()=>{
     const styles=["gradient","solid","monochrome","duotone","dots","grid","geometric","stripes","watercolor","spotlight","galaxy","vintage"];
     bgStyle=styles[Math.floor(Math.random()*styles.length)];
     $("bgSel").value=bgStyle; $("bgImgWrap").style.display="none";
-    $("titleFont").value=FONTS[Math.floor(Math.random()*FONTS.length)].f;
-    els.forEach(e=>{ if(e.t==="text") e.font=FONTS[Math.floor(Math.random()*FONTS.length)].f; });
+    $("titleFont").value=randFont(); $("qFont").value=randFont(); $("labelFont").value=randFont();
+    els.forEach(e=>{ if(e.t==="text") e.font=randFont(); });
     refresh();
   });
   document.querySelectorAll("#screens button").forEach(b=>b.addEventListener("click",()=>{

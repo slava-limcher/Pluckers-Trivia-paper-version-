@@ -543,6 +543,7 @@
     border: 5px solid var(--black);
     border-radius: 14px;
     padding: 14px 34px;
+    font-family: var(--label-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 44px;
     letter-spacing: 4px;
     color: var(--yellow);
@@ -553,6 +554,7 @@
     border: 5px solid var(--black);
     border-radius: 14px;
     padding: 14px 34px;
+    font-family: var(--label-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 48px;
     letter-spacing: 4px;
     color: var(--yellow);
@@ -568,10 +570,14 @@
   }
   .q-text {
     flex: 1;                       /* grow to fill the middle of the board */
+    width: 100%;
+    max-width: var(--qbox-w, 100%);
+    align-self: center;            /* center when narrowed */
     display: flex;
     align-items: center;
     justify-content: center;       /* center the question text inside the big box */
     animation: q-enter .3s cubic-bezier(.2,.7,.3,1) both;
+    font-family: var(--q-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 104px;
     line-height: 1.16;
     color: var(--cream);
@@ -1394,6 +1400,7 @@
   #lbOverlay .lbo-empty { flex: 1; background: #fff; border: 4px solid var(--blue); border-radius: 16px; text-align: center; color: var(--blue-dark); font-size: 28px; padding: 18px; }
   /* Single answer-reveal screen (shown one at a time after each round) */
   .ans-q {
+    font-family: var(--q-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 56px;
     line-height: 1.18;
     color: var(--cream);
@@ -1411,6 +1418,7 @@
     padding: 2px 14px; margin-right: 14px; font-size: 44px; vertical-align: middle;
   }
   .ans-a {
+    font-family: var(--q-font, "Anton","Oswald",Impact,sans-serif);
     margin-top: 24px;
     font-size: 72px;
     font-weight: 900;
@@ -1679,8 +1687,11 @@ const DEFAULT_THEME = {
   bg:      "gradient", // background style (gradient/solid/monochrome/duotone/spotlight/stripes/dots/grid/geometric/galaxy/watercolor/vintage/image)
   bgimg:   "",         // background image URL (used when bg = image)
   font:    "",         // title font-family CSS (empty = the default Anton stack)
+  qfont:   "",         // question/answer text font
+  labelfont: "",       // badge + category font
   boxBg:   "",         // question box fill color (empty = derive from background)
-  boxBorder: ""        // question box border color (empty = accent)
+  boxBorder: "",       // question box border color (empty = accent)
+  boxW:    100         // question box width (% of the available area)
 };
 function loadTheme() {
   try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
@@ -1712,6 +1723,9 @@ function applyTheme(t) {
   s.setProperty("--bg-mid", _darken(t.deep, .58));
   s.setProperty("--bg-bot", _darken(t.deep, .74));
   s.setProperty("--title-font", t.font || '"Anton","Oswald",Impact,sans-serif');
+  s.setProperty("--q-font", t.qfont || '"Anton","Oswald",Impact,sans-serif');
+  s.setProperty("--label-font", t.labelfont || '"Anton","Oswald",Impact,sans-serif');
+  s.setProperty("--qbox-w", (t.boxW || 100) + "%");
   // Question-box fill + border (empty = derive from the background / accent).
   s.setProperty("--qbox-bg", t.boxBg
     ? "linear-gradient(180deg, " + t.boxBg + ", " + _darken(t.boxBg, .32) + ")"
@@ -1758,7 +1772,7 @@ applyTheme(THEME);
     const COLORS = ["primary", "accent", "deep", "light"];
     let touched = false;
     // p.get() already URL-decodes, so no extra decodeURIComponent (keeps data-URL logos intact).
-    ["title1", "title2", "logo", "bg", "bgimg", "font", "boxBg", "boxBorder", ...COLORS].forEach(k => {
+    ["title1", "title2", "logo", "bg", "bgimg", "font", "qfont", "labelfont", "boxBg", "boxBorder", "boxW", ...COLORS].forEach(k => {
       let v = p.get(k);
       if (v == null || v === "") return;
       if (COLORS.includes(k) && v[0] !== "#") v = "#" + v;
