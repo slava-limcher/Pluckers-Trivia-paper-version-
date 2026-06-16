@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Create a Trivia Version</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;padding:30px 20px 70px;font-family:"Segoe UI",system-ui,Arial,sans-serif;color:#f3f6ff;
+    background:radial-gradient(1200px 800px at 50% -10%, #1d3a8a 0%, #0a1234 60%, #060a1f 100%);min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{margin:0 0 4px;font-size:34px;color:#ffd84d}
+  .sub{margin:0 0 26px;color:#cfe0ff;font-size:15px;line-height:1.5;max-width:760px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .panel{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.14);border-radius:16px;padding:20px}
+  label{display:block;font-size:12px;font-weight:800;letter-spacing:1.5px;color:#ffd84d;margin:14px 0 6px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=url]{width:100%;padding:11px 13px;border-radius:9px;border:2px solid #2a52be;
+    background:#fff;color:#142764;font-size:16px;font-weight:600}
+  input:focus{outline:none;border-color:#c8102e}
+  .two{display:flex;gap:12px}
+  .colors{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  .cfield{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:2px solid #2a52be;
+    border-radius:10px;padding:8px 12px;color:#142764;font-weight:800;font-size:14px}
+  .cfield input[type=color]{width:52px;height:38px;border:2px solid #2a52be;border-radius:7px;background:#fff;cursor:pointer;padding:2px}
+  .hint{font-size:12px;color:#9fb6c8;margin-top:6px;line-height:1.5}
+  /* preview */
+  .pv{border-radius:14px;overflow:hidden;border:3px solid #000;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+  .pv-top{height:10px;display:flex}
+  .pv-stage{padding:34px 22px;text-align:center;min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+  .pv-logo{max-width:160px;max-height:80px;display:block}
+  .pv-t1{font-family:"Anton",Impact,sans-serif;font-weight:900;font-size:58px;line-height:.95;letter-spacing:2px;margin:0}
+  .pv-t2{font-family:"Anton",Impact,sans-serif;font-weight:900;font-size:34px;letter-spacing:8px;margin:0}
+  .pv-chip{margin-top:10px;font-weight:900;font-size:13px;letter-spacing:2px;padding:7px 16px;border:3px solid #000;border-radius:10px}
+  .out{margin-top:18px}
+  .out label{margin-top:0}
+  .linkrow{display:flex;gap:8px;margin-bottom:12px}
+  .linkrow input{font-family:ui-monospace,Consolas,monospace;font-size:13px;font-weight:500}
+  .btn{border:2px solid #000;border-radius:9px;font-weight:800;font-size:14px;padding:11px 16px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+  .btn.copy{background:#f4c430;color:#c8102e}
+  .btn.open{background:#c8102e;color:#ffd84d}
+  .ok{color:#7ee08a;font-size:13px;font-weight:800;height:16px;margin-top:-4px}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎨 Create a Trivia Version</h1>
+    <p class="sub">Set a name, colors, and logo — then copy the link. <b>That link is your version</b>: it opens the
+       trivia game already branded, on any device. Re-open this page anytime to tweak and make a fresh link.</p>
+
+    <div class="cols">
+      <!-- FORM -->
+      <div class="panel">
+        <label for="vname">VERSION NAME <span style="color:#9fb6c8;font-weight:600;letter-spacing:0;">(just a label for you)</span></label>
+        <input type="text" id="vname" placeholder="e.g. Buffalo Wild Wings" />
+
+        <label>TITLE TEXT (two lines)</label>
+        <div class="two">
+          <input type="text" id="title1" value="TRIVIA" />
+          <input type="text" id="title2" value="NIGHT" />
+        </div>
+
+        <label>THEME COLORS</label>
+        <div class="colors">
+          <div class="cfield"><span>Primary</span><input type="color" id="primary" value="#c8102e"></div>
+          <div class="cfield"><span>Accent</span><input type="color" id="accent" value="#f4c430"></div>
+          <div class="cfield"><span>Background</span><input type="color" id="deep" value="#1d3a8a"></div>
+          <div class="cfield"><span>Text / Light</span><input type="color" id="light" value="#f7f1e3"></div>
+        </div>
+
+        <label for="logo">LOGO IMAGE URL <span style="color:#9fb6c8;font-weight:600;letter-spacing:0;">(optional)</span></label>
+        <input type="url" id="logo" placeholder="https://…/logo.png" />
+        <p class="hint">Paste a hosted image link so the logo travels with the version link. Leave blank for the
+           built-in logo. (To use a logo file from your computer, upload it in the game's 🎨 BRANDING panel instead — that stays on that device.)</p>
+
+        <label for="base">ENGINE LINK <span style="color:#9fb6c8;font-weight:600;letter-spacing:0;">(where the game is hosted)</span></label>
+        <input type="text" id="base" value="https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/" />
+      </div>
+
+      <!-- PREVIEW + OUTPUT -->
+      <div class="panel">
+        <label style="margin-top:0">LIVE PREVIEW</label>
+        <div class="pv" id="pv">
+          <div class="pv-top" id="pvTop"></div>
+          <div class="pv-stage" id="pvStage">
+            <img class="pv-logo" id="pvLogo" alt="" />
+            <h2 class="pv-t1" id="pvT1">TRIVIA</h2>
+            <div class="pv-t2" id="pvT2">NIGHT</div>
+            <div class="pv-chip" id="pvChip">FOOD &amp; DRINK</div>
+          </div>
+        </div>
+
+        <div class="out">
+          <label>YOUR VERSION LINK (host this)</label>
+          <div class="linkrow">
+            <input type="text" id="hostLink" readonly />
+            <button class="btn copy" data-copy="hostLink">COPY</button>
+            <a class="btn open" id="openHost" target="_blank" rel="noopener">OPEN</a>
+          </div>
+          <div class="ok" id="okMsg"></div>
+          <p class="hint">Open the link → click <b>📺 GO LIVE</b> → name the location → it hands you the TV link.
+             The TVs pick up this version's colors &amp; logo automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fields = ["title1","title2","primary","accent","deep","light","logo","base","vname"];
+  const darken = (hex,a)=>{const n=parseInt(hex.replace('#',''),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    r*=1-a;g*=1-a;b*=1-a;return '#'+[r,g,b].map(x=>Math.round(x).toString(16).padStart(2,'0')).join('')};
+
+  function buildLink(){
+    let base = $("base").value.trim();
+    if(!base) base = "index.html";
+    base = base.replace(/\/+$/,"") + "/index.html";
+    // bare engine link if someone pasted the full index.html already
+    base = $("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"") + "/index.html";
+    const p = new URLSearchParams();
+    if($("title1").value) p.set("title1",$("title1").value);
+    if($("title2").value) p.set("title2",$("title2").value);
+    ["primary","accent","deep","light"].forEach(k=>p.set(k,$(k).value.replace('#','')));
+    if($("logo").value.trim()) p.set("logo",$("logo").value.trim());
+    return base + "?" + p.toString();
+  }
+
+  function refresh(){
+    // preview
+    const deep=$("deep").value, light=$("light").value, primary=$("primary").value, accent=$("accent").value;
+    $("pvStage").style.background = `radial-gradient(600px 400px at 50% -20%, ${darken(deep,.0)} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+    $("pvTop").innerHTML = `<div style="flex:1;background:${primary}"></div><div style="flex:1;background:${accent}"></div><div style="flex:1;background:${deep}"></div>`;
+    $("pvT1").textContent = $("title1").value || "TRIVIA";
+    $("pvT1").style.color = light;
+    $("pvT1").style.textShadow = `4px 4px 0 ${primary}, 8px 8px 0 #000`;
+    $("pvT2").textContent = $("title2").value || "";
+    $("pvT2").style.color = accent;
+    $("pvT2").style.textShadow = `3px 3px 0 ${darken(deep,.3)}, 6px 6px 0 #000`;
+    $("pvChip").style.background = primary; $("pvChip").style.color = accent;
+    const logo = $("logo").value.trim();
+    if(logo){ $("pvLogo").src = logo; $("pvLogo").style.display="block"; $("pvLogo").onerror=()=>{$("pvLogo").style.display="none"}; }
+    else $("pvLogo").style.display="none";
+    // link
+    const link = buildLink();
+    $("hostLink").value = link;
+    $("openHost").href = link;
+  }
+
+  fields.forEach(id=>{ const e=$(id); if(e){ e.addEventListener("input",refresh); } });
+  document.querySelectorAll(".btn.copy").forEach(b=>b.addEventListener("click",()=>{
+    const inp=$(b.dataset.copy); inp.select();
+    navigator.clipboard.writeText(inp.value).then(()=>{ $("okMsg").textContent="✓ Copied! Paste it anywhere."; setTimeout(()=>$("okMsg").textContent="",2500); });
+  }));
+  refresh();
+</script>
+</body>
+</html>
