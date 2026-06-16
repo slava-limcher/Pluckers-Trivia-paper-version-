@@ -559,6 +559,7 @@
     }
     const on=(id,ev,fn)=>{const el=$(id);if(el)el.addEventListener(ev,fn);};
     on("elTxt","input",x=>{e.txt=x.target.value;renderDesign();saveDesign();});
+    on("elFont","change",x=>{e.font=x.target.value;renderDesign();saveDesign();});
     on("elC","input",x=>{e.c=x.target.value;renderDesign();saveDesign();});
     on("elSz","input",x=>{e.sz=+x.target.value;renderDesign();saveDesign();});
     on("elW","input",x=>{e.w=+x.target.value;renderDesign();saveDesign();});
@@ -581,10 +582,18 @@
 
   inputs.forEach(id=>{const e=$(id);if(e)e.addEventListener("input",refresh);});
   $("bgimg").addEventListener("input",refresh);
-  document.querySelectorAll("#bgSeg button").forEach(b=>b.addEventListener("click",()=>{
-    bgStyle=b.dataset.bg;document.querySelectorAll("#bgSeg button").forEach(x=>x.classList.toggle("active",x===b));
-    $("bgimg").style.display=bgStyle==="image"?"block":"none";refresh();
-  }));
+  $("bgSel").addEventListener("change",()=>{ bgStyle=$("bgSel").value; $("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; refresh(); });
+  $("bgImgFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,1280,d=>{if(d){$("bgimg").value=d;refresh();}});});
+  $("titleFont").innerHTML=fontOptions("");
+  $("titleFont").addEventListener("change",refresh);
+  $("randomBtn").addEventListener("click",()=>{
+    const styles=["gradient","solid","monochrome","duotone","dots","grid","geometric","stripes","watercolor","spotlight","galaxy","vintage"];
+    bgStyle=styles[Math.floor(Math.random()*styles.length)];
+    $("bgSel").value=bgStyle; $("bgImgWrap").style.display="none";
+    $("titleFont").value=FONTS[Math.floor(Math.random()*FONTS.length)].f;
+    els.forEach(e=>{ if(e.t==="text") e.font=FONTS[Math.floor(Math.random()*FONTS.length)].f; });
+    refresh();
+  });
   document.querySelectorAll("#screens button").forEach(b=>b.addEventListener("click",()=>{
     screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));refresh();renderProps();
   }));
