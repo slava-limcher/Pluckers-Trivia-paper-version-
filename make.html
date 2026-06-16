@@ -82,6 +82,15 @@
   .chip .dot{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
   .pal-presets{margin-top:11px}
   .pal-presets .btn{font-size:13px;padding:9px 14px}
+  /* presets */
+  .preset-list{display:flex;flex-wrap:wrap;gap:8px}
+  .preset{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:6px 8px 6px 11px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .preset:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+  .preset .pv-dots{display:inline-flex;gap:3px}
+  .preset .pv-dots i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+  .preset .px{border:none;background:#eef1f7;color:#8893a8;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center;padding:0}
+  .preset .px:hover{background:#fde2e2;color:#b42318}
+  .preset-empty{font-size:12.5px;color:var(--faint)}
 
   /* ---- Preview ---- */
   .pv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
@@ -159,6 +168,11 @@
   <div class="page">
     <!-- LEFT: controls -->
     <div class="card card-pad">
+      <div class="sec">
+        <div class="sec-h">Presets</div>
+        <div class="preset-list" id="presetList"></div>
+        <button class="btn copy" type="button" id="savePreset" style="margin-top:11px">💾 Save current as preset</button>
+      </div>
       <div class="sec">
         <div class="sec-h">Identity</div>
         <div class="group">
@@ -298,6 +312,37 @@
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim() });
   function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} }
+
+  // ---- Presets: save/load a full look (theme + placed text & images) ----
+  const BUILTIN_PRESETS = [
+    {name:"Pluckers", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#c8102e",accent:"#f4c430",deep:"#1d3a8a",light:"#f7f1e3",bg:"gradient",bgimg:"",logo:""}, els:[]},
+    {name:"Buffalo Wild Wings", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#FFD200",accent:"#FFFFFF",deep:"#161616",light:"#FFFFFF",bg:"gradient",bgimg:"",logo:""}, els:[]}
+  ];
+  function loadPresets(){ try{ return JSON.parse(localStorage.getItem("trivia-presets")||"[]"); }catch(e){ return []; } }
+  function savePresets(){ try{ localStorage.setItem("trivia-presets", JSON.stringify(PRESETS)); }catch(e){} }
+  let PRESETS = loadPresets();
+  function setTheme(t){
+    $("title1").value=t.title1||"TRIVIA"; $("title2").value=t.title2||"";
+    ["primary","accent","deep","light"].forEach(k=>{ if(t[k]) $(k).value=t[k]; });
+    $("logo").value=(t.logo&&t.logo!=="none")?t.logo:"";
+    bgStyle=t.bg||"gradient";
+    document.querySelectorAll("#bgSeg button").forEach(x=>x.classList.toggle("active",x.dataset.bg===bgStyle));
+    $("bgimg").value=t.bgimg||""; $("bgimg").style.display=bgStyle==="image"?"block":"none";
+  }
+  function applyPreset(p){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); selId=null; refresh(); renderProps(); }
+  function renderPresets(){
+    const wrap=$("presetList"); if(!wrap) return;
+    const dots=t=>`<span class="pv-dots"><i style="background:${t.primary}"></i><i style="background:${t.accent}"></i><i style="background:${t.deep}"></i></span>`;
+    let html=BUILTIN_PRESETS.map((p,i)=>`<span class="preset" data-b="${i}">${dots(p.theme)}${esc(p.name)}</span>`).join("");
+    html+=PRESETS.map((p,i)=>`<span class="preset" data-s="${i}">${dots(p.theme)}${esc(p.name)}<button class="px" data-del="${i}" title="Delete preset">×</button></span>`).join("");
+    wrap.innerHTML=html||'<span class="preset-empty">No saved presets yet — design a look, then save it.</span>';
+    wrap.querySelectorAll(".preset").forEach(el=>el.addEventListener("click",ev=>{
+      if(ev.target.classList.contains("px")) return;
+      if(el.dataset.b!==undefined) applyPreset(BUILTIN_PRESETS[+el.dataset.b]);
+      else applyPreset(PRESETS[+el.dataset.s]);
+    }));
+    wrap.querySelectorAll(".px").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); PRESETS.splice(+b.dataset.del,1); savePresets(); renderPresets(); }));
+  }
   const darken=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x*(1-a)).toString(16).padStart(2,'0')).join('')};
   const lighten=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x+(255-x)*a).toString(16).padStart(2,'0')).join('')};
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -423,6 +468,13 @@
   }));
   $("addText").addEventListener("click",addText);
   $("addImg").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)addImage(f);e.target.value="";});
+  $("savePreset").addEventListener("click",()=>{
+    const name=prompt("Name this preset:", $("vname").value||"My brand");
+    if(!name) return;
+    PRESETS.push({name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e))});
+    savePresets(); renderPresets();
+  });
+  renderPresets();
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
   // Brand palette → apply a named color to the chosen slot
