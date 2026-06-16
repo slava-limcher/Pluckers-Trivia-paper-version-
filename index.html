@@ -587,6 +587,7 @@
     padding: 40px 50px;
     box-shadow: var(--shadow);
     letter-spacing: 1px;
+    overflow: hidden;   /* text is sized to fit; never spill out of the box */
   }
   .q-text-body { width: 100%; }
   .q-text .q-num {
@@ -2296,9 +2297,9 @@ function fitQuestion() {
     body.scrollWidth <= (box.clientWidth - padX) + 1 &&
     body.scrollHeight <= (box.clientHeight - padY) + 1;
 
-  const MIN = 34, MAX = 240;
+  const MIN = 18, MAX = 240;
   let lo = MIN, hi = MAX, best = MIN;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 22; i++) {
     const mid = (lo + hi) / 2;
     box.style.fontSize = mid + "px";
     if (fits()) { best = mid; lo = mid; } else { hi = mid; }
@@ -2345,6 +2346,9 @@ function render() {
   renderDesignOverlay();
   // Apply any custom positions the host dragged for the built-in elements.
   applyBuiltinSlots();
+  // Box stays the size the host set — re-fit the question text into it (every
+  // question, after the box's final size/position is applied).
+  if (game.state === State.QUESTION) fitQuestion();
 }
 // When a design has "slots" for a screen, the built-in elements (badge, category,
 // question box, howto) are positioned freely (% of the 1920×1080 stage) instead of
