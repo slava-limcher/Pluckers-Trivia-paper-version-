@@ -195,6 +195,13 @@
   .steps{background:rgba(109,109,251,.13);border-color:rgba(109,109,251,.28)}
   .steps li{color:#cbcfff}
   .steps li::before{background:var(--accent)}
+  /* Fullscreen editor — the card fills the screen with a big editable canvas */
+  #editorCard:-webkit-full-screen{background:var(--bg1);padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  #editorCard:fullscreen{background:var(--bg1);padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  #editorCard:fullscreen .device{width:min(94vw, 150vh);max-width:94vw;margin:0 auto;flex:0 0 auto}
+  #editorCard:fullscreen .props{max-width:900px;margin:0 auto;width:100%}
+  #editorCard:fullscreen .editbar{justify-content:center}
+  #editorCard:fullscreen .pv-head{max-width:900px;margin:0 auto;width:100%}
   .pubstatus{font-size:12.5px;font-weight:600;margin:10px 0 4px;min-height:16px}
   .pubstatus.ok{color:#5fd6a0}
   .pubstatus.warn{color:#f2c14e}
@@ -352,13 +359,16 @@
 
     <!-- RIGHT: preview + output -->
     <div class="right">
-      <div class="card card-pad">
+      <div class="card card-pad" id="editorCard">
         <div class="pv-head">
           <h2>Live editor</h2>
-          <div class="screens" id="screens">
-            <button data-sc="title" class="active">Title</button>
-            <button data-sc="question">Question</button>
-            <button data-sc="answer">Answer</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="screens" id="screens">
+              <button data-sc="title" class="active">Title</button>
+              <button data-sc="question">Question</button>
+              <button data-sc="answer">Answer</button>
+            </div>
+            <button class="btn copy" id="fsBtn" type="button" title="Fullscreen edit" style="padding:7px 12px;font-size:15px">⛶</button>
           </div>
         </div>
         <div class="editbar">
@@ -652,6 +662,14 @@
     savePresets(); renderPresets();
   });
   $("publishBtn").addEventListener("click",publish);
+  $("fsBtn").addEventListener("click",()=>{
+    const c=$("editorCard");
+    if(document.fullscreenElement||document.webkitFullscreenElement){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+    else { (c.requestFullscreen||c.webkitRequestFullscreen||(()=>{})).call(c); }
+  });
+  const onFs=()=>{ const fs=!!(document.fullscreenElement||document.webkitFullscreenElement); $("fsBtn").textContent=fs?"✕":"⛶"; refresh(); renderProps(); };
+  document.addEventListener("fullscreenchange",onFs);
+  document.addEventListener("webkitfullscreenchange",onFs);
   renderPresets();
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
