@@ -156,6 +156,28 @@
           <label class="swatch"><input type="color" id="deep" value="#1d3a8a"><span><div class="sw-name">Background</div><div class="sw-hex" id="hxdeep">#1d3a8a</div></span></label>
           <label class="swatch"><input type="color" id="light" value="#f7f1e3"><span><div class="sw-name">Text / Light</div><div class="sw-hex" id="hxlight">#f7f1e3</div></span></label>
         </div>
+        <div class="palette">
+          <div class="pal-head">
+            <span class="pal-title">Brand palette</span>
+            <label class="pal-apply">Apply to
+              <select id="palTarget" class="pal-sel">
+                <option value="primary">Primary</option>
+                <option value="accent">Accent</option>
+                <option value="deep">Background</option>
+                <option value="light">Text / Light</option>
+              </select>
+            </label>
+          </div>
+          <div class="chips" id="palChips">
+            <button class="chip" type="button" data-hex="#FFD200"><span class="dot" style="background:#FFD200"></span>B-Dubs Gold</button>
+            <button class="chip" type="button" data-hex="#000000"><span class="dot" style="background:#000000"></span>Black</button>
+            <button class="chip" type="button" data-hex="#FFFFFF"><span class="dot" style="background:#FFFFFF;box-shadow:inset 0 0 0 1px #d0d5dd"></span>White</button>
+            <button class="chip" type="button" data-hex="#AAAAA9"><span class="dot" style="background:#AAAAA9"></span>Dark Gray</button>
+          </div>
+          <div class="pal-presets">
+            <button class="btn copy" type="button" id="bwwPreset">⚡ Buffalo Wild Wings look</button>
+          </div>
+        </div>
       </div>
 
       <div class="sec">
