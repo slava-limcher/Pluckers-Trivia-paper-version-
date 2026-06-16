@@ -484,7 +484,7 @@
     });
   }
   function select(id){ selId=id; $("pvDesign").querySelectorAll(".de-el").forEach(n=>n.classList.toggle("sel", n.dataset.id===id)); renderProps(); }
-  function updateLink(){ const link=buildLink(); $("hostLink").value=link; $("openHost").href=link; }
+  // (link is generated on Publish now — see publish())
   function renderProps(){
     const box=$("props"); const e=els.find(x=>x.id===selId);
     if(!e){ box.style.display="none"; box.innerHTML=""; return; }
