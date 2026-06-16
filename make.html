@@ -93,7 +93,27 @@
   .device-bar{height:30px;background:#0b0f1e;display:flex;align-items:center;gap:6px;padding:0 12px}
   .device-bar i{width:9px;height:9px;border-radius:50%;background:#3a4258;display:inline-block}
   .stripe{height:8px;display:flex}
-  .stage{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px;text-align:center;overflow:hidden;position:relative}
+  .stage{aspect-ratio:16/9;overflow:hidden;position:relative}
+  #pvScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px;text-align:center}
+  #pvDesign{position:absolute;inset:0}
+  .de-el{position:absolute;cursor:move;touch-action:none}
+  .de-el.sel{outline:2px dashed #fff;outline-offset:3px;box-shadow:0 0 0 4px rgba(91,91,240,.5)}
+  .de-el .de-text2{line-height:1.15;white-space:pre-wrap;word-break:break-word}
+  .de-el img{display:block;width:100%;height:auto;pointer-events:none}
+  /* editor toolbar + properties */
+  .editbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .editbar .btn{font-size:13px;padding:8px 13px}
+  .edit-hint{font-size:12px;color:var(--muted)}
+  .props{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:14px;background:#fafbfe}
+  .props .prow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .props .prow:last-child{margin-bottom:0}
+  .props .pl{font-size:12px;font-weight:700;color:var(--muted);min-width:54px}
+  .props input[type=text]{flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;font:inherit;font-size:14px}
+  .props input[type=color]{width:40px;height:32px;border:1px solid var(--line-strong);border-radius:7px;padding:2px;background:#fff;cursor:pointer}
+  .props input[type=range]{flex:1;min-width:120px}
+  .props .seg{padding:4px}
+  .props .seg button{padding:6px 11px;font-size:12.5px}
+  .props .btn.del{background:#fee2e2;color:#b42318;border:1px solid #fecaca;font-size:13px;padding:8px 13px}
   /* shared preview screen styles (themed via inline vars) */
   .sc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
   .sc-logo{max-width:38%;max-height:30%;display:block}
@@ -232,18 +252,27 @@
     <div class="right">
       <div class="card card-pad">
         <div class="pv-head">
-          <h2>Live preview</h2>
+          <h2>Live editor</h2>
           <div class="screens" id="screens">
             <button data-sc="title" class="active">Title</button>
             <button data-sc="question">Question</button>
             <button data-sc="answer">Answer</button>
           </div>
         </div>
+        <div class="editbar">
+          <button class="btn copy" type="button" id="addText">＋ Text box</button>
+          <label class="btn copy" style="cursor:pointer">＋ Image<input type="file" id="addImg" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label>
+          <span class="edit-hint">Drag to place • click to edit • items show on this screen</span>
+        </div>
         <div class="device">
           <div class="device-bar"><i></i><i></i><i></i></div>
           <div class="stripe" id="pvStripe"></div>
-          <div class="stage" id="pvStage"></div>
+          <div class="stage" id="pvStage">
+            <div id="pvScreen"></div>
+            <div id="pvDesign"></div>
+          </div>
         </div>
+        <div class="props" id="props" style="display:none"></div>
       </div>
 
       <div class="card card-pad">
@@ -264,6 +293,11 @@
   const COLORS = ["primary","accent","deep","light"];
   const inputs = ["title1","title2","logo","base","vname","scat","squestion","sanswer",...COLORS];
   let bgStyle = "gradient", screen = "title";
+  let els = [], selId = null;
+  const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
+  const newId = () => "e" + Math.random().toString(36).slice(2, 8);
+  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim() });
+  function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} }
   const darken=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x*(1-a)).toString(16).padStart(2,'0')).join('')};
   const lighten=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x+(255-x)*a).toString(16).padStart(2,'0')).join('')};
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -300,7 +334,7 @@
         <div class="sc-box" style="background:linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)});border-color:${accent};color:${light};flex:0 0 auto"><span>${q}</span></div>
         <div class="sc-ans" style="background:${accent};color:${darken(primary,.1)}">✓ ${a}</div></div>`;
     }
-    $("pvStage").innerHTML=html;
+    $("pvScreen").innerHTML=html;
   }
 
   function buildLink(){
@@ -312,15 +346,70 @@
     if($("logo").value.trim())p.set("logo",$("logo").value.trim());
     if(bgStyle&&bgStyle!=="gradient")p.set("bg",bgStyle);
     if(bgStyle==="image"&&$("bgimg").value.trim())p.set("bgimg",$("bgimg").value.trim());
+    if(els.length)p.set("design",DESIGN_ID);
     return base+"?"+p.toString();
   }
+
+  // ---- freeform design elements (text boxes + images, draggable per screen) ----
+  function renderDesign(){
+    const wrap=$("pvDesign"); wrap.innerHTML="";
+    const rect=$("pvStage").getBoundingClientRect(); const scale=rect.width/1920;
+    els.filter(e=>e.s===screen||e.s==="all").forEach(e=>{
+      const d=document.createElement("div"); d.className="de-el"+(e.id===selId?" sel":""); d.dataset.id=e.id;
+      d.style.left=e.x+"%"; d.style.top=e.y+"%"; d.style.width=e.w+"%";
+      if(e.t==="img"){ const im=document.createElement("img"); im.src=e.src; d.appendChild(im); }
+      else { const tx=document.createElement("div"); tx.className="de-text2"; tx.textContent=e.txt||""; tx.style.color=e.c; tx.style.fontSize=(e.sz*scale)+"px"; tx.style.fontWeight=e.b; tx.style.textAlign=e.a; tx.style.textShadow="2px 2px 0 rgba(0,0,0,.5)"; d.appendChild(tx); }
+      attachDrag(d,e); wrap.appendChild(d);
+    });
+  }
+  function attachDrag(d,e){
+    d.addEventListener("pointerdown",ev=>{
+      ev.preventDefault(); select(e.id);
+      const rect=$("pvStage").getBoundingClientRect();
+      const sx=ev.clientX, sy=ev.clientY, ex=e.x, ey=e.y;
+      try{d.setPointerCapture(ev.pointerId);}catch(_){}
+      const mv=m=>{ e.x=Math.max(0,Math.min(96,ex+(m.clientX-sx)/rect.width*100)); e.y=Math.max(0,Math.min(94,ey+(m.clientY-sy)/rect.height*100)); d.style.left=e.x+"%"; d.style.top=e.y+"%"; };
+      const up=()=>{ d.removeEventListener("pointermove",mv); d.removeEventListener("pointerup",up); saveDesign(); updateLink(); };
+      d.addEventListener("pointermove",mv); d.addEventListener("pointerup",up);
+    });
+  }
+  function select(id){ selId=id; renderDesign(); renderProps(); }
+  function updateLink(){ const link=buildLink(); $("hostLink").value=link; $("openHost").href=link; }
+  function renderProps(){
+    const box=$("props"); const e=els.find(x=>x.id===selId);
+    if(!e){ box.style.display="none"; box.innerHTML=""; return; }
+    box.style.display="block";
+    const scrSel='<div class="prow"><span class="pl">Screen</span><div class="seg" id="elScreen">'+
+      ["title","question","answer","all"].map(s=>'<button type="button" data-s="'+s+'"'+(e.s===s?' class="active"':'')+'>'+s[0].toUpperCase()+s.slice(1)+'</button>').join('')+'</div></div>';
+    if(e.t==="img"){
+      box.innerHTML='<div class="prow"><span class="pl">Size</span><input type="range" id="elW" min="5" max="90" value="'+e.w+'"></div>'+scrSel+
+        '<div class="prow"><button class="btn del" id="elDel">🗑 Delete</button></div>';
+    } else {
+      box.innerHTML='<div class="prow"><span class="pl">Text</span><input type="text" id="elTxt" value="'+e.txt.replace(/"/g,"&quot;")+'"></div>'+
+        '<div class="prow"><span class="pl">Color</span><input type="color" id="elC" value="'+e.c+'"><span class="pl">Size</span><input type="range" id="elSz" min="14" max="160" value="'+e.sz+'"></div>'+
+        '<div class="prow"><span class="pl">Align</span><div class="seg" id="elA">'+["left","center","right"].map(a=>'<button type="button" data-a="'+a+'"'+(e.a===a?' class="active"':'')+'>'+a[0].toUpperCase()+a.slice(1)+'</button>').join('')+'</div></div>'+
+        scrSel+'<div class="prow"><button class="btn del" id="elDel">🗑 Delete</button></div>';
+    }
+    const on=(id,ev,fn)=>{const el=$(id);if(el)el.addEventListener(ev,fn);};
+    on("elTxt","input",x=>{e.txt=x.target.value;renderDesign();saveDesign();});
+    on("elC","input",x=>{e.c=x.target.value;renderDesign();saveDesign();});
+    on("elSz","input",x=>{e.sz=+x.target.value;renderDesign();saveDesign();});
+    on("elW","input",x=>{e.w=+x.target.value;renderDesign();saveDesign();});
+    box.querySelectorAll("#elA button").forEach(b=>b.addEventListener("click",()=>{e.a=b.dataset.a;renderProps();renderDesign();saveDesign();}));
+    box.querySelectorAll("#elScreen button").forEach(b=>b.addEventListener("click",()=>{e.s=b.dataset.s;renderProps();renderDesign();saveDesign();updateLink();}));
+    on("elDel","click",()=>{els=els.filter(x=>x.id!==e.id);selId=null;renderDesign();renderProps();saveDesign();updateLink();});
+  }
+  function addText(){ const e={id:newId(),t:"text",s:screen,x:33,y:42,w:34,txt:"New text",c:$("light").value,sz:54,b:800,a:"center"}; els.push(e); select(e.id); saveDesign(); updateLink(); }
+  function addImage(file){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:36,y:34,w:26,src:d}; els.push(e); select(e.id); saveDesign(); updateLink(); }); }
 
   function refresh(){
     COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
     $("pvStage").style.background=previewBg();
     $("pvStripe").innerHTML=`<div style="flex:1;background:${$("primary").value}"></div><div style="flex:1;background:${$("accent").value}"></div><div style="flex:1;background:${$("deep").value}"></div>`;
     renderScreen();
-    const link=buildLink();$("hostLink").value=link;$("openHost").href=link;
+    renderDesign();
+    saveDesign();
+    updateLink();
   }
 
   inputs.forEach(id=>{const e=$(id);if(e)e.addEventListener("input",refresh);});
@@ -330,8 +419,10 @@
     $("bgimg").style.display=bgStyle==="image"?"block":"none";refresh();
   }));
   document.querySelectorAll("#screens button").forEach(b=>b.addEventListener("click",()=>{
-    screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));renderScreen();
+    screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));refresh();renderProps();
   }));
+  $("addText").addEventListener("click",addText);
+  $("addImg").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)addImage(f);e.target.value="";});
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
   // Brand palette → apply a named color to the chosen slot
