@@ -231,8 +231,10 @@
           <div class="uploadrow">
             <label class="btn copy" style="cursor:pointer"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>⬆ Upload file</label>
             <button class="btn copy" type="button" id="logoClear">Clear</button>
+            <button class="btn primary" type="button" id="useLogoColors" style="padding:9px 14px;font-size:13px">🎨 Use logo colors</button>
           </div>
-          <p class="help">Pasted URL = short link. Uploaded file = embedded (longer link, but self-contained).</p>
+          <div class="pubstatus" id="logoMsg" style="margin:6px 0 0"></div>
+          <p class="help">Pasted URL = short link. Uploaded file = embedded. <b>Use logo colors</b> builds your theme from the logo's colors (upload the file for best results).</p>
         </div>
       </div>
 
@@ -630,6 +632,54 @@
   renderPresets();
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
+  // ---- Build the theme from the logo's own colors ----
+  function extractPalette(src,cb){
+    const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>{
+      const N=72,c=document.createElement("canvas");c.width=N;c.height=N;
+      const ctx=c.getContext("2d");ctx.drawImage(img,0,0,N,N);
+      let data; try{ data=ctx.getImageData(0,0,N,N).data; }catch(e){ cb(null); return; }
+      const buckets={};
+      for(let i=0;i<data.length;i+=4){
+        if(data[i+3]<128) continue;
+        const r=data[i],g=data[i+1],b=data[i+2];
+        const key=(r>>4)+"-"+(g>>4)+"-"+(b>>4);
+        const bk=buckets[key]||(buckets[key]={r:0,g:0,b:0,n:0});
+        bk.r+=r;bk.g+=g;bk.b+=b;bk.n++;
+      }
+      const arr=Object.values(buckets).map(bk=>{
+        const r=bk.r/bk.n,g=bk.g/bk.n,b=bk.b/bk.n,mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+        const l=(mx+mn)/2/255,s=mx===mn?0:(mx-mn)/(255-Math.abs(mx+mn-255));
+        return {r,g,b,n:bk.n,l,s};
+      });
+      cb(arr.length?arr:null);
+    };
+    img.onerror=()=>cb(null);
+    img.src=src;
+  }
+  const _hexOf=o=>"#"+[o.r,o.g,o.b].map(x=>Math.round(x).toString(16).padStart(2,"0")).join("");
+  const _dist=(a,b)=>Math.sqrt((a.r-b.r)**2+(a.g-b.g)**2+(a.b-b.b)**2);
+  function applyLogoColors(){
+    const src=$("logo").value.trim(), msg=$("logoMsg");
+    if(!src){ msg.textContent="Add a logo first."; msg.className="pubstatus warn"; return; }
+    msg.textContent="Reading logo colors…"; msg.className="pubstatus";
+    extractPalette(src,arr=>{
+      if(!arr){ msg.textContent="Couldn't read the colors — please UPLOAD the logo file (pasted URLs are often blocked)."; msg.className="pubstatus warn"; return; }
+      const score=o=>o.s*(1-Math.abs(o.l-0.5))*Math.log(o.n+1);
+      const vibrant=arr.slice().sort((a,b)=>score(b)-score(a));
+      const primary=vibrant[0];
+      const accent=vibrant.find(o=>o!==primary && _dist(o,primary)>70) || vibrant[1] || primary;
+      const dark=arr.slice().sort((a,b)=>a.l-b.l)[0];
+      const lightC=arr.slice().sort((a,b)=>b.l-a.l)[0];
+      $("primary").value=_hexOf(primary);
+      $("accent").value=_hexOf(accent);
+      $("deep").value=(dark.l<0.28)?_hexOf(dark):darken(_hexOf(primary),.58);
+      $("light").value=(lightC.l>0.8)?_hexOf(lightC):"#f7f1e3";
+      refresh();
+      msg.textContent="✓ Theme built from your logo — tweak any color below."; msg.className="pubstatus ok";
+    });
+  }
+  $("useLogoColors").addEventListener("click",applyLogoColors);
   // Brand palette — your own named colors, saved in this browser, applied to any slot.
   function loadPalette(){ try{ return JSON.parse(localStorage.getItem("trivia-palette")||"[]"); }catch(e){ return []; } }
   function savePalette(){ try{ localStorage.setItem("trivia-palette", JSON.stringify(PALETTE)); }catch(e){} }
