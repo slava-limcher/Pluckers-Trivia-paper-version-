@@ -77,6 +77,14 @@
   .swatch .sw-name{font-size:13px;font-weight:600;line-height:1.2}
   .swatch .sw-hex{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;text-transform:uppercase}
 
+  /* segmented control + upload */
+  .seg{display:flex;flex-wrap:wrap;gap:6px;background:#f2f4f7;border:1px solid var(--line);border-radius:11px;padding:5px}
+  .seg button{border:none;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);padding:9px 14px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button:hover{color:var(--ink)}
+  .seg button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+  .uploadrow{display:flex;gap:8px;margin-top:10px}
+  .uploadrow .btn{font-size:13px;padding:9px 14px}
+
   /* ---- Preview / device ---- */
   .pv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .pv-head .tag{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
@@ -162,10 +170,26 @@
       </div>
 
       <div class="group">
-        <label class="lbl" for="logo">Logo image URL <span class="opt">— optional</span></label>
-        <input class="inp" type="url" id="logo" placeholder="https://…/logo.png" />
-        <p class="help">Paste a hosted image link so the logo travels with the version. Leave blank for the built-in logo.
-           To use a file from your computer, upload it in the game's 🎨 Branding panel (stays on that device).</p>
+        <label class="lbl">Background style</label>
+        <div class="seg" id="bgSeg">
+          <button type="button" data-bg="gradient" class="active">Gradient</button>
+          <button type="button" data-bg="spotlight">Spotlight</button>
+          <button type="button" data-bg="stripes">Stripes</button>
+          <button type="button" data-bg="solid">Solid</button>
+          <button type="button" data-bg="image">Image</button>
+        </div>
+        <input class="inp" type="url" id="bgimg" placeholder="https://…/background.jpg" style="margin-top:10px;display:none" />
+        <p class="help">How the screen looks behind the questions. <b>Image</b> uses a hosted photo URL (darkened for readability).</p>
+      </div>
+
+      <div class="group">
+        <label class="lbl" for="logo">Logo <span class="opt">— optional</span></label>
+        <input class="inp" type="url" id="logo" placeholder="Paste an image URL  (https://…/logo.png)" />
+        <div class="uploadrow">
+          <label class="btn copy" style="cursor:pointer"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>⬆ Upload a logo file</label>
+          <button class="btn copy" type="button" id="logoClear">Clear</button>
+        </div>
+        <p class="help">Paste a hosted URL for a short link — or upload a file from your computer (it's embedded in the link, which makes it longer but fully self-contained).</p>
       </div>
 
       <details class="advanced">
@@ -213,8 +237,26 @@
   const $ = id => document.getElementById(id);
   const COLORS = ["primary","accent","deep","light"];
   const fields = ["title1","title2","logo","base","vname",...COLORS];
+  let bgStyle = "gradient";
   const darken = (hex,a)=>{const n=parseInt(hex.replace('#',''),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
     return '#'+[r,g,b].map(x=>Math.round(x*(1-a)).toString(16).padStart(2,'0')).join('')};
+  const lighten = (hex,a)=>{const n=parseInt(hex.replace('#',''),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    return '#'+[r,g,b].map(x=>Math.round(x+(255-x)*a).toString(16).padStart(2,'0')).join('')};
+  function downscaleLogo(file,max,cb){
+    const fr=new FileReader();
+    fr.onload=e=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const s=Math.min(1,max/Math.max(w,h));
+      w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);try{cb(c.toDataURL('image/png'))}catch(err){cb(null)}};img.onerror=()=>cb(null);img.src=e.target.result;};
+    fr.onerror=()=>cb(null);fr.readAsDataURL(file);
+  }
+  function previewBg(){
+    const deep=$("deep").value, img=$("bgimg").value.trim();
+    if(bgStyle==="image" && img) return `linear-gradient(rgba(6,10,31,.55),rgba(6,10,31,.68)), url("${img}") center/cover no-repeat`;
+    if(bgStyle==="solid") return darken(deep,.72);
+    if(bgStyle==="spotlight") return `radial-gradient(600px 400px at 50% -10%, ${lighten(deep,.18)} 0%, ${darken(deep,.45)} 45%, ${darken(deep,.72)} 100%)`;
+    if(bgStyle==="stripes") return `repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 14px, transparent 14px 30px), radial-gradient(600px 380px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+    return `radial-gradient(600px 380px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+  }
 
   function buildLink(){
     const base = $("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"") + "/index.html";
@@ -223,13 +265,15 @@
     if($("title2").value) p.set("title2",$("title2").value);
     COLORS.forEach(k=>p.set(k,$(k).value.replace('#','')));
     if($("logo").value.trim()) p.set("logo",$("logo").value.trim());
+    if(bgStyle && bgStyle!=="gradient") p.set("bg",bgStyle);
+    if(bgStyle==="image" && $("bgimg").value.trim()) p.set("bgimg",$("bgimg").value.trim());
     return base + "?" + p.toString();
   }
 
   function refresh(){
     const deep=$("deep").value, light=$("light").value, primary=$("primary").value, accent=$("accent").value;
     COLORS.forEach(k=>{ const h=$("hx"+k); if(h) h.textContent=$(k).value; });
-    $("pvStage").style.background = `radial-gradient(600px 380px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+    $("pvStage").style.background = previewBg();
     $("pvStripe").innerHTML = `<div style="flex:1;background:${primary}"></div><div style="flex:1;background:${accent}"></div><div style="flex:1;background:${deep}"></div>`;
     $("pvT1").textContent=$("title1").value||"TRIVIA"; $("pvT1").style.color=light; $("pvT1").style.textShadow=`3px 3px 0 ${primary},6px 6px 0 #000`;
     $("pvT2").textContent=$("title2").value||""; $("pvT2").style.color=accent; $("pvT2").style.textShadow=`2px 2px 0 ${darken(deep,.3)},4px 4px 0 #000`;
@@ -241,6 +285,18 @@
   }
 
   fields.forEach(id=>{ const e=$(id); if(e) e.addEventListener("input",refresh); });
+  $("bgimg").addEventListener("input",refresh);
+  document.querySelectorAll("#bgSeg button").forEach(b=>b.addEventListener("click",()=>{
+    bgStyle=b.dataset.bg;
+    document.querySelectorAll("#bgSeg button").forEach(x=>x.classList.toggle("active",x===b));
+    $("bgimg").style.display = bgStyle==="image" ? "block" : "none";
+    refresh();
+  }));
+  $("logoFile").addEventListener("change",e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    downscaleLogo(f,240,d=>{ if(d){ $("logo").value=d; refresh(); } });
+  });
+  $("logoClear").addEventListener("click",()=>{ $("logo").value=""; $("logoFile").value=""; refresh(); });
   $("copyBtn").addEventListener("click",()=>{
     $("hostLink").select();
     navigator.clipboard.writeText($("hostLink").value).then(()=>{

@@ -53,6 +53,13 @@
     pointer-events: none;
     z-index: 0;
   }
+  /* ---- Background styles (set by the theme; default is the gradient above) ---- */
+  body.bg-solid { background: var(--bg-bot); }
+  body.bg-spotlight { background: radial-gradient(1100px 720px at 50% -8%, var(--blue-bright) 0%, var(--bg-mid) 42%, var(--bg-bot) 100%); }
+  body.bg-stripes { background: radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, var(--bg-mid) 60%, var(--bg-bot) 100%); }
+  body.bg-image { background: linear-gradient(rgba(6,10,31,.55), rgba(6,10,31,.68)), var(--bg-image, none) center / cover no-repeat fixed; }
+  body.bg-stripes::before { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 16px, transparent 16px 34px); }
+  body.bg-solid::before, body.bg-spotlight::before, body.bg-image::before { opacity: 0; }
   /* The whole UI is laid out on a fixed 1920×1080 "stage" and scaled uniformly to
      fit any screen (1080p TV = 1×, 720p TV = 0.667×, laptops = proportional).
      This keeps every element in the exact same place at every resolution, so
@@ -1662,7 +1669,9 @@ const DEFAULT_THEME = {
   primary: "#c8102e",  // brand main  (drives the red family)
   accent:  "#f4c430",  // highlight   (drives the yellow family)
   deep:    "#1d3a8a",  // background  (drives the blue family + page background)
-  light:   "#f7f1e3"   // light text  (drives the cream/ink family)
+  light:   "#f7f1e3",  // light text  (drives the cream/ink family)
+  bg:      "gradient", // background style: gradient | solid | spotlight | stripes | image
+  bgimg:   ""          // background image URL (used when bg = image)
 };
 function loadTheme() {
   try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
@@ -1693,6 +1702,18 @@ function applyTheme(t) {
   s.setProperty("--ink-dim", _darken(t.light, .18));
   s.setProperty("--bg-mid", _darken(t.deep, .58));
   s.setProperty("--bg-bot", _darken(t.deep, .74));
+  // Background style (gradient | solid | spotlight | stripes | image)
+  const b = document.body;
+  if (b) {
+    b.classList.remove("bg-gradient", "bg-solid", "bg-spotlight", "bg-stripes", "bg-image");
+    if ((t.bg === "image" || t.bgimg) && t.bgimg) {
+      b.style.setProperty("--bg-image", 'url("' + t.bgimg + '")');
+      b.classList.add("bg-image");
+    } else {
+      b.style.removeProperty("--bg-image");
+      b.classList.add("bg-" + (t.bg && t.bg !== "image" ? t.bg : "gradient"));
+    }
+  }
 }
 applyTheme(THEME);
 
@@ -1705,11 +1726,11 @@ applyTheme(THEME);
     const p = new URLSearchParams(location.search);
     const COLORS = ["primary", "accent", "deep", "light"];
     let touched = false;
-    ["title1", "title2", "logo", ...COLORS].forEach(k => {
+    // p.get() already URL-decodes, so no extra decodeURIComponent (keeps data-URL logos intact).
+    ["title1", "title2", "logo", "bg", "bgimg", ...COLORS].forEach(k => {
       let v = p.get(k);
       if (v == null || v === "") return;
-      if (COLORS.includes(k)) v = (v[0] === "#") ? v : "#" + v;
-      else v = decodeURIComponent(v);
+      if (COLORS.includes(k) && v[0] !== "#") v = "#" + v;
       THEME[k] = v;
       touched = true;
     });
@@ -2755,7 +2776,7 @@ function openBrandingModal() {
   });
 
   $("brApply").addEventListener("click", () => {
-    THEME = {
+    THEME = Object.assign({}, THEME, {
       title1: ($("brTitle1").value || "TRIVIA").trim() || "TRIVIA",
       title2: ($("brTitle2").value || "NIGHT").trim(),
       logo: pendingLogo,
@@ -2763,7 +2784,7 @@ function openBrandingModal() {
       accent: $("brAccent").value,
       deep: $("brDeep").value,
       light: $("brLight").value
-    };
+    });
     saveTheme(); applyTheme(THEME);
     closeLoadModal(); render();
     if (live.role === "host") pushState();
