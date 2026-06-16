@@ -319,6 +319,11 @@
           </div>
           <p class="help">CSS styles are built from your <b>Background</b> color. For real photo textures (wood, marble, brick, nature, galaxy photos…) choose <b>Image</b> and upload or paste one.</p>
         </div>
+        <div class="group">
+          <label class="lbl" for="dim">Dim background — <span id="dimVal">0%</span></label>
+          <input type="range" id="dim" min="0" max="85" value="0" style="width:100%;accent-color:var(--accent)">
+          <p class="help">Darkens the background so the text and question box stand out — great for bright photos.</p>
+        </div>
       </div>
       <div class="sec">
         <div class="sec-h">Fonts</div>
@@ -411,7 +416,7 @@
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
-  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100) });
+  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), dim:($("dim")?+$("dim").value:0) });
   let published = false;
   function markEdited(){ if(published){ const st=$("pubStatus"); if(st){ st.textContent="✱ Edited — click Publish to update the live link."; st.className="pubstatus warn"; } } }
   function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} markEdited(); }
@@ -462,6 +467,7 @@
     if($("qFont")) $("qFont").value=t.qfont||"";
     if($("labelFont")) $("labelFont").value=t.labelfont||"";
     if($("boxWidth")){ $("boxWidth").value=t.boxW||100; $("boxWidthVal").textContent=($("boxWidth").value)+"%"; }
+    if($("dim")){ $("dim").value=t.dim||0; $("dimVal").textContent=($("dim").value)+"%"; }
     if($("boxCustom")){
       const has=!!(t.boxBg||t.boxBorder);
       $("boxCustom").checked=has; $("boxColors").style.display=has?"grid":"none";
@@ -621,7 +627,9 @@
   function refresh(){
     COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
     ["boxBg","boxBorder"].forEach(k=>{const h=$("hx"+k);if(h&&$(k))h.textContent=$(k).value;});
-    $("pvStage").style.background=previewBg();
+    const dimv=$("dim")?Math.max(0,Math.min(0.9,(+$("dim").value)/100)):0;
+    const dimLayer=dimv>0?`linear-gradient(rgba(0,0,0,${dimv}),rgba(0,0,0,${dimv})), `:"";
+    $("pvStage").style.background=dimLayer+previewBg();
     $("pvStripe").innerHTML=`<div style="flex:1;background:${$("primary").value}"></div><div style="flex:1;background:${$("accent").value}"></div><div style="flex:1;background:${$("deep").value}"></div>`;
     renderScreen();
     renderDesign();
@@ -638,6 +646,7 @@
   $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
   $("labelFont").innerHTML=fontOptions(""); $("labelFont").addEventListener("change",refresh);
   $("boxWidth").addEventListener("input",()=>{ $("boxWidthVal").textContent=$("boxWidth").value+"%"; refresh(); });
+  $("dim").addEventListener("input",()=>{ $("dimVal").textContent=$("dim").value+"%"; refresh(); });
   $("boxCustom").addEventListener("change",()=>{ $("boxColors").style.display=$("boxCustom").checked?"grid":"none"; refresh(); });
   $("boxBg").addEventListener("input",refresh);
   $("boxBorder").addEventListener("input",refresh);

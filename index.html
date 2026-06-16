@@ -1691,7 +1691,8 @@ const DEFAULT_THEME = {
   labelfont: "",       // badge + category font
   boxBg:   "",         // question box fill color (empty = derive from background)
   boxBorder: "",       // question box border color (empty = accent)
-  boxW:    100         // question box width (% of the available area)
+  boxW:    100,        // question box width (% of the available area)
+  dim:     0           // background dim (0 = none, higher = darker overlay over the background)
 };
 function loadTheme() {
   try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
@@ -1736,7 +1737,9 @@ function applyTheme(t) {
   const b = document.body;
   if (b) {
     const style = t.bg || "gradient";
-    b.style.background = bgBackground(style, t);
+    const dimv = Math.max(0, Math.min(0.9, (t.dim || 0) / 100));
+    const dimLayer = dimv > 0 ? "linear-gradient(rgba(0,0,0," + dimv + "),rgba(0,0,0," + dimv + ")), " : "";
+    b.style.background = dimLayer + bgBackground(style, t);
     b.classList.toggle("bg-plain", !(style === "gradient" || style === "stripes"));
   }
 }
@@ -1772,7 +1775,7 @@ applyTheme(THEME);
     const COLORS = ["primary", "accent", "deep", "light"];
     let touched = false;
     // p.get() already URL-decodes, so no extra decodeURIComponent (keeps data-URL logos intact).
-    ["title1", "title2", "logo", "bg", "bgimg", "font", "qfont", "labelfont", "boxBg", "boxBorder", "boxW", ...COLORS].forEach(k => {
+    ["title1", "title2", "logo", "bg", "bgimg", "font", "qfont", "labelfont", "boxBg", "boxBorder", "boxW", "dim", ...COLORS].forEach(k => {
       let v = p.get(k);
       if (v == null || v === "") return;
       if (COLORS.includes(k) && v[0] !== "#") v = "#" + v;
