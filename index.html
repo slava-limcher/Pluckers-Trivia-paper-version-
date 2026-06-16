@@ -1892,7 +1892,6 @@ function viewTitle() {
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
-        <button class="btn secondary" id="brandBtn" style="background:var(--cream);color:var(--blue);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">🎨 BRANDING</button>
         <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">📺 GO LIVE</button>
       </div>
       <div class="setup-row">
@@ -1907,8 +1906,6 @@ function viewTitle() {
   `;
   document.getElementById("startBtn").addEventListener("click", advance);
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
-  const bb = document.getElementById("brandBtn");
-  if (bb) bb.addEventListener("click", openBrandingModal);
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
   const ti = document.getElementById("timerInput");

@@ -9,220 +9,212 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Anton&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f4f5f8; --surface:#ffffff; --ink:#101828; --muted:#667085; --faint:#98a2b3;
-    --line:#e4e7ec; --line-strong:#d0d5dd;
-    --accent:#4f46e5; --accent-ink:#ffffff; --accent-soft:#eef2ff;
-    --ring:rgba(79,70,229,.16);
-    --radius:14px; --shadow-sm:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
-    --shadow-md:0 4px 12px rgba(16,24,40,.07),0 12px 30px rgba(16,24,40,.08);
+    --bg1:#eef1f8; --bg2:#e7ebf5; --surface:#ffffff; --ink:#0f1729; --muted:#5b6b86; --faint:#94a0b8;
+    --line:#e4e8f0; --line-strong:#cfd6e4;
+    --accent:#5b5bf0; --accent2:#8b5cf6; --accent-soft:#eef0ff; --ring:rgba(91,91,240,.18);
+    --radius:16px; --shadow-sm:0 1px 2px rgba(15,23,41,.05),0 2px 6px rgba(15,23,41,.06);
+    --shadow-md:0 10px 24px rgba(15,23,41,.08),0 24px 48px rgba(15,23,41,.10);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
-    font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
-    background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;
-    line-height:1.45;
+    font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink);
+    -webkit-font-smoothing:antialiased; line-height:1.45; min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 88% -8%, rgba(139,92,246,.10), transparent 60%),
+      radial-gradient(800px 480px at 5% 0%, rgba(91,91,240,.10), transparent 55%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
   }
   /* ---- App bar ---- */
-  .appbar{
-    background:var(--surface); border-bottom:1px solid var(--line);
-    padding:16px 28px; display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:10;
-  }
-  .logo-mark{
-    width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:grid;place-items:center;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; font-size:22px;
-    box-shadow:0 4px 10px rgba(79,70,229,.35);
-  }
+  .appbar{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+  .logo-mark{width:42px;height:42px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:21px;box-shadow:0 6px 16px rgba(91,91,240,.38)}
   .appbar .titles{flex:1;min-width:0}
-  .appbar h1{font-size:17px;font-weight:700;margin:0;letter-spacing:-.2px}
-  .appbar p{font-size:13px;color:var(--muted);margin:1px 0 0}
-  .pill{font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);
-    border:1px solid #e0e3ff;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .appbar h1{font-size:17px;font-weight:800;margin:0;letter-spacing:-.3px}
+  .appbar p{font-size:12.5px;color:var(--muted);margin:1px 0 0}
+  .pill{font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid #e0e3ff;padding:6px 12px;border-radius:999px;white-space:nowrap}
 
-  /* ---- Layout ---- */
-  .page{max-width:1180px;margin:0 auto;padding:28px;display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
-  @media(max-width:900px){.page{grid-template-columns:1fr;padding:20px}}
+  .page{max-width:1240px;margin:0 auto;padding:26px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+  @media(max-width:920px){.page{grid-template-columns:1fr;padding:18px}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
   .card-pad{padding:22px 24px}
-  .card h2{font-size:15px;font-weight:700;margin:0 0 2px;letter-spacing:-.1px}
+  .card h2{font-size:15px;font-weight:800;margin:0 0 2px;letter-spacing:-.1px}
   .card .desc{font-size:13px;color:var(--muted);margin:0 0 18px}
-  .right{position:sticky;top:90px;display:flex;flex-direction:column;gap:20px}
+  .right{position:sticky;top:86px;display:flex;flex-direction:column;gap:20px}
 
-  /* ---- Form ---- */
-  .group{margin-bottom:20px}
+  /* ---- Sections / form ---- */
+  .sec{border-top:1px solid var(--line);margin-top:20px;padding-top:18px}
+  .sec:first-of-type{border-top:none;margin-top:0;padding-top:0}
+  .sec-h{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+  .group{margin-bottom:16px}
   .group:last-child{margin-bottom:0}
   .lbl{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
   .lbl .opt{color:var(--faint);font-weight:500}
   .help{font-size:12px;color:var(--muted);margin:7px 0 0;line-height:1.5}
-  .inp{
-    width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:10px;
-    font:inherit;font-size:15px;color:var(--ink);background:#fff;transition:border-color .15s,box-shadow .15s;
-  }
+  .inp{width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:10px;font:inherit;font-size:15px;color:var(--ink);background:#fff;transition:border-color .15s,box-shadow .15s}
   .inp::placeholder{color:var(--faint)}
   .inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
-  .row2{display:flex;gap:12px}
-  .row2 .inp{flex:1;min-width:0}
-
-  /* color rows */
+  .row2{display:flex;gap:12px}.row2 .inp{flex:1;min-width:0}
   .swatches{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .swatch{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:#fff;transition:border-color .15s}
   .swatch:hover{border-color:var(--line-strong)}
-  .swatch input[type=color]{
-    -webkit-appearance:none;appearance:none;width:34px;height:34px;border:none;border-radius:9px;
-    background:none;cursor:pointer;padding:0;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)
-  }
+  .swatch input[type=color]{-webkit-appearance:none;appearance:none;width:36px;height:36px;border:none;border-radius:9px;background:none;cursor:pointer;padding:0;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
   .swatch input[type=color]::-webkit-color-swatch-wrapper{padding:0}
   .swatch input[type=color]::-webkit-color-swatch{border:none;border-radius:9px}
-  .swatch .sw-meta{min-width:0}
   .swatch .sw-name{font-size:13px;font-weight:600;line-height:1.2}
   .swatch .sw-hex{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;text-transform:uppercase}
-
-  /* segmented control + upload */
-  .seg{display:flex;flex-wrap:wrap;gap:6px;background:#f2f4f7;border:1px solid var(--line);border-radius:11px;padding:5px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px;background:#eef1f7;border:1px solid var(--line);border-radius:11px;padding:5px}
   .seg button{border:none;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);padding:9px 14px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
   .seg button:hover{color:var(--ink)}
   .seg button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
   .uploadrow{display:flex;gap:8px;margin-top:10px}
   .uploadrow .btn{font-size:13px;padding:9px 14px}
 
-  /* ---- Preview / device ---- */
-  .pv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-  .pv-head .tag{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
-  .device{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000;box-shadow:var(--shadow-md)}
-  .device-bar{height:30px;background:#0c1020;display:flex;align-items:center;gap:6px;padding:0 12px}
+  /* ---- Preview ---- */
+  .pv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+  .pv-head h2{margin:0}
+  .screens{display:flex;gap:4px;background:#eef1f7;border:1px solid var(--line);border-radius:10px;padding:4px}
+  .screens button{border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 13px;border-radius:7px;cursor:pointer}
+  .screens button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+  .device{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#000;box-shadow:var(--shadow-md)}
+  .device-bar{height:30px;background:#0b0f1e;display:flex;align-items:center;gap:6px;padding:0 12px}
   .device-bar i{width:9px;height:9px;border-radius:50%;background:#3a4258;display:inline-block}
   .stripe{height:8px;display:flex}
-  .stage{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center}
-  .stage img{max-width:42%;max-height:34%;display:block}
-  .t1{font-family:"Anton",Impact,sans-serif;font-size:clamp(30px,6vw,62px);line-height:.92;letter-spacing:1.5px;margin:0}
-  .t2{font-family:"Anton",Impact,sans-serif;font-size:clamp(16px,3.4vw,34px);letter-spacing:8px;margin:0}
-  .chip{margin-top:8px;font-family:"Anton",Impact,sans-serif;font-size:clamp(11px,2vw,17px);letter-spacing:2px;padding:7px 16px;border:3px solid #000;border-radius:10px}
+  .stage{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px;text-align:center;overflow:hidden;position:relative}
+  /* shared preview screen styles (themed via inline vars) */
+  .sc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .sc-logo{max-width:38%;max-height:30%;display:block}
+  .sc-t1{font-family:"Anton",Impact,sans-serif;font-size:clamp(26px,5.6vw,56px);line-height:.92;letter-spacing:1.5px;margin:0}
+  .sc-t2{font-family:"Anton",Impact,sans-serif;font-size:clamp(14px,3.2vw,30px);letter-spacing:7px;margin:0}
+  .sc-row{display:flex;justify-content:space-between;width:100%;gap:10px;margin-bottom:4px}
+  .sc-badge,.sc-cat{font-family:"Anton",Impact,sans-serif;font-size:clamp(9px,1.7vw,15px);letter-spacing:1.5px;padding:6px 12px;border:2px solid #000;border-radius:8px;white-space:nowrap}
+  .sc-box{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:3px solid;border-radius:14px;
+    font-family:"Anton",Impact,sans-serif;font-size:clamp(15px,2.9vw,30px);line-height:1.1;padding:10px 14px}
+  .sc-num{font-family:"Anton",Impact,sans-serif;border:2px solid #000;border-radius:7px;padding:1px 9px;font-size:.9em;flex:0 0 auto}
+  .sc-howto{font-family:"Inter",sans-serif;font-weight:700;font-size:clamp(9px,1.7vw,15px);opacity:.95;line-height:1.3}
+  .sc-ans{width:100%;border-radius:12px;font-family:"Anton",Impact,sans-serif;font-size:clamp(13px,2.5vw,26px);padding:9px 14px;letter-spacing:1px}
 
   /* ---- Output ---- */
   .out-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .out-label .lbl{margin:0}
-  .copied{font-size:12.5px;font-weight:600;color:#12805c;opacity:0;transition:opacity .2s}
-  .copied.show{opacity:1}
-  .linkbox{
-    display:flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:11px;
-    background:#f9fafb;padding:6px 6px 6px 12px;
-  }
-  .linkbox input{flex:1;min-width:0;border:none;background:none;font-family:ui-monospace,Consolas,monospace;
-    font-size:12.5px;color:#344054;padding:6px 0}
+  .copied{font-size:12.5px;font-weight:700;color:#0e9f6e;opacity:0;transition:opacity .2s}.copied.show{opacity:1}
+  .linkbox{display:flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:11px;background:#f7f9fc;padding:6px 6px 6px 12px}
+  .linkbox input{flex:1;min-width:0;border:none;background:none;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#33415c;padding:6px 0}
   .linkbox input:focus{outline:none}
-  .btn{border:none;border-radius:9px;font:inherit;font-weight:600;font-size:14px;padding:10px 16px;cursor:pointer;
-    white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:filter .15s,background .15s}
+  .btn{border:none;border-radius:9px;font:inherit;font-weight:600;font-size:14px;padding:10px 16px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:filter .15s,background .15s}
   .btn:active{transform:translateY(1px)}
-  .btn.copy{background:#fff;color:var(--ink);border:1px solid var(--line-strong)}
-  .btn.copy:hover{background:#f2f4f7}
-  .btn.primary{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(16,24,40,.1)}
-  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.copy{background:#fff;color:var(--ink);border:1px solid var(--line-strong)}.btn.copy:hover{background:#f1f4f9}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 12px rgba(91,91,240,.35)}.btn.primary:hover{filter:brightness(1.07)}
   .btn.block{width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:14px}
   .steps{list-style:none;margin:16px 0 0;padding:14px 16px;background:var(--accent-soft);border:1px solid #e3e6ff;border-radius:11px}
-  .steps li{font-size:13px;color:#3730a3;padding-left:24px;position:relative;margin:0 0 8px}
-  .steps li:last-child{margin:0}
-  .steps li::before{content:"";position:absolute;left:0;top:1px;width:17px;height:17px;border-radius:50%;
-    background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
-  .steps li:nth-child(1)::before{content:"1"} .steps li:nth-child(2)::before{content:"2"} .steps li:nth-child(3)::before{content:"3"}
-  .advanced{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .steps li{font-size:13px;color:#3b32b8;padding-left:24px;position:relative;margin:0 0 8px}.steps li:last-child{margin:0}
+  .steps li::before{position:absolute;left:0;top:0;width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+  .steps li:nth-child(1)::before{content:"1"}.steps li:nth-child(2)::before{content:"2"}.steps li:nth-child(3)::before{content:"3"}
+  .advanced{margin-top:6px}
   .advanced summary{font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;list-style:none}
   .advanced summary::-webkit-details-marker{display:none}
-  .advanced summary::before{content:"⚙ ";}
+  .advanced summary::before{content:"⚙ "}
 </style>
 </head>
 <body>
   <div class="appbar">
     <div class="logo-mark">🎯</div>
-    <div class="titles">
-      <h1>Trivia Studio</h1>
-      <p>Version Builder — brand a new trivia in seconds</p>
-    </div>
-    <span class="pill">Live preview</span>
+    <div class="titles"><h1>Trivia Studio</h1><p>Version Builder — design a branded trivia, copy the link, go live</p></div>
+    <span class="pill">Live editor</span>
   </div>
 
   <div class="page">
     <!-- LEFT: controls -->
     <div class="card card-pad">
-      <h2>Brand details</h2>
-      <p class="desc">Name it, pick your colors, and drop in a logo. Everything updates in the preview as you go.</p>
-
-      <div class="group">
-        <label class="lbl" for="vname">Version name <span class="opt">— a label for you</span></label>
-        <input class="inp" type="text" id="vname" placeholder="e.g. Buffalo Wild Wings — Friday Night" />
-      </div>
-
-      <div class="group">
-        <label class="lbl">Title text <span class="opt">— two lines on the screen</span></label>
-        <div class="row2">
-          <input class="inp" type="text" id="title1" value="TRIVIA" placeholder="Line 1" />
-          <input class="inp" type="text" id="title2" value="NIGHT" placeholder="Line 2" />
+      <div class="sec">
+        <div class="sec-h">Identity</div>
+        <div class="group">
+          <label class="lbl" for="vname">Version name <span class="opt">— a label for you</span></label>
+          <input class="inp" type="text" id="vname" placeholder="e.g. Buffalo Wild Wings — Friday" />
+        </div>
+        <div class="group">
+          <label class="lbl">Title text <span class="opt">— two lines on the screen</span></label>
+          <div class="row2"><input class="inp" type="text" id="title1" value="TRIVIA" placeholder="Line 1" /><input class="inp" type="text" id="title2" value="NIGHT" placeholder="Line 2" /></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="logo">Logo <span class="opt">— optional</span></label>
+          <input class="inp" type="url" id="logo" placeholder="Paste an image URL  (https://…/logo.png)" />
+          <div class="uploadrow">
+            <label class="btn copy" style="cursor:pointer"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>⬆ Upload file</label>
+            <button class="btn copy" type="button" id="logoClear">Clear</button>
+          </div>
+          <p class="help">Pasted URL = short link. Uploaded file = embedded (longer link, but self-contained).</p>
         </div>
       </div>
 
-      <div class="group">
-        <label class="lbl">Theme colors</label>
+      <div class="sec">
+        <div class="sec-h">Colors</div>
         <div class="swatches">
-          <label class="swatch"><input type="color" id="primary" value="#c8102e"><span class="sw-meta"><div class="sw-name">Primary</div><div class="sw-hex" id="hxprimary">#c8102e</div></span></label>
-          <label class="swatch"><input type="color" id="accent" value="#f4c430"><span class="sw-meta"><div class="sw-name">Accent</div><div class="sw-hex" id="hxaccent">#f4c430</div></span></label>
-          <label class="swatch"><input type="color" id="deep" value="#1d3a8a"><span class="sw-meta"><div class="sw-name">Background</div><div class="sw-hex" id="hxdeep">#1d3a8a</div></span></label>
-          <label class="swatch"><input type="color" id="light" value="#f7f1e3"><span class="sw-meta"><div class="sw-name">Text / Light</div><div class="sw-hex" id="hxlight">#f7f1e3</div></span></label>
+          <label class="swatch"><input type="color" id="primary" value="#c8102e"><span><div class="sw-name">Primary</div><div class="sw-hex" id="hxprimary">#c8102e</div></span></label>
+          <label class="swatch"><input type="color" id="accent" value="#f4c430"><span><div class="sw-name">Accent</div><div class="sw-hex" id="hxaccent">#f4c430</div></span></label>
+          <label class="swatch"><input type="color" id="deep" value="#1d3a8a"><span><div class="sw-name">Background</div><div class="sw-hex" id="hxdeep">#1d3a8a</div></span></label>
+          <label class="swatch"><input type="color" id="light" value="#f7f1e3"><span><div class="sw-name">Text / Light</div><div class="sw-hex" id="hxlight">#f7f1e3</div></span></label>
         </div>
       </div>
 
-      <div class="group">
-        <label class="lbl">Background style</label>
-        <div class="seg" id="bgSeg">
-          <button type="button" data-bg="gradient" class="active">Gradient</button>
-          <button type="button" data-bg="spotlight">Spotlight</button>
-          <button type="button" data-bg="stripes">Stripes</button>
-          <button type="button" data-bg="solid">Solid</button>
-          <button type="button" data-bg="image">Image</button>
+      <div class="sec">
+        <div class="sec-h">Game background</div>
+        <div class="group">
+          <label class="lbl">Style</label>
+          <div class="seg" id="bgSeg">
+            <button type="button" data-bg="gradient" class="active">Gradient</button>
+            <button type="button" data-bg="spotlight">Spotlight</button>
+            <button type="button" data-bg="stripes">Stripes</button>
+            <button type="button" data-bg="solid">Solid</button>
+            <button type="button" data-bg="image">Image</button>
+          </div>
+          <input class="inp" type="url" id="bgimg" placeholder="https://…/background.jpg" style="margin-top:10px;display:none" />
+          <p class="help">The <b>Background</b> color above sets the base shade; the style controls the texture behind the questions. <b>Image</b> uses a hosted photo (auto-darkened for readability).</p>
         </div>
-        <input class="inp" type="url" id="bgimg" placeholder="https://…/background.jpg" style="margin-top:10px;display:none" />
-        <p class="help">How the screen looks behind the questions. <b>Image</b> uses a hosted photo URL (darkened for readability).</p>
       </div>
 
-      <div class="group">
-        <label class="lbl" for="logo">Logo <span class="opt">— optional</span></label>
-        <input class="inp" type="url" id="logo" placeholder="Paste an image URL  (https://…/logo.png)" />
-        <div class="uploadrow">
-          <label class="btn copy" style="cursor:pointer"><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>⬆ Upload a logo file</label>
-          <button class="btn copy" type="button" id="logoClear">Clear</button>
+      <div class="sec">
+        <div class="sec-h">Preview text <span style="color:var(--faint);font-weight:500;text-transform:none;letter-spacing:0">— just to see your brand (not saved)</span></div>
+        <div class="group">
+          <input class="inp" type="text" id="scat" value="FOOD &amp; DRINK" placeholder="Sample category" style="margin-bottom:10px" />
+          <input class="inp" type="text" id="squestion" value="The Scoville scale measures what property of food?" placeholder="Sample question" style="margin-bottom:10px" />
+          <input class="inp" type="text" id="sanswer" value="Spicy heat" placeholder="Sample answer" />
         </div>
-        <p class="help">Paste a hosted URL for a short link — or upload a file from your computer (it's embedded in the link, which makes it longer but fully self-contained).</p>
       </div>
 
-      <details class="advanced">
-        <summary>Advanced</summary>
-        <div class="group" style="margin-top:14px">
-          <label class="lbl" for="base">Engine link <span class="opt">— where the game is hosted</span></label>
-          <input class="inp" type="text" id="base" value="https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/" />
-        </div>
-      </details>
+      <div class="sec">
+        <details class="advanced">
+          <summary>Advanced</summary>
+          <div class="group" style="margin-top:14px">
+            <label class="lbl" for="base">Engine link <span class="opt">— where the game is hosted</span></label>
+            <input class="inp" type="text" id="base" value="https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/" />
+          </div>
+        </details>
+      </div>
     </div>
 
     <!-- RIGHT: preview + output -->
     <div class="right">
       <div class="card card-pad">
-        <div class="pv-head"><h2 style="margin:0">Preview</h2><span class="tag">Title screen</span></div>
+        <div class="pv-head">
+          <h2>Live preview</h2>
+          <div class="screens" id="screens">
+            <button data-sc="title" class="active">Title</button>
+            <button data-sc="question">Question</button>
+            <button data-sc="answer">Answer</button>
+          </div>
+        </div>
         <div class="device">
           <div class="device-bar"><i></i><i></i><i></i></div>
           <div class="stripe" id="pvStripe"></div>
-          <div class="stage" id="pvStage">
-            <img id="pvLogo" alt="" />
-            <h2 class="t1" id="pvT1">TRIVIA</h2>
-            <div class="t2" id="pvT2">NIGHT</div>
-            <div class="chip" id="pvChip">FOOD &amp; DRINK</div>
-          </div>
+          <div class="stage" id="pvStage"></div>
         </div>
       </div>
 
       <div class="card card-pad">
-        <div class="out-label"><label class="lbl">Your version link</label><span class="copied" id="copied">✓ Copied to clipboard</span></div>
-        <div class="linkbox">
-          <input type="text" id="hostLink" readonly />
-          <button class="btn copy" id="copyBtn">Copy</button>
-        </div>
+        <div class="out-label"><label class="lbl">Your version link</label><span class="copied" id="copied">✓ Copied</span></div>
+        <div class="linkbox"><input type="text" id="hostLink" readonly /><button class="btn copy" id="copyBtn">Copy</button></div>
         <a class="btn primary block" id="openHost" target="_blank" rel="noopener">Open this version →</a>
         <ol class="steps">
           <li>Open the link on the host computer.</li>
@@ -236,73 +228,79 @@
 <script>
   const $ = id => document.getElementById(id);
   const COLORS = ["primary","accent","deep","light"];
-  const fields = ["title1","title2","logo","base","vname",...COLORS];
-  let bgStyle = "gradient";
-  const darken = (hex,a)=>{const n=parseInt(hex.replace('#',''),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
-    return '#'+[r,g,b].map(x=>Math.round(x*(1-a)).toString(16).padStart(2,'0')).join('')};
-  const lighten = (hex,a)=>{const n=parseInt(hex.replace('#',''),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
-    return '#'+[r,g,b].map(x=>Math.round(x+(255-x)*a).toString(16).padStart(2,'0')).join('')};
-  function downscaleLogo(file,max,cb){
-    const fr=new FileReader();
-    fr.onload=e=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const s=Math.min(1,max/Math.max(w,h));
-      w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const c=document.createElement('canvas');c.width=w;c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);try{cb(c.toDataURL('image/png'))}catch(err){cb(null)}};img.onerror=()=>cb(null);img.src=e.target.result;};
-    fr.onerror=()=>cb(null);fr.readAsDataURL(file);
-  }
+  const inputs = ["title1","title2","logo","base","vname","scat","squestion","sanswer",...COLORS];
+  let bgStyle = "gradient", screen = "title";
+  const darken=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x*(1-a)).toString(16).padStart(2,'0')).join('')};
+  const lighten=(h,a)=>{const n=parseInt(h.replace('#',''),16);return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(x=>Math.round(x+(255-x)*a).toString(16).padStart(2,'0')).join('')};
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function downscaleLogo(file,max,cb){const fr=new FileReader();fr.onload=e=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const s=Math.min(1,max/Math.max(w,h));w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);try{cb(c.toDataURL('image/png'))}catch(err){cb(null)}};img.onerror=()=>cb(null);img.src=e.target.result;};fr.onerror=()=>cb(null);fr.readAsDataURL(file);}
+
   function previewBg(){
     const deep=$("deep").value, img=$("bgimg").value.trim();
-    if(bgStyle==="image" && img) return `linear-gradient(rgba(6,10,31,.55),rgba(6,10,31,.68)), url("${img}") center/cover no-repeat`;
+    if(bgStyle==="image"&&img) return `linear-gradient(rgba(6,10,31,.55),rgba(6,10,31,.68)), url("${img}") center/cover no-repeat`;
     if(bgStyle==="solid") return darken(deep,.72);
-    if(bgStyle==="spotlight") return `radial-gradient(600px 400px at 50% -10%, ${lighten(deep,.18)} 0%, ${darken(deep,.45)} 45%, ${darken(deep,.72)} 100%)`;
-    if(bgStyle==="stripes") return `repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 14px, transparent 14px 30px), radial-gradient(600px 380px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
-    return `radial-gradient(600px 380px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+    if(bgStyle==="spotlight") return `radial-gradient(620px 420px at 50% -10%, ${lighten(deep,.18)} 0%, ${darken(deep,.45)} 45%, ${darken(deep,.72)} 100%)`;
+    if(bgStyle==="stripes") return `repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 14px, transparent 14px 30px), radial-gradient(620px 400px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+    return `radial-gradient(620px 400px at 50% -20%, ${deep} 0%, ${darken(deep,.55)} 70%, ${darken(deep,.72)} 100%)`;
+  }
+
+  function logoTag(){ const l=$("logo").value.trim(); return l?`<img class="sc-logo" src="${l}" onerror="this.style.display='none'">`:""; }
+
+  function renderScreen(){
+    const t1=$("title1").value||"TRIVIA", t2=$("title2").value||"", primary=$("primary").value, accent=$("accent").value,
+      deep=$("deep").value, light=$("light").value, cat=esc($("scat").value||"CATEGORY"),
+      q=esc($("squestion").value||"Your question shows here"), a=esc($("sanswer").value||"Answer");
+    const sh1=`3px 3px 0 ${primary},6px 6px 0 #000`, sh2=`2px 2px 0 ${darken(deep,.3)},4px 4px 0 #000`;
+    let html="";
+    if(screen==="title"){
+      html=`<div class="sc">${logoTag()}<div class="sc-t1" style="color:${light};text-shadow:${sh1}">${esc(t1)}</div>${t2?`<div class="sc-t2" style="color:${accent};text-shadow:${sh2}">${esc(t2)}</div>`:""}</div>`;
+    } else if(screen==="question"){
+      html=`<div class="sc" style="justify-content:flex-start;gap:10px">
+        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">QUESTION 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
+        <div class="sc-box" style="background:linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)});border-color:${accent};color:${light}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
+        <div class="sc-howto" style="color:${light}">📝 Just walked in? Grab an answer sheet.</div></div>`;
+    } else {
+      html=`<div class="sc" style="justify-content:flex-start;gap:10px">
+        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">ANSWER 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
+        <div class="sc-box" style="background:linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)});border-color:${accent};color:${light};flex:0 0 auto"><span>${q}</span></div>
+        <div class="sc-ans" style="background:${accent};color:${darken(primary,.1)}">✓ ${a}</div></div>`;
+    }
+    $("pvStage").innerHTML=html;
   }
 
   function buildLink(){
-    const base = $("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"") + "/index.html";
-    const p = new URLSearchParams();
-    if($("title1").value) p.set("title1",$("title1").value);
-    if($("title2").value) p.set("title2",$("title2").value);
+    const base=$("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"")+"/index.html";
+    const p=new URLSearchParams();
+    if($("title1").value)p.set("title1",$("title1").value);
+    if($("title2").value)p.set("title2",$("title2").value);
     COLORS.forEach(k=>p.set(k,$(k).value.replace('#','')));
-    if($("logo").value.trim()) p.set("logo",$("logo").value.trim());
-    if(bgStyle && bgStyle!=="gradient") p.set("bg",bgStyle);
-    if(bgStyle==="image" && $("bgimg").value.trim()) p.set("bgimg",$("bgimg").value.trim());
-    return base + "?" + p.toString();
+    if($("logo").value.trim())p.set("logo",$("logo").value.trim());
+    if(bgStyle&&bgStyle!=="gradient")p.set("bg",bgStyle);
+    if(bgStyle==="image"&&$("bgimg").value.trim())p.set("bgimg",$("bgimg").value.trim());
+    return base+"?"+p.toString();
   }
 
   function refresh(){
-    const deep=$("deep").value, light=$("light").value, primary=$("primary").value, accent=$("accent").value;
-    COLORS.forEach(k=>{ const h=$("hx"+k); if(h) h.textContent=$(k).value; });
-    $("pvStage").style.background = previewBg();
-    $("pvStripe").innerHTML = `<div style="flex:1;background:${primary}"></div><div style="flex:1;background:${accent}"></div><div style="flex:1;background:${deep}"></div>`;
-    $("pvT1").textContent=$("title1").value||"TRIVIA"; $("pvT1").style.color=light; $("pvT1").style.textShadow=`3px 3px 0 ${primary},6px 6px 0 #000`;
-    $("pvT2").textContent=$("title2").value||""; $("pvT2").style.color=accent; $("pvT2").style.textShadow=`2px 2px 0 ${darken(deep,.3)},4px 4px 0 #000`;
-    $("pvChip").style.background=primary; $("pvChip").style.color=accent;
-    const logo=$("logo").value.trim();
-    if(logo){ $("pvLogo").src=logo; $("pvLogo").style.display="block"; $("pvLogo").onerror=()=>{$("pvLogo").style.display="none"}; }
-    else $("pvLogo").style.display="none";
-    const link=buildLink(); $("hostLink").value=link; $("openHost").href=link;
+    COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
+    $("pvStage").style.background=previewBg();
+    $("pvStripe").innerHTML=`<div style="flex:1;background:${$("primary").value}"></div><div style="flex:1;background:${$("accent").value}"></div><div style="flex:1;background:${$("deep").value}"></div>`;
+    renderScreen();
+    const link=buildLink();$("hostLink").value=link;$("openHost").href=link;
   }
 
-  fields.forEach(id=>{ const e=$(id); if(e) e.addEventListener("input",refresh); });
+  inputs.forEach(id=>{const e=$(id);if(e)e.addEventListener("input",refresh);});
   $("bgimg").addEventListener("input",refresh);
   document.querySelectorAll("#bgSeg button").forEach(b=>b.addEventListener("click",()=>{
-    bgStyle=b.dataset.bg;
-    document.querySelectorAll("#bgSeg button").forEach(x=>x.classList.toggle("active",x===b));
-    $("bgimg").style.display = bgStyle==="image" ? "block" : "none";
-    refresh();
+    bgStyle=b.dataset.bg;document.querySelectorAll("#bgSeg button").forEach(x=>x.classList.toggle("active",x===b));
+    $("bgimg").style.display=bgStyle==="image"?"block":"none";refresh();
   }));
-  $("logoFile").addEventListener("change",e=>{
-    const f=e.target.files&&e.target.files[0]; if(!f) return;
-    downscaleLogo(f,240,d=>{ if(d){ $("logo").value=d; refresh(); } });
-  });
-  $("logoClear").addEventListener("click",()=>{ $("logo").value=""; $("logoFile").value=""; refresh(); });
-  $("copyBtn").addEventListener("click",()=>{
-    $("hostLink").select();
-    navigator.clipboard.writeText($("hostLink").value).then(()=>{
-      $("copied").classList.add("show"); setTimeout(()=>$("copied").classList.remove("show"),2200);
-    });
-  });
+  document.querySelectorAll("#screens button").forEach(b=>b.addEventListener("click",()=>{
+    screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));renderScreen();
+  }));
+  $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
+  $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
+  $("copyBtn").addEventListener("click",()=>{$("hostLink").select();navigator.clipboard.writeText($("hostLink").value).then(()=>{$("copied").classList.add("show");setTimeout(()=>$("copied").classList.remove("show"),2000);});});
   refresh();
 </script>
 </body>
