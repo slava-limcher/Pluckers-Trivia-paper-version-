@@ -1755,15 +1755,24 @@ function brandLogoSrc() {
 // rendered on top of the normal screen. Positions are % of the 1920×1080 stage,
 // text size is in stage px, so it scales with everything else.
 let DESIGN = null;
-function loadDesign() {
+async function loadDesign() {
+  let id;
+  try { id = new URLSearchParams(location.search).get("design"); } catch (e) {}
+  if (!id) return;
+  let d = null;
+  // 1) Cloud first — so custom logos/images travel to any device (links stay short).
   try {
-    const id = new URLSearchParams(location.search).get("design");
-    if (!id) return;
-    const raw = localStorage.getItem("trivia-design-" + id);
-    if (!raw) return;
-    DESIGN = JSON.parse(raw);
-    if (DESIGN && DESIGN.theme) { THEME = Object.assign({}, THEME, DESIGN.theme); applyTheme(THEME); }
+    if (liveConfigured()) {
+      const { data } = await liveClient().from(LIVE_TABLE).select("state").eq("room_code", "dsgn_" + id).maybeSingle();
+      if (data && data.state) { const p = JSON.parse(data.state); d = p.design || p; }
+    }
   } catch (e) {}
+  // 2) Fall back to this browser's saved copy.
+  if (!d) { try { const raw = localStorage.getItem("trivia-design-" + id); if (raw) d = JSON.parse(raw); } catch (e) {} }
+  if (!d) return;
+  DESIGN = d;
+  if (d.theme) { THEME = Object.assign({}, THEME, d.theme); applyTheme(THEME); }
+  render();   // re-render now that the design (theme + elements) is loaded
 }
 function designScreenKey() {
   if (game.state === State.QUESTION) return "question";

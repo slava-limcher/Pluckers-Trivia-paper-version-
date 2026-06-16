@@ -7,13 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Anton&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg1:#eef1f8; --bg2:#e7ebf5; --surface:#ffffff; --ink:#0f1729; --muted:#5b6b86; --faint:#94a0b8;
-    --line:#e4e8f0; --line-strong:#cfd6e4;
-    --accent:#5b5bf0; --accent2:#8b5cf6; --accent-soft:#eef0ff; --ring:rgba(91,91,240,.18);
-    --radius:16px; --shadow-sm:0 1px 2px rgba(15,23,41,.05),0 2px 6px rgba(15,23,41,.06);
-    --shadow-md:0 10px 24px rgba(15,23,41,.08),0 24px 48px rgba(15,23,41,.10);
+    --bg1:#0d1322; --bg2:#070b14; --surface:#141c2f; --ink:#e9eefb; --muted:#9aa7c4; --faint:#6c789a;
+    --line:#222c44; --line-strong:#33405e; --field:#0f1828; --field-line:#2c3a56; --field-hi:#1b2540;
+    --accent:#6d6dfb; --accent2:#9b6bff; --accent-soft:rgba(109,109,251,.16); --ring:rgba(109,109,251,.32);
+    --radius:16px; --shadow-sm:0 1px 2px rgba(0,0,0,.3),0 2px 8px rgba(0,0,0,.35);
+    --shadow-md:0 12px 28px rgba(0,0,0,.45),0 28px 60px rgba(0,0,0,.5);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -21,12 +22,13 @@
     font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink);
     -webkit-font-smoothing:antialiased; line-height:1.45; min-height:100vh;
     background:
-      radial-gradient(900px 500px at 88% -8%, rgba(139,92,246,.10), transparent 60%),
-      radial-gradient(800px 480px at 5% 0%, rgba(91,91,240,.10), transparent 55%),
+      radial-gradient(900px 520px at 88% -8%, rgba(155,107,255,.16), transparent 60%),
+      radial-gradient(820px 500px at 5% 0%, rgba(109,109,251,.16), transparent 55%),
       linear-gradient(180deg, var(--bg1), var(--bg2));
+    background-attachment:fixed;
   }
   /* ---- App bar ---- */
-  .appbar{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  .appbar{background:rgba(14,19,34,.78);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
     padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
   .logo-mark{width:42px;height:42px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:21px;box-shadow:0 6px 16px rgba(91,91,240,.38)}
@@ -156,6 +158,38 @@
   .advanced summary{font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;list-style:none}
   .advanced summary::-webkit-details-marker{display:none}
   .advanced summary::before{content:"⚙ "}
+
+  /* ===== Dark skin (overrides the light defaults of the form controls) ===== */
+  .inp{background:var(--field);color:var(--ink);border-color:var(--field-line)}
+  .inp::placeholder{color:var(--faint)}
+  .swatch{background:var(--field);border-color:var(--field-line)}
+  .swatch:hover{border-color:var(--accent)}
+  .swatch input[type=color]{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+  .seg{background:var(--field);border-color:var(--field-line)}
+  .seg button.active{background:var(--field-hi);color:#fff}
+  .screens{background:var(--field);border-color:var(--field-line)}
+  .screens button.active{background:var(--field-hi);color:#fff}
+  .chip{background:var(--field);border-color:var(--field-line);color:var(--ink)}
+  .chip .dot{box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  .btn.copy{background:var(--field);color:var(--ink);border-color:var(--field-line)}
+  .btn.copy:hover{background:var(--field-hi)}
+  .linkbox{background:#0c1322;border-color:var(--field-line)}
+  .linkbox input{color:#c4d0ea}
+  .props{background:#101829;border-color:var(--field-line)}
+  .props input[type=text]{background:var(--field);color:var(--ink);border-color:var(--field-line)}
+  .props input[type=color]{background:var(--field);border-color:var(--field-line)}
+  .palette{background:#101829;border-color:var(--field-line)}
+  .pal-sel{background:var(--field);color:var(--ink);border-color:var(--field-line)}
+  .preset{background:var(--field);border-color:var(--field-line);color:var(--ink)}
+  .preset .px{background:#26324c;color:#aeb9d6}
+  .preset .px:hover{background:#4a1f24;color:#ff9b9b}
+  .btn.del{background:rgba(239,68,68,.16);color:#ff9b9b;border-color:rgba(239,68,68,.4)}
+  .steps{background:rgba(109,109,251,.13);border-color:rgba(109,109,251,.28)}
+  .steps li{color:#cbcfff}
+  .steps li::before{background:var(--accent)}
+  .pubstatus{font-size:12.5px;font-weight:600;margin:10px 0 4px;min-height:16px}
+  .pubstatus.ok{color:#5fd6a0}
+  .pubstatus.warn{color:#f2c14e}
 </style>
 </head>
 <body>
@@ -290,9 +324,11 @@
       </div>
 
       <div class="card card-pad">
+        <button class="btn primary block" id="publishBtn" style="margin-top:0">🚀 Publish version &amp; get link</button>
+        <div class="pubstatus" id="pubStatus"></div>
         <div class="out-label"><label class="lbl">Your version link</label><span class="copied" id="copied">✓ Copied</span></div>
-        <div class="linkbox"><input type="text" id="hostLink" readonly /><button class="btn copy" id="copyBtn">Copy</button></div>
-        <a class="btn primary block" id="openHost" target="_blank" rel="noopener">Open this version →</a>
+        <div class="linkbox"><input type="text" id="hostLink" readonly placeholder="Click Publish to create your shareable link" /><button class="btn copy" id="copyBtn">Copy</button></div>
+        <a class="btn primary block" id="openHost" target="_blank" rel="noopener" href="#">Open this version →</a>
         <ol class="steps">
           <li>Open the link on the host computer.</li>
           <li>Click <b>📺 Go Live</b> and name the location.</li>
@@ -311,7 +347,36 @@
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim() });
-  function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} }
+  let published = false;
+  function markEdited(){ if(published){ const st=$("pubStatus"); if(st){ st.textContent="✱ Edited — click Publish to update the live link."; st.className="pubstatus warn"; } } }
+  function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} markEdited(); }
+  function updateLink(){ /* link is created on Publish now */ }
+
+  // ---- Cloud publish (saves the design + images to Supabase; link stays short) ----
+  const SUPABASE_URL = "https://yfatjubmmnykwopnuoyk.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
+  let supa = null;
+  function supaClient(){ if(!supa && window.supabase) supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supa; }
+  function versionLink(){
+    const base=$("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"")+"/index.html";
+    return base+"?design="+DESIGN_ID;
+  }
+  function setLink(link){ $("hostLink").value=link; $("openHost").href=link; }
+  async function publish(){
+    saveDesign();
+    const st=$("pubStatus"); const link=versionLink();
+    const c=supaClient();
+    if(!c){ st.textContent="⚠ Cloud unavailable — this link only works on this device."; st.className="pubstatus warn"; published=true; setLink(link); return; }
+    st.textContent="Publishing…"; st.className="pubstatus";
+    try{
+      const { error } = await c.from("sessions").upsert(
+        { room_code:"dsgn_"+DESIGN_ID, state:JSON.stringify({design:{theme:themeObj(), els}}), updated_at:new Date().toISOString() },
+        { onConflict:"room_code" });
+      if(error) throw error;
+      published=true; setLink(link);
+      st.textContent="✓ Published — your link works on any device (logo & images included)."; st.className="pubstatus ok";
+    }catch(e){ published=true; setLink(link); st.textContent="Couldn't reach the cloud: "+(e.message||e)+" — link works on this device."; st.className="pubstatus warn"; }
+  }
 
   // ---- Presets: save/load a full look (theme + placed text & images) ----
   const BUILTIN_PRESETS = [
@@ -474,6 +539,7 @@
     PRESETS.push({name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e))});
     savePresets(); renderPresets();
   });
+  $("publishBtn").addEventListener("click",publish);
   renderPresets();
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
