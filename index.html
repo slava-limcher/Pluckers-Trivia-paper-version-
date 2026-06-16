@@ -1749,6 +1749,44 @@ function brandLogoSrc() {
   return "pluckers-logo.png?v=3";
 }
 
+// ---- Freeform design overlay ----
+// A "design" (made in make.html) is custom text boxes + images placed anywhere on
+// each screen. It's loaded by ?design=<id> from localStorage (same browser) and
+// rendered on top of the normal screen. Positions are % of the 1920×1080 stage,
+// text size is in stage px, so it scales with everything else.
+let DESIGN = null;
+function loadDesign() {
+  try {
+    const id = new URLSearchParams(location.search).get("design");
+    if (!id) return;
+    const raw = localStorage.getItem("trivia-design-" + id);
+    if (!raw) return;
+    DESIGN = JSON.parse(raw);
+    if (DESIGN && DESIGN.theme) { THEME = Object.assign({}, THEME, DESIGN.theme); applyTheme(THEME); }
+  } catch (e) {}
+}
+function designScreenKey() {
+  if (game.state === State.QUESTION) return "question";
+  if (game.state === State.ANSWER) return "answer";
+  if (game.state === State.TITLE) return "title";
+  return String(game.state || "");
+}
+function renderDesignOverlay() {
+  const app = document.getElementById("app");
+  let ov = document.getElementById("designOverlay");
+  const els = (DESIGN && Array.isArray(DESIGN.els)) ? DESIGN.els : [];
+  if (!els.length) { if (ov) ov.remove(); return; }
+  if (!ov) { ov = document.createElement("div"); ov.id = "designOverlay"; app.appendChild(ov); }
+  const sk = designScreenKey();
+  ov.innerHTML = els.filter(e => e.s === "all" || e.s === sk).map(e => {
+    const box = "left:" + e.x + "%;top:" + e.y + "%;width:" + (e.w || 30) + "%;";
+    if (e.t === "img") return '<img class="de-img" src="' + (e.src || "") + '" style="' + box + '" />';
+    const st = box + "color:" + (e.c || "#fff") + ";font-size:" + (e.sz || 40) + "px;font-weight:" +
+      (e.b || 800) + ";text-align:" + (e.a || "center") + ";text-shadow:2px 2px 0 rgba(0,0,0,.5);";
+    return '<div class="de-text" style="' + st + '">' + escapeHtml(e.txt || "") + "</div>";
+  }).join("");
+}
+
 // ---- Scoreboard / leaderboard ----
 // Host enters team names + scores, then PUBLISHES to show a leaderboard on the TVs.
 const TEAMS_KEY = "pluckers-trivia-teams";
@@ -2243,6 +2281,8 @@ function render() {
   if (live.role === "host" && !live.applying) pushState();
   // On TV displays, show/hide the injected instructions + QR per screen.
   updateTvChromeVisibility();
+  // Draw any freeform custom text/image elements on top of this screen.
+  renderDesignOverlay();
 }
 
 // The element that hosts all on-screen UI (the scaled 1920×1080 stage). Overlays
@@ -3743,6 +3783,7 @@ processLogos();            // strip any white box from the header logo
 const _params = new URLSearchParams(location.search);
 const _isTv = _params.has("tv") || _params.has("screen");
 const _room = _params.get("room");
+loadDesign();   // apply a custom freeform design (?design=id) before first render
 if (_params.has("demo")) {
   startDemo();                                   // TV point-of-view preview (no setup)
 } else if (_isTv) {
