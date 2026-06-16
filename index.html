@@ -8,7 +8,7 @@
      (TVs usually don't have Impact, so we ship a web font instead). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=Bebas+Neue&family=Archivo+Black&family=Poppins:wght@600;700;800&family=Montserrat:wght@700;800&family=Bungee&family=Righteous&family=Lobster&family=Pacifico&family=Playfair+Display:wght@700;800;900&family=Rye&family=Press+Start+2P&family=Monoton&family=Permanent+Marker&family=Anton+SC&display=swap" rel="stylesheet">
 <style>
   :root {
     --red: #c8102e;
@@ -60,6 +60,7 @@
   body.bg-image { background: linear-gradient(rgba(6,10,31,.55), rgba(6,10,31,.68)), var(--bg-image, none) center / cover no-repeat fixed; }
   body.bg-stripes::before { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 16px, transparent 16px 34px); }
   body.bg-solid::before, body.bg-spotlight::before, body.bg-image::before { opacity: 0; }
+  body.bg-plain::before { opacity: 0; }   /* hide the diagonal texture for custom background styles */
   /* ---- Freeform design overlay (custom text boxes + images placed per screen) ---- */
   #designOverlay { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
   #designOverlay .de-text { position: absolute; line-height: 1.15; white-space: pre-wrap; word-break: break-word; }
@@ -253,6 +254,7 @@
     filter: drop-shadow(0 18px 32px rgba(0,0,0,.6));
   }
   h1.title {
+    font-family: var(--title-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 130px;
     line-height: .95;
     margin: 0 0 8px;
@@ -1674,8 +1676,9 @@ const DEFAULT_THEME = {
   accent:  "#f4c430",  // highlight   (drives the yellow family)
   deep:    "#1d3a8a",  // background  (drives the blue family + page background)
   light:   "#f7f1e3",  // light text  (drives the cream/ink family)
-  bg:      "gradient", // background style: gradient | solid | spotlight | stripes | image
-  bgimg:   ""          // background image URL (used when bg = image)
+  bg:      "gradient", // background style (gradient/solid/monochrome/duotone/spotlight/stripes/dots/grid/geometric/galaxy/watercolor/vintage/image)
+  bgimg:   "",         // background image URL (used when bg = image)
+  font:    ""          // title font-family CSS (empty = the default Anton stack)
 };
 function loadTheme() {
   try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
@@ -1706,17 +1709,34 @@ function applyTheme(t) {
   s.setProperty("--ink-dim", _darken(t.light, .18));
   s.setProperty("--bg-mid", _darken(t.deep, .58));
   s.setProperty("--bg-bot", _darken(t.deep, .74));
-  // Background style (gradient | solid | spotlight | stripes | image)
+  s.setProperty("--title-font", t.font || '"Anton","Oswald",Impact,sans-serif');
+  // Background style — built by the shared bgBackground() so the game and the
+  // make.html preview always match.
   const b = document.body;
   if (b) {
-    b.classList.remove("bg-gradient", "bg-solid", "bg-spotlight", "bg-stripes", "bg-image");
-    if ((t.bg === "image" || t.bgimg) && t.bgimg) {
-      b.style.setProperty("--bg-image", 'url("' + t.bgimg + '")');
-      b.classList.add("bg-image");
-    } else {
-      b.style.removeProperty("--bg-image");
-      b.classList.add("bg-" + (t.bg && t.bg !== "image" ? t.bg : "gradient"));
-    }
+    const style = t.bg || "gradient";
+    b.style.background = bgBackground(style, t);
+    b.classList.toggle("bg-plain", !(style === "gradient" || style === "stripes"));
+  }
+}
+// Returns the CSS `background` value for a given style using the theme colors.
+function bgBackground(style, t) {
+  const D = t.deep, P = t.primary, A = t.accent;
+  const dark = _darken(D, .34), mid = _darken(D, .58), bot = _darken(D, .74), bright = _lighten(D, .18);
+  switch (style) {
+    case "solid": return D;
+    case "monochrome": return "linear-gradient(180deg, " + _lighten(D, .14) + " 0%, " + D + " 45%, " + _darken(D, .5) + " 100%)";
+    case "duotone": return "linear-gradient(135deg, " + _darken(D, .2) + " 0%, " + _darken(P, .12) + " 100%)";
+    case "spotlight": return "radial-gradient(1100px 720px at 50% -8%, " + bright + " 0%, " + mid + " 42%, " + bot + " 100%)";
+    case "stripes": return "repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 16px, transparent 16px 34px), radial-gradient(1400px 900px at 50% -15%, " + dark + " 0%, " + mid + " 60%, " + bot + " 100%)";
+    case "dots": return "radial-gradient(" + _lighten(D, .13) + " 2px, transparent 2.6px) 0 0 / 30px 30px, " + bot;
+    case "grid": return "linear-gradient(" + _lighten(D, .12) + " 1px, transparent 1px) 0 0/46px 46px, linear-gradient(90deg, " + _lighten(D, .12) + " 1px, transparent 1px) 0 0/46px 46px, " + bot;
+    case "geometric": return "repeating-linear-gradient(135deg, " + _darken(D, .35) + " 0 46px, " + mid + " 46px 92px)";
+    case "galaxy": return "radial-gradient(1.5px 1.5px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 32% 64%,#fff,transparent),radial-gradient(1.5px 1.5px at 54% 18%,#fff,transparent),radial-gradient(1px 1px at 72% 50%,#fff,transparent),radial-gradient(1.5px 1.5px at 86% 78%,#fff,transparent),radial-gradient(1px 1px at 44% 88%,#fff,transparent),radial-gradient(1px 1px at 92% 34%,#fff,transparent),radial-gradient(760px 480px at 72% 22%," + P + "44,transparent 70%),radial-gradient(820px 540px at 22% 74%," + A + "33,transparent 70%)," + _darken(D, .82);
+    case "watercolor": return "radial-gradient(540px 440px at 24% 30%," + P + "55,transparent 62%),radial-gradient(540px 450px at 76% 66%," + A + "55,transparent 62%),radial-gradient(500px 410px at 60% 20%," + D + "55,transparent 62%)," + _lighten(D, .42);
+    case "vintage": return "radial-gradient(1200px 820px at 50% 38%, " + _darken(A, .42) + " 0%, " + _darken(D, .5) + " 60%, " + bot + " 100%)";
+    case "image": return t.bgimg ? 'linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)), url("' + t.bgimg + '") center/cover no-repeat fixed' : bot;
+    default: return "radial-gradient(1400px 900px at 50% -15%, " + dark + " 0%, " + mid + " 60%, " + bot + " 100%)";
   }
 }
 applyTheme(THEME);
@@ -1731,7 +1751,7 @@ applyTheme(THEME);
     const COLORS = ["primary", "accent", "deep", "light"];
     let touched = false;
     // p.get() already URL-decodes, so no extra decodeURIComponent (keeps data-URL logos intact).
-    ["title1", "title2", "logo", "bg", "bgimg", ...COLORS].forEach(k => {
+    ["title1", "title2", "logo", "bg", "bgimg", "font", ...COLORS].forEach(k => {
       let v = p.get(k);
       if (v == null || v === "") return;
       if (COLORS.includes(k) && v[0] !== "#") v = "#" + v;
@@ -1791,7 +1811,8 @@ function renderDesignOverlay() {
     const box = "left:" + e.x + "%;top:" + e.y + "%;width:" + (e.w || 30) + "%;";
     if (e.t === "img") return '<img class="de-img" src="' + (e.src || "") + '" style="' + box + '" />';
     const st = box + "color:" + (e.c || "#fff") + ";font-size:" + (e.sz || 40) + "px;font-weight:" +
-      (e.b || 800) + ";text-align:" + (e.a || "center") + ";text-shadow:2px 2px 0 rgba(0,0,0,.5);";
+      (e.b || 800) + ";text-align:" + (e.a || "center") + ";text-shadow:2px 2px 0 rgba(0,0,0,.5);" +
+      (e.font ? "font-family:" + e.font + ";" : "");
     return '<div class="de-text" style="' + st + '">' + escapeHtml(e.txt || "") + "</div>";
   }).join("");
 }
