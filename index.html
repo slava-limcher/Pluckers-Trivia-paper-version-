@@ -1696,6 +1696,27 @@ function applyTheme(t) {
 }
 applyTheme(THEME);
 
+// A "version" link can carry its whole brand in the URL (made by make.html):
+//   ?title1=BAR&title2=QUIZ&primary=6b21a8&accent=ff8a00&deep=241036&light=fff7ed&logo=https://…
+// When present, those override the saved theme so the link reproduces the brand
+// on any device. (No params = the default theme — nothing changes.)
+(function applyUrlTheme() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const COLORS = ["primary", "accent", "deep", "light"];
+    let touched = false;
+    ["title1", "title2", "logo", ...COLORS].forEach(k => {
+      let v = p.get(k);
+      if (v == null || v === "") return;
+      if (COLORS.includes(k)) v = (v[0] === "#") ? v : "#" + v;
+      else v = decodeURIComponent(v);
+      THEME[k] = v;
+      touched = true;
+    });
+    if (touched) applyTheme(THEME);
+  } catch (e) {}
+})();
+
 // Where the brand logo image comes from (custom data URL, built-in, or none).
 function brandLogoSrc() {
   if (THEME.logo === "none") return "";
