@@ -575,8 +575,8 @@
     font-size: 104px;
     line-height: 1.16;
     color: var(--cream);
-    background: linear-gradient(180deg, var(--blue-dark), #0a1234);
-    border: 5px solid var(--yellow);
+    background: var(--qbox-bg, linear-gradient(180deg, var(--blue-dark), #0a1234));
+    border: 5px solid var(--qbox-border, var(--yellow));
     border-radius: 22px;
     padding: 40px 50px;
     box-shadow: var(--shadow);
@@ -1397,8 +1397,8 @@
     font-size: 56px;
     line-height: 1.18;
     color: var(--cream);
-    background: linear-gradient(180deg, var(--blue-dark), #0a1234);
-    border: 5px solid var(--yellow);
+    background: var(--qbox-bg, linear-gradient(180deg, var(--blue-dark), #0a1234));
+    border: 5px solid var(--qbox-border, var(--yellow));
     border-radius: 22px;
     padding: 26px 40px;
     letter-spacing: 1px;
@@ -1678,7 +1678,9 @@ const DEFAULT_THEME = {
   light:   "#f7f1e3",  // light text  (drives the cream/ink family)
   bg:      "gradient", // background style (gradient/solid/monochrome/duotone/spotlight/stripes/dots/grid/geometric/galaxy/watercolor/vintage/image)
   bgimg:   "",         // background image URL (used when bg = image)
-  font:    ""          // title font-family CSS (empty = the default Anton stack)
+  font:    "",         // title font-family CSS (empty = the default Anton stack)
+  boxBg:   "",         // question box fill color (empty = derive from background)
+  boxBorder: ""        // question box border color (empty = accent)
 };
 function loadTheme() {
   try { const raw = localStorage.getItem(THEME_KEY); if (raw) return Object.assign({}, DEFAULT_THEME, JSON.parse(raw)); } catch (e) {}
@@ -1710,6 +1712,11 @@ function applyTheme(t) {
   s.setProperty("--bg-mid", _darken(t.deep, .58));
   s.setProperty("--bg-bot", _darken(t.deep, .74));
   s.setProperty("--title-font", t.font || '"Anton","Oswald",Impact,sans-serif');
+  // Question-box fill + border (empty = derive from the background / accent).
+  s.setProperty("--qbox-bg", t.boxBg
+    ? "linear-gradient(180deg, " + t.boxBg + ", " + _darken(t.boxBg, .32) + ")"
+    : "linear-gradient(180deg, " + _darken(t.deep, .34) + ", " + _darken(t.deep, .62) + ")");
+  s.setProperty("--qbox-border", t.boxBorder || t.accent);
   // Background style — built by the shared bgBackground() so the game and the
   // make.html preview always match.
   const b = document.body;
@@ -1751,7 +1758,7 @@ applyTheme(THEME);
     const COLORS = ["primary", "accent", "deep", "light"];
     let touched = false;
     // p.get() already URL-decodes, so no extra decodeURIComponent (keeps data-URL logos intact).
-    ["title1", "title2", "logo", "bg", "bgimg", "font", ...COLORS].forEach(k => {
+    ["title1", "title2", "logo", "bg", "bgimg", "font", "boxBg", "boxBorder", ...COLORS].forEach(k => {
       let v = p.get(k);
       if (v == null || v === "") return;
       if (COLORS.includes(k) && v[0] !== "#") v = "#" + v;

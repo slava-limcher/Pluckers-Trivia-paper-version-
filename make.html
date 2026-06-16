@@ -263,6 +263,14 @@
             <button class="btn copy" type="button" id="palAdd">＋ Add</button>
           </div>
         </div>
+        <div class="group" style="margin-top:16px">
+          <label class="lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="boxCustom">Custom question-box colors</label>
+          <div id="boxColors" class="swatches" style="display:none;margin-top:8px">
+            <label class="swatch"><input type="color" id="boxBg" value="#142764"><span><div class="sw-name">Box fill</div><div class="sw-hex" id="hxboxBg">#142764</div></span></label>
+            <label class="swatch"><input type="color" id="boxBorder" value="#f4c430"><span><div class="sw-name">Box border</div><div class="sw-hex" id="hxboxBorder">#f4c430</div></span></label>
+          </div>
+          <p class="help">Off = the box matches your theme automatically. On = pick its own fill &amp; border.</p>
+        </div>
       </div>
 
       <div class="sec">
@@ -378,7 +386,8 @@
   let els = [], selId = null;
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
-  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:"") });
+  const boxOn = () => $("boxCustom") && $("boxCustom").checked;
+  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:"") });
   let published = false;
   function markEdited(){ if(published){ const st=$("pubStatus"); if(st){ st.textContent="✱ Edited — click Publish to update the live link."; st.className="pubstatus warn"; } } }
   function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els})); }catch(e){} markEdited(); }
@@ -426,6 +435,11 @@
     if($("bgSel")) $("bgSel").value=bgStyle;
     $("bgimg").value=t.bgimg||""; if($("bgImgWrap")) $("bgImgWrap").style.display=bgStyle==="image"?"block":"none";
     if($("titleFont")) $("titleFont").value=t.font||"";
+    if($("boxCustom")){
+      const has=!!(t.boxBg||t.boxBorder);
+      $("boxCustom").checked=has; $("boxColors").style.display=has?"grid":"none";
+      if(t.boxBg) $("boxBg").value=t.boxBg; if(t.boxBorder) $("boxBorder").value=t.boxBorder;
+    }
   }
   function applyPreset(p){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); selId=null; refresh(); renderProps(); }
   function renderPresets(){
@@ -486,18 +500,21 @@
       q=esc($("squestion").value||"Your question shows here"), a=esc($("sanswer").value||"Answer");
     const sh1=`3px 3px 0 ${primary},6px 6px 0 #000`, sh2=`2px 2px 0 ${darken(deep,.3)},4px 4px 0 #000`;
     const tf=($("titleFont")&&$("titleFont").value)?`font-family:${$("titleFont").value};`:"";
+    const bxOn=boxOn();
+    const boxFill=bxOn?`linear-gradient(180deg,${$("boxBg").value},${darken($("boxBg").value,.32)})`:`linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)})`;
+    const boxBorder=bxOn?$("boxBorder").value:accent;
     let html="";
     if(screen==="title"){
       html=`<div class="sc">${logoTag()}<div class="sc-t1" style="${tf}color:${light};text-shadow:${sh1}">${esc(t1)}</div>${t2?`<div class="sc-t2" style="${tf}color:${accent};text-shadow:${sh2}">${esc(t2)}</div>`:""}</div>`;
     } else if(screen==="question"){
       html=`<div class="sc" style="justify-content:flex-start;gap:10px">
         <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">QUESTION 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
-        <div class="sc-box" style="background:linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)});border-color:${accent};color:${light}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
+        <div class="sc-box" style="background:${boxFill};border-color:${boxBorder};color:${light}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
         <div class="sc-howto" style="color:${light}">📝 Just walked in? Grab an answer sheet.</div></div>`;
     } else {
       html=`<div class="sc" style="justify-content:flex-start;gap:10px">
         <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent}">ANSWER 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent}">${cat}</span></div>
-        <div class="sc-box" style="background:linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)});border-color:${accent};color:${light};flex:0 0 auto"><span>${q}</span></div>
+        <div class="sc-box" style="background:${boxFill};border-color:${boxBorder};color:${light};flex:0 0 auto"><span>${q}</span></div>
         <div class="sc-ans" style="background:${accent};color:${darken(primary,.1)}">✓ ${a}</div></div>`;
     }
     $("pvScreen").innerHTML=html;
@@ -572,6 +589,7 @@
 
   function refresh(){
     COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
+    ["boxBg","boxBorder"].forEach(k=>{const h=$("hx"+k);if(h&&$(k))h.textContent=$(k).value;});
     $("pvStage").style.background=previewBg();
     $("pvStripe").innerHTML=`<div style="flex:1;background:${$("primary").value}"></div><div style="flex:1;background:${$("accent").value}"></div><div style="flex:1;background:${$("deep").value}"></div>`;
     renderScreen();
@@ -586,6 +604,9 @@
   $("bgImgFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,1280,d=>{if(d){$("bgimg").value=d;refresh();}});});
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
+  $("boxCustom").addEventListener("change",()=>{ $("boxColors").style.display=$("boxCustom").checked?"grid":"none"; refresh(); });
+  $("boxBg").addEventListener("input",refresh);
+  $("boxBorder").addEventListener("input",refresh);
   $("randomBtn").addEventListener("click",()=>{
     const styles=["gradient","solid","monochrome","duotone","dots","grid","geometric","stripes","watercolor","spotlight","galaxy","vintage"];
     bgStyle=styles[Math.floor(Math.random()*styles.length)];
