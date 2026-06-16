@@ -1759,6 +1759,12 @@ function bgBackground(style, t) {
     case "galaxy": return "radial-gradient(1.5px 1.5px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 32% 64%,#fff,transparent),radial-gradient(1.5px 1.5px at 54% 18%,#fff,transparent),radial-gradient(1px 1px at 72% 50%,#fff,transparent),radial-gradient(1.5px 1.5px at 86% 78%,#fff,transparent),radial-gradient(1px 1px at 44% 88%,#fff,transparent),radial-gradient(1px 1px at 92% 34%,#fff,transparent),radial-gradient(760px 480px at 72% 22%," + P + "44,transparent 70%),radial-gradient(820px 540px at 22% 74%," + A + "33,transparent 70%)," + _darken(D, .82);
     case "watercolor": return "radial-gradient(540px 440px at 24% 30%," + P + "55,transparent 62%),radial-gradient(540px 450px at 76% 66%," + A + "55,transparent 62%),radial-gradient(500px 410px at 60% 20%," + D + "55,transparent 62%)," + _lighten(D, .42);
     case "vintage": return "radial-gradient(1200px 820px at 50% 38%, " + _darken(A, .42) + " 0%, " + _darken(D, .5) + " 60%, " + bot + " 100%)";
+    case "neon": return "radial-gradient(42% 50% at 32% 44%, " + P + "66, transparent 70%)," +
+      "radial-gradient(46% 56% at 67% 56%, " + A + "59, transparent 72%)," +
+      "radial-gradient(34% 34% at 50% 50%, " + A + "22, transparent 70%)," +
+      "repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 40px)," +
+      "repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 84px)," +
+      _darken(D, .66);
     case "image": return t.bgimg ? 'linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)), url("' + t.bgimg + '") center/cover no-repeat fixed' : bot;
     default: return "radial-gradient(1400px 900px at 50% -15%, " + dark + " 0%, " + mid + " 60%, " + bot + " 100%)";
   }
@@ -2337,6 +2343,27 @@ function render() {
   updateTvChromeVisibility();
   // Draw any freeform custom text/image elements on top of this screen.
   renderDesignOverlay();
+  // Apply any custom positions the host dragged for the built-in elements.
+  applyBuiltinSlots();
+}
+// When a design has "slots" for a screen, the built-in elements (badge, category,
+// question box, howto) are positioned freely (% of the 1920×1080 stage) instead of
+// the default layout. position:fixed resolves to #app (it has a transform), so % =
+// stage %, matching the editor.
+function applyBuiltinSlots() {
+  if (!DESIGN || !DESIGN.slots) return;
+  const sl = DESIGN.slots[designScreenKey()];
+  if (!sl) return;
+  const map = { badge: ".q-badge", category: ".q-category", box: ".q-text", howto: ".q-howto" };
+  Object.keys(map).forEach(name => {
+    const el = document.querySelector(map[name]); const s = sl[name];
+    if (!el || !s) return;
+    el.style.position = "fixed";
+    el.style.left = s.x + "%"; el.style.top = s.y + "%";
+    el.style.margin = "0"; el.style.flex = "none";
+    if (s.w != null) el.style.width = s.w + "%";
+    if (s.h != null) el.style.height = s.h + "%";
+  });
 }
 
 // The element that hosts all on-screen UI (the scaled 1920×1080 stage). Overlays
