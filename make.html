@@ -565,6 +565,18 @@
     }
     $("pvScreen").innerHTML=html;
     positionBuiltins();
+    fitPreviewBox();
+    requestAnimationFrame(fitPreviewBox);   // re-fit once layout/fonts settle
+  }
+  // Auto-size the question/answer text to fill its box — mirrors the game's
+  // fitQuestion(), so the preview (and fullscreen) match the real game.
+  function fitPreviewBox(){
+    const box=$("pvScreen")&&$("pvScreen").querySelector(".sc-box"); if(!box) return;
+    box.style.whiteSpace="normal";
+    const fits=f=>{ box.style.fontSize=f+"px"; return box.scrollWidth<=box.clientWidth+1 && box.scrollHeight<=box.clientHeight+1; };
+    let lo=10,hi=220,best=10;
+    for(let i=0;i<18;i++){ const mid=(lo+hi)/2; if(fits(mid)){best=mid;lo=mid;}else hi=mid; }
+    box.style.fontSize=best+"px";
   }
   // When "Move built-in items" is on for this screen, position the built-in mock
   // elements freely (% of the canvas) and make them mouse-draggable.
