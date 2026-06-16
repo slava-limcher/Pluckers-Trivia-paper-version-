@@ -2354,7 +2354,7 @@ function applyBuiltinSlots() {
   if (!DESIGN || !DESIGN.slots) return;
   const sl = DESIGN.slots[designScreenKey()];
   if (!sl) return;
-  const map = { badge: ".q-badge", category: ".q-category", box: ".q-text", howto: ".q-howto" };
+  const map = { badge: ".q-badge", category: ".q-category", box: ".q-text", howto: ".q-howto", num: ".q-text .q-num, .ans-q .q-num" };
   Object.keys(map).forEach(name => {
     const el = document.querySelector(map[name]); const s = sl[name];
     if (!el || !s) return;

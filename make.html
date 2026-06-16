@@ -417,8 +417,8 @@
   let bgStyle = "gradient", screen = "title";
   let els = [], selId = null, slots = {};
   const SLOT_DEFAULTS = {
-    question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:19,w:97,h:60}, howto:{x:15,y:88} },
-    answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:17,w:97,h:42} },
+    question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:19,w:97,h:60}, num:{x:4,y:44}, howto:{x:15,y:88} },
+    answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:17,w:97,h:42}, num:{x:4,y:38} },
     title:{}
   };
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
@@ -570,10 +570,11 @@
   // elements freely (% of the canvas) and make them mouse-draggable.
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
-    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", howto:".sc-howto" };
+    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", num:".sc-num", howto:".sc-howto" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;
+      if(name==="num") $("pvScreen").appendChild(el);   // pull the number out of the box so it positions against the stage
       el.style.position="absolute"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
       if(s.w!=null) el.style.width=s.w+"%";
