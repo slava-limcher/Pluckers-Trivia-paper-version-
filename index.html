@@ -60,6 +60,10 @@
   body.bg-image { background: linear-gradient(rgba(6,10,31,.55), rgba(6,10,31,.68)), var(--bg-image, none) center / cover no-repeat fixed; }
   body.bg-stripes::before { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 16px, transparent 16px 34px); }
   body.bg-solid::before, body.bg-spotlight::before, body.bg-image::before { opacity: 0; }
+  /* ---- Freeform design overlay (custom text boxes + images placed per screen) ---- */
+  #designOverlay { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
+  #designOverlay .de-text { position: absolute; line-height: 1.15; white-space: pre-wrap; word-break: break-word; }
+  #designOverlay .de-img { position: absolute; height: auto; display: block; }
   /* The whole UI is laid out on a fixed 1920×1080 "stage" and scaled uniformly to
      fit any screen (1080p TV = 1×, 720p TV = 0.667×, laptops = proportional).
      This keeps every element in the exact same place at every resolution, so
