@@ -373,7 +373,7 @@
       d.addEventListener("pointermove",mv); d.addEventListener("pointerup",up);
     });
   }
-  function select(id){ selId=id; renderDesign(); renderProps(); }
+  function select(id){ selId=id; $("pvDesign").querySelectorAll(".de-el").forEach(n=>n.classList.toggle("sel", n.dataset.id===id)); renderProps(); }
   function updateLink(){ const link=buildLink(); $("hostLink").value=link; $("openHost").href=link; }
   function renderProps(){
     const box=$("props"); const e=els.find(x=>x.id===selId);
@@ -399,8 +399,8 @@
     box.querySelectorAll("#elScreen button").forEach(b=>b.addEventListener("click",()=>{e.s=b.dataset.s;renderProps();renderDesign();saveDesign();updateLink();}));
     on("elDel","click",()=>{els=els.filter(x=>x.id!==e.id);selId=null;renderDesign();renderProps();saveDesign();updateLink();});
   }
-  function addText(){ const e={id:newId(),t:"text",s:screen,x:33,y:42,w:34,txt:"New text",c:$("light").value,sz:54,b:800,a:"center"}; els.push(e); select(e.id); saveDesign(); updateLink(); }
-  function addImage(file){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:36,y:34,w:26,src:d}; els.push(e); select(e.id); saveDesign(); updateLink(); }); }
+  function addText(){ const e={id:newId(),t:"text",s:screen,x:33,y:42,w:34,txt:"New text",c:$("light").value,sz:54,b:800,a:"center"}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }
+  function addImage(file){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:36,y:34,w:26,src:d}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }); }
 
   function refresh(){
     COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
