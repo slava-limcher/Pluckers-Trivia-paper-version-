@@ -114,6 +114,7 @@
   .de-el{position:absolute;cursor:move;touch-action:none}
   .de-el.sel{outline:2px dashed #fff;outline-offset:3px;box-shadow:0 0 0 4px rgba(91,91,240,.5)}
   .de-el .de-text2{line-height:1.15;white-space:pre-wrap;word-break:break-word}
+  .rz-handle{position:absolute;right:-7px;bottom:-7px;width:15px;height:15px;background:#6d6dfb;border:2px solid #fff;border-radius:3px;cursor:nwse-resize;z-index:8;box-shadow:0 1px 3px rgba(0,0,0,.4)}
   .de-el img{display:block;width:100%;height:auto;pointer-events:none}
   /* editor toolbar + properties */
   .editbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
@@ -591,8 +592,31 @@
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
       if(s.w!=null) el.style.width=s.w+"%";
       if(s.h!=null) el.style.height=s.h+"%";
+      if(name!=="box" && s.s!=null){ el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left"; }
       el.style.outline="1px dashed rgba(255,255,255,.35)"; el.style.outlineOffset="3px";
       attachBuiltinDrag(el,s);
+      const h=document.createElement("div"); h.className="rz-handle"; el.appendChild(h);
+      attachResize(h,el,name,s);
+    });
+  }
+  function attachResize(handle,el,name,s){
+    handle.addEventListener("pointerdown",ev=>{
+      ev.preventDefault(); ev.stopPropagation();
+      const rect=$("pvStage").getBoundingClientRect();
+      const sx=ev.clientX, sy=ev.clientY, startW=s.w, startH=s.h, startS=s.s||1;
+      try{handle.setPointerCapture(ev.pointerId);}catch(_){}
+      const mv=m=>{
+        if(name==="box"){
+          s.w=Math.max(15,Math.min(100, startW+(m.clientX-sx)/rect.width*100));
+          s.h=Math.max(10,Math.min(95, startH+(m.clientY-sy)/rect.height*100));
+          el.style.width=s.w+"%"; el.style.height=s.h+"%"; fitPreviewBox();
+        } else {
+          s.s=Math.max(0.3, Math.min(4, startS+(m.clientX-sx)/150));
+          el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left";
+        }
+      };
+      const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); };
+      handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
     });
   }
   function attachBuiltinDrag(el,s){

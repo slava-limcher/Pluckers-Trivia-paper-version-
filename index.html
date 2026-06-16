@@ -2363,6 +2363,7 @@ function applyBuiltinSlots() {
     el.style.margin = "0"; el.style.flex = "none";
     if (s.w != null) el.style.width = s.w + "%";
     if (s.h != null) el.style.height = s.h + "%";
+    if (s.s != null && name !== "box") { el.style.transform = "scale(" + s.s + ")"; el.style.transformOrigin = "top left"; }
   });
 }
 
