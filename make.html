@@ -634,8 +634,9 @@
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); if(!el) return;
       const r=el.getBoundingClientRect();
-      const s={ x:+(((r.left-st.left)/st.width)*100).toFixed(2), y:+(((r.top-st.top)/st.height)*100).toFixed(2) };
-      if(name==="box"){ s.w=+((r.width/st.width)*100).toFixed(2); s.h=+((r.height/st.height)*100).toFixed(2); s.fs=parseFloat(getComputedStyle(el).fontSize); }
+      const s={ x:+(((r.left-st.left)/st.width)*100).toFixed(2), y:+(((r.top-st.top)/st.height)*100).toFixed(2),
+        w:+((r.width/st.width)*100).toFixed(2), h:+((r.height/st.height)*100).toFixed(2) };
+      if(name==="box") s.fs=parseFloat(getComputedStyle(el).fontSize);
       out[name]=s;
     });
     return out;
