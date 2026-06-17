@@ -625,13 +625,29 @@
   }
   // When "Move built-in items" is on for this screen, position the built-in mock
   // elements freely (% of the canvas) and make them mouse-draggable.
+  // Measure where the built-in items currently sit (default layout) and return
+  // them as slots — so turning on "Move built-in items" changes NOTHING, it just
+  // makes the current layout draggable.
+  function captureSlots(){
+    const st=$("pvStage").getBoundingClientRect();
+    const map={badge:".sc-badge",category:".sc-cat",box:".sc-box",num:".sc-num",howto:".sc-howto",answer:".sc-ans"};
+    const out={};
+    Object.keys(map).forEach(name=>{
+      const el=$("pvScreen").querySelector(map[name]); if(!el) return;
+      const r=el.getBoundingClientRect();
+      const s={ x:+(((r.left-st.left)/st.width)*100).toFixed(2), y:+(((r.top-st.top)/st.height)*100).toFixed(2) };
+      if(name==="box"){ s.w=+((r.width/st.width)*100).toFixed(2); s.h=+((r.height/st.height)*100).toFixed(2); }
+      out[name]=s;
+    });
+    return out;
+  }
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
     const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", num:".sc-num", howto:".sc-howto", answer:".sc-ans" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;
-      if(name==="num") $("pvScreen").appendChild(el);   // pull the number out of the box so it positions against the stage
+      if(name==="num"){ const fs=getComputedStyle(el).fontSize; $("pvScreen").appendChild(el); el.style.fontSize=fs; }   // pull the number out of the box (keep its rendered size)
       el.style.position="absolute"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
       if(s.w!=null) el.style.width=s.w+"%";
@@ -784,7 +800,7 @@
   function syncFreeBtn(){ const b=$("freeLayout"); if(b) b.classList.toggle("active", !!slots[screen]); }
   $("freeLayout").addEventListener("click",()=>{
     if(slots[screen]) delete slots[screen];
-    else slots[screen]=JSON.parse(JSON.stringify(SLOT_DEFAULTS[screen]||{}));
+    else slots[screen]=captureSlots();   // keep everything exactly where it is, just make it draggable
     syncFreeBtn(); refresh(); saveDesign();
   });
   $("addText").addEventListener("click",addText);
