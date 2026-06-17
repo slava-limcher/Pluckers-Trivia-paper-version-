@@ -486,11 +486,13 @@
   // Both modes use a short cloud link (?design=id) so an uploaded logo / bg image
   // never bloats the URL (which caused HTTP 431). If the cloud is unreachable, the
   // PHONE mode falls back to a logo-free param link; PAPER falls back to the local id.
-  function versionLink(){ return baseUrl()+"?design="+DESIGN_ID; }
+  // Phone links also carry the id in the hash (#design=) so the brand survives local
+  // servers that strip the query string on clean-URL redirects.
+  function versionLink(){ const u=baseUrl()+"?design="+DESIGN_ID; return gameMode==="phone" ? u+"#design="+DESIGN_ID : u; }
   function setLink(link){ $("hostLink").value=link; $("openHost").href=link; }
   async function publish(){
     saveDesign();
-    const st=$("pubStatus"); const base=baseUrl(); const designLink=base+"?design="+DESIGN_ID;
+    const st=$("pubStatus"); const base=baseUrl(); const designLink=base+"?design="+DESIGN_ID+(gameMode==="phone"?"#design="+DESIGN_ID:"");
     const c=supaClient();
     if(!c){
       published=true;
