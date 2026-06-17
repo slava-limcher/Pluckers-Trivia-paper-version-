@@ -114,7 +114,16 @@
   .de-el{position:absolute;cursor:move;touch-action:none}
   .de-el.sel{outline:2px dashed #fff;outline-offset:3px;box-shadow:0 0 0 4px rgba(91,91,240,.5)}
   .de-el .de-text2{line-height:1.15;white-space:pre-wrap;word-break:break-word}
-  .rz-handle{position:absolute;right:-7px;bottom:-7px;width:15px;height:15px;background:#6d6dfb;border:2px solid #fff;border-radius:3px;cursor:nwse-resize;z-index:8;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .rz-handle,.rz-h{position:absolute;width:14px;height:14px;background:#6d6dfb;border:2px solid #fff;border-radius:3px;z-index:8;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .rz-handle{right:-7px;bottom:-7px;cursor:nwse-resize}
+  .rz-h.n{top:-7px;left:50%;margin-left:-7px;cursor:ns-resize}
+  .rz-h.s{bottom:-7px;left:50%;margin-left:-7px;cursor:ns-resize}
+  .rz-h.e{right:-7px;top:50%;margin-top:-7px;cursor:ew-resize}
+  .rz-h.w{left:-7px;top:50%;margin-top:-7px;cursor:ew-resize}
+  .rz-h.ne{top:-7px;right:-7px;cursor:nesw-resize}
+  .rz-h.nw{top:-7px;left:-7px;cursor:nwse-resize}
+  .rz-h.se{bottom:-7px;right:-7px;cursor:nwse-resize}
+  .rz-h.sw{bottom:-7px;left:-7px;cursor:nesw-resize}
   .de-el img{display:block;width:100%;height:auto;pointer-events:none}
   /* editor toolbar + properties */
   .editbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
@@ -655,29 +664,38 @@
       if(name!=="box" && s.s!=null){ el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left"; }
       el.style.outline="1px dashed rgba(255,255,255,.35)"; el.style.outlineOffset="3px";
       attachBuiltinDrag(el,s);
-      const h=document.createElement("div"); h.className="rz-handle"; el.appendChild(h);
-      attachResize(h,el,name,s);
+      addHandles(el,(ev,dirX,dirY,handle)=>resizeBuiltin(ev,dirX,dirY,handle,el,name,s));
     });
   }
-  function attachResize(handle,el,name,s){
-    handle.addEventListener("pointerdown",ev=>{
-      ev.preventDefault(); ev.stopPropagation();
-      const rect=$("pvStage").getBoundingClientRect();
-      const sx=ev.clientX, sy=ev.clientY, startW=s.w, startH=s.h, startS=s.s||1;
-      try{handle.setPointerCapture(ev.pointerId);}catch(_){}
-      const mv=m=>{
-        if(name==="box"){
-          s.w=Math.max(15,Math.min(100, startW+(m.clientX-sx)/rect.width*100));
-          s.h=Math.max(10,Math.min(95, startH+(m.clientY-sy)/rect.height*100));
-          el.style.width=s.w+"%"; el.style.height=s.h+"%"; fitPreviewBox(); s.fs=parseFloat(getComputedStyle(el).fontSize);
-        } else {
-          s.s=Math.max(0.3, Math.min(4, startS+(m.clientX-sx)/150));
-          el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left";
-        }
-      };
-      const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); };
-      handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
+  // 8 directional handles (4 edges + 4 corners). dirX:-1=west,1=east; dirY:-1=north,1=south.
+  const RZ_DIRS=[["n",0,-1],["s",0,1],["e",1,0],["w",-1,0],["ne",1,-1],["nw",-1,-1],["se",1,1],["sw",-1,1]];
+  function addHandles(target,onStart){
+    RZ_DIRS.forEach(d=>{
+      const h=document.createElement("div"); h.className="rz-h "+d[0]; target.appendChild(h);
+      h.addEventListener("pointerdown",ev=>{ ev.preventDefault(); ev.stopPropagation(); onStart(ev,d[1],d[2],h); });
     });
+  }
+  function resizeBuiltin(ev,dirX,dirY,handle,el,name,s){
+    const rect=$("pvStage").getBoundingClientRect();
+    const sx=ev.clientX, sy=ev.clientY, startW=s.w, startH=s.h, startX=s.x, startY=s.y, startS=s.s||1;
+    try{handle.setPointerCapture(ev.pointerId);}catch(_){}
+    const mv=m=>{
+      const dxP=(m.clientX-sx)/rect.width*100, dyP=(m.clientY-sy)/rect.height*100;
+      if(name==="box"){
+        if(dirX===1) s.w=Math.max(15,Math.min(100,startW+dxP));
+        else if(dirX===-1){ const nw=Math.max(15,Math.min(100,startW-dxP)); s.x=Math.max(0,startX+(startW-nw)); s.w=nw; }
+        if(dirY===1) s.h=Math.max(10,Math.min(95,startH+dyP));
+        else if(dirY===-1){ const nh=Math.max(10,Math.min(95,startH-dyP)); s.y=Math.max(0,startY+(startH-nh)); s.h=nh; }
+        el.style.left=s.x+"%"; el.style.top=s.y+"%"; el.style.width=s.w+"%"; el.style.height=s.h+"%";
+        fitPreviewBox(); s.fs=parseFloat(getComputedStyle(el).fontSize);
+      } else {
+        const out=(dirX*(m.clientX-sx)+dirY*(m.clientY-sy))/150;
+        s.s=Math.max(0.3,Math.min(4,startS+out));
+        el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left";
+      }
+    };
+    const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); };
+    handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
   }
   function attachBuiltinDrag(el,s){
     el.addEventListener("pointerdown",ev=>{
@@ -715,29 +733,38 @@
       if(e.t==="img"){ const im=document.createElement("img"); im.src=e.src; d.appendChild(im); }
       else { const tx=document.createElement("div"); tx.className="de-text2"; tx.textContent=e.txt||""; tx.style.color=e.c; tx.style.fontSize=(e.sz*scale)+"px"; tx.style.fontWeight=e.b; tx.style.textAlign=e.a; tx.style.textShadow="2px 2px 0 rgba(0,0,0,.5)"; if(e.font) tx.style.fontFamily=e.font; d.appendChild(tx); }
       attachDrag(d,e);
-      const h=document.createElement("div"); h.className="rz-handle"; d.appendChild(h); attachElResize(h,d,e);
+      addHandles(d,(ev,dirX,dirY,handle)=>resizeEl(ev,dirX,dirY,handle,d,e));
       wrap.appendChild(d);
     });
   }
-  // Drag the corner handle to resize a freeform element (text → font size, image → width).
-  function attachElResize(handle,d,e){
-    handle.addEventListener("pointerdown",ev=>{
-      ev.preventDefault(); ev.stopPropagation(); select(e.id);
-      const rect=$("pvStage").getBoundingClientRect(); const scale=rect.width/1920;
-      const sx=ev.clientX, sy=ev.clientY, startSz=e.sz||40, startW=e.w||30;
-      try{handle.setPointerCapture(ev.pointerId);}catch(_){}
-      const mv=m=>{
-        if(e.t==="img"){
-          e.w=Math.max(3,Math.min(100, startW+(m.clientX-sx)/rect.width*100)); d.style.width=e.w+"%";
-        } else {
-          const delta=((m.clientX-sx)+(m.clientY-sy))/2;
-          e.sz=Math.max(8,Math.min(400, startSz+delta/scale));
+  // Pull any edge/corner to resize a freeform element.
+  // Text: left/right widen the wrap box, up/down grow the font. Image: any edge changes width.
+  function resizeEl(ev,dirX,dirY,handle,d,e){
+    select(e.id);
+    const rect=$("pvStage").getBoundingClientRect(); const scale=rect.width/1920;
+    const sx=ev.clientX, sy=ev.clientY, startSz=e.sz||40, startW=e.w||30, startX=e.x;
+    try{handle.setPointerCapture(ev.pointerId);}catch(_){}
+    const mv=m=>{
+      const dxP=(m.clientX-sx)/rect.width*100;
+      if(e.t==="img"){
+        if(dirX===1) e.w=Math.max(3,Math.min(100,startW+dxP));
+        else if(dirX===-1){ const nw=Math.max(3,Math.min(100,startW-dxP)); e.x=Math.max(0,startX+(startW-nw)); e.w=nw; }
+        else { e.w=Math.max(3,Math.min(100,startW+dirY*(m.clientY-sy)/rect.width*100)); }
+        d.style.width=e.w+"%"; d.style.left=e.x+"%";
+      } else {
+        if(dirX!==0){
+          if(dirX===1) e.w=Math.max(5,Math.min(100,startW+dxP));
+          else { const nw=Math.max(5,Math.min(100,startW-dxP)); e.x=Math.max(0,startX+(startW-nw)); e.w=nw; }
+          d.style.width=e.w+"%"; d.style.left=e.x+"%";
+        }
+        if(dirY!==0){
+          e.sz=Math.max(8,Math.min(400,startSz+dirY*(m.clientY-sy)/scale));
           const tx=d.querySelector(".de-text2"); if(tx) tx.style.fontSize=(e.sz*scale)+"px";
         }
-      };
-      const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); updateLink(); renderProps(); };
-      handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
-    });
+      }
+    };
+    const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); updateLink(); renderProps(); };
+    handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
   }
   function attachDrag(d,e){
     d.addEventListener("pointerdown",ev=>{
