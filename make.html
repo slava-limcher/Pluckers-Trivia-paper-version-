@@ -419,7 +419,7 @@
   let els = [], selId = null, slots = {};
   const SLOT_DEFAULTS = {
     question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:19,w:97,h:60}, num:{x:4,y:44}, howto:{x:15,y:88} },
-    answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:17,w:97,h:42}, num:{x:4,y:38} },
+    answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:17,w:97,h:40}, num:{x:4,y:34}, answer:{x:18,y:66} },
     title:{}
   };
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
@@ -578,7 +578,7 @@
       content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}">${badge(deep,44,'ROUND 1 ANSWERS')}${badge(primary,48,'ANSWER 1 OF 10')}</div>
         <div class="sc-box" style="${boxStyle};flex:0 0 auto;height:40%"><div style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
-        <div style="margin-top:${px(8)};font-family:${qFontV};font-size:${px(64)};font-weight:900;text-align:center;color:${darken(primary,.1)};background:${accent};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(20)} ${px(40)}">✓ ${a}</div>
+        <div class="sc-ans" style="margin-top:${px(8)};font-family:${qFontV};font-size:${px(64)};font-weight:900;text-align:center;color:${darken(primary,.1)};background:${accent};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(20)} ${px(40)}">✓ ${a}</div>
       </div>`;
     }
     $("pvScreen").innerHTML=`<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
@@ -600,7 +600,7 @@
   // elements freely (% of the canvas) and make them mouse-draggable.
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
-    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", num:".sc-num", howto:".sc-howto" };
+    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", num:".sc-num", howto:".sc-howto", answer:".sc-ans" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;
