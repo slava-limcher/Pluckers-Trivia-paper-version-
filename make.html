@@ -714,7 +714,29 @@
       d.style.left=e.x+"%"; d.style.top=e.y+"%"; d.style.width=e.w+"%";
       if(e.t==="img"){ const im=document.createElement("img"); im.src=e.src; d.appendChild(im); }
       else { const tx=document.createElement("div"); tx.className="de-text2"; tx.textContent=e.txt||""; tx.style.color=e.c; tx.style.fontSize=(e.sz*scale)+"px"; tx.style.fontWeight=e.b; tx.style.textAlign=e.a; tx.style.textShadow="2px 2px 0 rgba(0,0,0,.5)"; if(e.font) tx.style.fontFamily=e.font; d.appendChild(tx); }
-      attachDrag(d,e); wrap.appendChild(d);
+      attachDrag(d,e);
+      const h=document.createElement("div"); h.className="rz-handle"; d.appendChild(h); attachElResize(h,d,e);
+      wrap.appendChild(d);
+    });
+  }
+  // Drag the corner handle to resize a freeform element (text → font size, image → width).
+  function attachElResize(handle,d,e){
+    handle.addEventListener("pointerdown",ev=>{
+      ev.preventDefault(); ev.stopPropagation(); select(e.id);
+      const rect=$("pvStage").getBoundingClientRect(); const scale=rect.width/1920;
+      const sx=ev.clientX, sy=ev.clientY, startSz=e.sz||40, startW=e.w||30;
+      try{handle.setPointerCapture(ev.pointerId);}catch(_){}
+      const mv=m=>{
+        if(e.t==="img"){
+          e.w=Math.max(3,Math.min(100, startW+(m.clientX-sx)/rect.width*100)); d.style.width=e.w+"%";
+        } else {
+          const delta=((m.clientX-sx)+(m.clientY-sy))/2;
+          e.sz=Math.max(8,Math.min(400, startSz+delta/scale));
+          const tx=d.querySelector(".de-text2"); if(tx) tx.style.fontSize=(e.sz*scale)+"px";
+        }
+      };
+      const up=()=>{ handle.removeEventListener("pointermove",mv); handle.removeEventListener("pointerup",up); saveDesign(); updateLink(); renderProps(); };
+      handle.addEventListener("pointermove",mv); handle.addEventListener("pointerup",up);
     });
   }
   function attachDrag(d,e){
