@@ -109,7 +109,7 @@
   .device-bar i{width:9px;height:9px;border-radius:50%;background:#3a4258;display:inline-block}
   .stripe{height:8px;display:flex}
   .stage{aspect-ratio:16/9;overflow:hidden;position:relative}
-  #pvScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 20px;text-align:center}
+  #pvScreen{position:absolute;inset:0;text-align:center}
   #pvDesign{position:absolute;inset:0}
   .de-el{position:absolute;cursor:move;touch-action:none}
   .de-el.sel{outline:2px dashed #fff;outline-offset:3px;box-shadow:0 0 0 4px rgba(91,91,240,.5)}
@@ -610,15 +610,14 @@
     }
     $("pvScreen").innerHTML=`<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
     positionBuiltins();
-    fitPreviewBox();
-    requestAnimationFrame(fitPreviewBox);   // re-fit once layout/fonts settle
+    if(!(slots[screen]&&slots[screen].box)){ fitPreviewBox(); requestAnimationFrame(fitPreviewBox); }   // box is auto-fit unless its size was captured/locked
   }
   // Auto-size the question/answer text to fill its box — mirrors the game's
   // fitQuestion(), so the preview (and fullscreen) match the real game.
   function fitPreviewBox(){
     const box=$("pvScreen")&&$("pvScreen").querySelector(".sc-box"); if(!box) return;
     box.style.whiteSpace="normal";
-    const fits=f=>{ box.style.fontSize=f+"px"; return box.scrollWidth<=box.clientWidth+1 && box.scrollHeight<=box.clientHeight+1; };
+    const fits=f=>{ box.style.fontSize=f+"px"; return box.scrollWidth<=box.clientWidth+2 && box.scrollHeight<=box.clientHeight+8; };
     let lo=10,hi=220,best=10;
     for(let i=0;i<18;i++){ const mid=(lo+hi)/2; if(fits(mid)){best=mid;lo=mid;}else hi=mid; }
     box.style.fontSize=best+"px";
@@ -636,7 +635,7 @@
       const el=$("pvScreen").querySelector(map[name]); if(!el) return;
       const r=el.getBoundingClientRect();
       const s={ x:+(((r.left-st.left)/st.width)*100).toFixed(2), y:+(((r.top-st.top)/st.height)*100).toFixed(2) };
-      if(name==="box"){ s.w=+((r.width/st.width)*100).toFixed(2); s.h=+((r.height/st.height)*100).toFixed(2); }
+      if(name==="box"){ s.w=+((r.width/st.width)*100).toFixed(2); s.h=+((r.height/st.height)*100).toFixed(2); s.fs=parseFloat(getComputedStyle(el).fontSize); }
       out[name]=s;
     });
     return out;
@@ -652,6 +651,7 @@
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
       if(s.w!=null) el.style.width=s.w+"%";
       if(s.h!=null) el.style.height=s.h+"%";
+      if(name==="box" && s.fs!=null) el.style.fontSize=s.fs+"px";   // keep the captured fitted size
       if(name!=="box" && s.s!=null){ el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left"; }
       el.style.outline="1px dashed rgba(255,255,255,.35)"; el.style.outlineOffset="3px";
       attachBuiltinDrag(el,s);
@@ -669,7 +669,7 @@
         if(name==="box"){
           s.w=Math.max(15,Math.min(100, startW+(m.clientX-sx)/rect.width*100));
           s.h=Math.max(10,Math.min(95, startH+(m.clientY-sy)/rect.height*100));
-          el.style.width=s.w+"%"; el.style.height=s.h+"%"; fitPreviewBox();
+          el.style.width=s.w+"%"; el.style.height=s.h+"%"; fitPreviewBox(); s.fs=parseFloat(getComputedStyle(el).fontSize);
         } else {
           s.s=Math.max(0.3, Math.min(4, startS+(m.clientX-sx)/150));
           el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left";
