@@ -448,7 +448,9 @@
   // Theme as URL params (used for PHONE versions — the phone engine reads these directly).
   function themeParams(){
     const t=themeObj(); const p=new URLSearchParams();
-    ["title1","title2","logo","bg","bgimg","font","qfont","labelfont","boxBg","boxBorder"].forEach(k=>{ if(t[k]) p.set(k,t[k]); });
+    // Skip base64 data: blobs (uploaded logo/bg image) — they blow the URL past the
+    // server header limit (HTTP 431). Those ride in the cloud design instead.
+    ["title1","title2","logo","bg","bgimg","font","qfont","labelfont","boxBg","boxBorder"].forEach(k=>{ if(t[k] && !/^data:/.test(t[k])) p.set(k,t[k]); });
     ["primary","accent","deep","light"].forEach(k=>p.set(k,String(t[k]).replace('#','')));
     if(t.boxW&&t.boxW!=100) p.set("boxW",t.boxW);
     if(t.dim) p.set("dim",t.dim);
@@ -464,30 +466,41 @@
   const SUPABASE_ANON_KEY = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
   let supa = null;
   function supaClient(){ if(!supa && window.supabase) supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supa; }
-  function versionLink(){
-    const base=$("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"")+"/index.html";
-    return gameMode==="phone" ? base+"?"+themeParams() : base+"?design="+DESIGN_ID;
-  }
+  function baseUrl(){ return $("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"")+"/index.html"; }
+  // Both modes use a short cloud link (?design=id) so an uploaded logo / bg image
+  // never bloats the URL (which caused HTTP 431). If the cloud is unreachable, the
+  // PHONE mode falls back to a logo-free param link; PAPER falls back to the local id.
+  function versionLink(){ return baseUrl()+"?design="+DESIGN_ID; }
   function setLink(link){ $("hostLink").value=link; $("openHost").href=link; }
   async function publish(){
     saveDesign();
-    const st=$("pubStatus"); const link=versionLink();
-    if(gameMode==="phone"){   // phone engine reads the brand from the link directly — no cloud needed
-      published=true; setLink(link);
-      st.textContent="✓ Phone version ready — players join & answer on their phones. Brand travels in the link."; st.className="pubstatus ok";
-      return;
-    }
+    const st=$("pubStatus"); const base=baseUrl(); const designLink=base+"?design="+DESIGN_ID;
     const c=supaClient();
-    if(!c){ st.textContent="⚠ Cloud unavailable — this link only works on this device."; st.className="pubstatus warn"; published=true; setLink(link); return; }
+    if(!c){
+      published=true;
+      setLink(gameMode==="phone" ? base+"?"+themeParams() : designLink);
+      st.textContent = gameMode==="phone"
+        ? "⚠ Cloud unavailable — published without the logo/images (colors & text still apply)."
+        : "⚠ Cloud unavailable — this link only works on this device.";
+      st.className="pubstatus warn"; return;
+    }
     st.textContent="Publishing…"; st.className="pubstatus";
     try{
       const { error } = await c.from("sessions").upsert(
         { room_code:"dsgn_"+DESIGN_ID, state:JSON.stringify({design:{theme:themeObj(), els, slots}}), updated_at:new Date().toISOString() },
         { onConflict:"room_code" });
       if(error) throw error;
-      published=true; setLink(link);
-      st.textContent="✓ Published — your link works on any device (logo & images included)."; st.className="pubstatus ok";
-    }catch(e){ published=true; setLink(link); st.textContent="Couldn't reach the cloud: "+(e.message||e)+" — link works on this device."; st.className="pubstatus warn"; }
+      published=true; setLink(designLink);
+      st.textContent = gameMode==="phone"
+        ? "✓ Phone version published — players join & answer on their phones (logo, colors & text included)."
+        : "✓ Published — your link works on any device (logo & images included).";
+      st.className="pubstatus ok";
+    }catch(e){
+      published=true;
+      setLink(gameMode==="phone" ? base+"?"+themeParams() : designLink);
+      st.textContent="Couldn't reach the cloud: "+(e.message||e)+" — "+(gameMode==="phone"?"published without the logo.":"link works on this device.");
+      st.className="pubstatus warn";
+    }
   }
 
   // ---- Presets: save/load a full look (theme + placed text & images) ----
