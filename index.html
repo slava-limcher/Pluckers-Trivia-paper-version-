@@ -1289,6 +1289,9 @@
     min-width: 150px; text-align: center;
   }
   .q-timer.q-timer-up { background: var(--red); color: #fff; }
+  /* Timer OFF: keep its exact footprint so toggling the timer never moves/resizes
+     the question box — it just hides the number. */
+  .q-timer.q-timer-off { visibility: hidden; }
   /* On the TV the timer stays in-flow in the top bar (same as the host), centered
      between the QUESTION badge and the category. */
   /* Host title-screen scoreboard box (replaces WIN PRIZES on the host; TVs keep WIN PRIZES) */
@@ -1772,6 +1775,29 @@ function bgBackground(style, t) {
 }
 applyTheme(THEME);
 
+// Per-screen look — a design (made in make.html) can give the title, question, and
+// answer screens DIFFERENT backgrounds + fonts. This applies the right one for the
+// current screen, falling back to the global theme when a screen has no override.
+function applyScreenStyle(key) {
+  const sc = (THEME.screens && THEME.screens[key]) || null;
+  const pick = (a, b) => (a != null && a !== "") ? a : b;
+  const font  = sc ? pick(sc.font, THEME.font)           : THEME.font;
+  const qfont = sc ? pick(sc.qfont, THEME.qfont)         : THEME.qfont;
+  const lfont = sc ? pick(sc.labelfont, THEME.labelfont) : THEME.labelfont;
+  const s = document.documentElement.style;
+  s.setProperty("--title-font", font  || '"Anton","Oswald",Impact,sans-serif');
+  s.setProperty("--q-font",     qfont || '"Anton","Oswald",Impact,sans-serif');
+  s.setProperty("--label-font", lfont || '"Anton","Oswald",Impact,sans-serif');
+  const style = (sc && sc.bg) || THEME.bg || "gradient";
+  const dim = (sc && sc.dim != null) ? sc.dim : (THEME.dim || 0);
+  const b = document.body; if (!b) return;
+  const dimv = Math.max(0, Math.min(0.9, (dim || 0) / 100));
+  const dimLayer = dimv > 0 ? "linear-gradient(rgba(0,0,0," + dimv + "),rgba(0,0,0," + dimv + ")), " : "";
+  const t2 = Object.assign({}, THEME, { bgimg: (sc && sc.bgimg) || THEME.bgimg });
+  b.style.background = dimLayer + bgBackground(style, t2);
+  b.classList.toggle("bg-plain", !(style === "gradient" || style === "stripes"));
+}
+
 // A "version" link can carry its whole brand in the URL (made by make.html):
 //   ?title1=BAR&title2=QUIZ&primary=6b21a8&accent=ff8a00&deep=241036&light=fff7ed&logo=https://…
 // When present, those override the saved theme so the link reproduces the brand
@@ -2071,7 +2097,7 @@ function viewQuestion() {
         <div class="q-topbar">
           <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
           <div class="q-topcenter">
-            ${TIMER_SECS > 0 ? '<div class="q-timer" id="qTimer">' + TIMER_SECS + '</div>' : ''}
+            <div class="q-timer${TIMER_SECS > 0 ? '' : ' q-timer-off'}" id="qTimer">${TIMER_SECS > 0 ? TIMER_SECS : 0}</div>
             <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
           </div>
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
@@ -2338,6 +2364,8 @@ function render() {
     case State.ROUND_END: viewRoundEnd(); break;
     case State.END: viewEnd(); break;
   }
+  // Apply this screen's background + fonts (a design can set different ones per screen).
+  applyScreenStyle(designScreenKey());
   // If we're hosting a live session, broadcast the new state to all displays.
   if (live.role === "host" && !live.applying) pushState();
   // On TV displays, show/hide the injected instructions + QR per screen.

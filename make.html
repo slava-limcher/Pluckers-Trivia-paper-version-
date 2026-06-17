@@ -306,7 +306,8 @@
       </div>
 
       <div class="sec">
-        <div class="sec-h">Game background</div>
+        <div class="sec-h">Game background <span class="scope-chip" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--accent);color:#10182a;margin-left:8px;vertical-align:middle">Title screen</span></div>
+        <p class="help" style="margin-top:-4px">Each screen has its own background &amp; fonts. Pick a screen tab above the preview (Title / Question / Answer), then set its look here.</p>
         <div class="group">
           <label class="lbl" for="bgSel">Style</label>
           <select class="inp" id="bgSel">
@@ -346,7 +347,7 @@
         </div>
       </div>
       <div class="sec">
-        <div class="sec-h">Fonts</div>
+        <div class="sec-h">Fonts <span class="scope-chip" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--accent);color:#10182a;margin-left:8px;vertical-align:middle">Title screen</span></div>
         <div class="group">
           <label class="lbl" for="titleFont">Title font</label>
           <select class="inp" id="titleFont"></select>
@@ -433,6 +434,13 @@
   const COLORS = ["primary","accent","deep","light"];
   const inputs = ["title1","title2","logo","base","vname","scat","squestion","sanswer",...COLORS];
   let bgStyle = "gradient", screen = "title", gameMode = "paper";
+  // Per-screen look: each screen (title/question/answer) keeps its OWN background +
+  // fonts, so they can differ. The Game-background + Fonts controls edit whichever
+  // screen tab is active above the preview.
+  const SCREENS = { title:null, question:null, answer:null };
+  function readBgFonts(){ return { bg:bgStyle, bgimg:($("bgimg")?$("bgimg").value.trim():""), dim:+(($("dim")&&$("dim").value)||0), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:"") }; }
+  function writeBgFonts(s){ s=s||{}; bgStyle=s.bg||"gradient"; if($("bgSel"))$("bgSel").value=bgStyle; if($("bgimg"))$("bgimg").value=s.bgimg||""; if($("bgImgWrap"))$("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; if($("dim")){$("dim").value=s.dim||0;$("dimVal").textContent=($("dim").value)+"%";} if($("titleFont"))$("titleFont").value=s.font||""; if($("qFont"))$("qFont").value=s.qfont||""; if($("labelFont"))$("labelFont").value=s.labelfont||""; }
+  function updateBgScope(){ const lbl=screen==="title"?"Title screen":screen==="question"?"Question screen":"Answer screen"; document.querySelectorAll(".scope-chip").forEach(c=>c.textContent=lbl); }
   const PAPER_BASE = "https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/";
   const phoneBase = () => location.origin + "/trivia-wings/";
   let els = [], selId = null, slots = {};
@@ -444,7 +452,15 @@
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
-  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), dim:($("dim")?+$("dim").value:0), mode:gameMode });
+  const themeObj = () => {
+    const sc = {};
+    ["title","question","answer"].forEach(k=>{ sc[k] = Object.assign({}, SCREENS[k]||{}); });
+    sc[screen] = readBgFonts();   // capture live edits to the active screen
+    const base = sc.question || sc.title || readBgFonts();   // global fallback (misc states + phone)
+    return { title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(),
+      bg:base.bg, bgimg:base.bgimg, font:base.font, qfont:base.qfont, labelfont:base.labelfont, dim:base.dim,
+      boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), mode:gameMode, screens:sc };
+  };
   // Theme as URL params (used for PHONE versions — the phone engine reads these directly).
   function themeParams(){
     const t=themeObj(); const p=new URLSearchParams();
@@ -531,6 +547,11 @@
       $("boxCustom").checked=has; $("boxColors").style.display=has?"grid":"none";
       if(t.boxBg) $("boxBg").value=t.boxBg; if(t.boxBorder) $("boxBorder").value=t.boxBorder;
     }
+    // Per-screen looks: use t.screens if present, else replicate the single bg/fonts
+    // to all three screens (backward compatible with older designs/presets).
+    const one={ bg:t.bg||"gradient", bgimg:t.bgimg||"", dim:t.dim||0, font:t.font||"", qfont:t.qfont||"", labelfont:t.labelfont||"" };
+    ["title","question","answer"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
+    writeBgFonts(SCREENS[screen]); updateBgScope();
   }
   function applyPreset(p){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); selId=null; refresh(); renderProps(); }
   function renderPresets(){
@@ -825,6 +846,7 @@
   function addImage(file){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:36,y:34,w:26,src:d}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }); }
 
   function refresh(){
+    SCREENS[screen]=readBgFonts();   // persist this screen's background + fonts
     COLORS.forEach(k=>{const h=$("hx"+k);if(h)h.textContent=$(k).value;});
     ["boxBg","boxBorder"].forEach(k=>{const h=$("hx"+k);if(h&&$(k))h.textContent=$(k).value;});
     const dimv=$("dim")?Math.max(0,Math.min(0.9,(+$("dim").value)/100)):0;
@@ -860,7 +882,9 @@
     refresh();
   });
   document.querySelectorAll("#screens button").forEach(b=>b.addEventListener("click",()=>{
-    screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));refresh();renderProps();syncFreeBtn();
+    screen=b.dataset.sc;document.querySelectorAll("#screens button").forEach(x=>x.classList.toggle("active",x===b));
+    writeBgFonts(SCREENS[screen]);updateBgScope();   // load THIS screen's background + fonts
+    refresh();renderProps();syncFreeBtn();
   }));
   function syncFreeBtn(){ const b=$("freeLayout"); if(b) b.classList.toggle("active", !!slots[screen]); }
   $("freeLayout").addEventListener("click",()=>{
@@ -966,6 +990,8 @@
   $("palName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("palAdd").click(); });
   renderPalette();
   $("copyBtn").addEventListener("click",()=>{$("hostLink").select();navigator.clipboard.writeText($("hostLink").value).then(()=>{$("copied").classList.add("show");setTimeout(()=>$("copied").classList.remove("show"),2000);});});
+  ["title","question","answer"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
+  updateBgScope();
   refresh();
 </script>
 </body>
