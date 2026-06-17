@@ -227,6 +227,14 @@
       <div class="sec">
         <div class="sec-h">Identity</div>
         <div class="group">
+          <label class="lbl">Game type</label>
+          <div class="seg" id="modeSeg">
+            <button type="button" data-mode="paper" class="active">📺 Paper / TV</button>
+            <button type="button" data-mode="phone">📱 Phone</button>
+          </div>
+          <p class="help"><b>Paper / TV:</b> host runs it, questions on the TVs, players answer on paper. <b>Phone:</b> players join &amp; answer on their phones (QR). Both use your brand below.</p>
+        </div>
+        <div class="group">
           <label class="lbl" for="vname">Version name <span class="opt">— a label for you</span></label>
           <input class="inp" type="text" id="vname" placeholder="e.g. Buffalo Wild Wings — Friday" />
         </div>
@@ -415,7 +423,9 @@
   const $ = id => document.getElementById(id);
   const COLORS = ["primary","accent","deep","light"];
   const inputs = ["title1","title2","logo","base","vname","scat","squestion","sanswer",...COLORS];
-  let bgStyle = "gradient", screen = "title";
+  let bgStyle = "gradient", screen = "title", gameMode = "paper";
+  const PAPER_BASE = "https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/";
+  const phoneBase = () => location.origin + "/trivia-wings/";
   let els = [], selId = null, slots = {};
   const SLOT_DEFAULTS = {
     question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, box:{x:1.5,y:19,w:97,h:60}, num:{x:4,y:44}, howto:{x:15,y:88} },
@@ -425,7 +435,16 @@
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
   const newId = () => "e" + Math.random().toString(36).slice(2, 8);
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
-  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), dim:($("dim")?+$("dim").value:0) });
+  const themeObj = () => ({ title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(), bg:bgStyle, bgimg:$("bgimg").value.trim(), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:""), boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), dim:($("dim")?+$("dim").value:0), mode:gameMode });
+  // Theme as URL params (used for PHONE versions — the phone engine reads these directly).
+  function themeParams(){
+    const t=themeObj(); const p=new URLSearchParams();
+    ["title1","title2","logo","bg","bgimg","font","qfont","labelfont","boxBg","boxBorder"].forEach(k=>{ if(t[k]) p.set(k,t[k]); });
+    ["primary","accent","deep","light"].forEach(k=>p.set(k,String(t[k]).replace('#','')));
+    if(t.boxW&&t.boxW!=100) p.set("boxW",t.boxW);
+    if(t.dim) p.set("dim",t.dim);
+    return p.toString();
+  }
   let published = false;
   function markEdited(){ if(published){ const st=$("pubStatus"); if(st){ st.textContent="✱ Edited — click Publish to update the live link."; st.className="pubstatus warn"; } } }
   function saveDesign(){ try{ localStorage.setItem("trivia-design-"+DESIGN_ID, JSON.stringify({v:1, theme:themeObj(), els, slots})); }catch(e){} markEdited(); }
@@ -438,12 +457,17 @@
   function supaClient(){ if(!supa && window.supabase) supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return supa; }
   function versionLink(){
     const base=$("base").value.trim().replace(/index\.html.*$/,"").replace(/\/+$/,"")+"/index.html";
-    return base+"?design="+DESIGN_ID;
+    return gameMode==="phone" ? base+"?"+themeParams() : base+"?design="+DESIGN_ID;
   }
   function setLink(link){ $("hostLink").value=link; $("openHost").href=link; }
   async function publish(){
     saveDesign();
     const st=$("pubStatus"); const link=versionLink();
+    if(gameMode==="phone"){   // phone engine reads the brand from the link directly — no cloud needed
+      published=true; setLink(link);
+      st.textContent="✓ Phone version ready — players join & answer on their phones. Brand travels in the link."; st.className="pubstatus ok";
+      return;
+    }
     const c=supaClient();
     if(!c){ st.textContent="⚠ Cloud unavailable — this link only works on this device."; st.className="pubstatus warn"; published=true; setLink(link); return; }
     st.textContent="Publishing…"; st.className="pubstatus";
@@ -466,6 +490,9 @@
   function savePresets(){ try{ localStorage.setItem("trivia-presets", JSON.stringify(PRESETS)); }catch(e){} }
   let PRESETS = loadPresets();
   function setTheme(t){
+    gameMode = t.mode==="phone" ? "phone" : "paper";
+    document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x.dataset.mode===gameMode));
+    if($("base")) $("base").value = gameMode==="phone"?phoneBase():PAPER_BASE;
     $("title1").value=t.title1||"TRIVIA"; $("title2").value=t.title2||"";
     ["primary","accent","deep","light"].forEach(k=>{ if(t[k]) $(k).value=t[k]; });
     $("logo").value=(t.logo&&t.logo!=="none")?t.logo:"";
@@ -769,6 +796,13 @@
     savePresets(); renderPresets();
   });
   $("publishBtn").addEventListener("click",publish);
+  document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{
+    gameMode=b.dataset.mode;
+    document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x===b));
+    if($("base")) $("base").value = gameMode==="phone"?phoneBase():PAPER_BASE;
+    published=false; if($("pubStatus")){$("pubStatus").textContent="";$("pubStatus").className="pubstatus";} $("hostLink").value="";
+    refresh();
+  }));
   $("fsBtn").addEventListener("click",()=>{
     const c=$("editorCard");
     if(document.fullscreenElement||document.webkitFullscreenElement){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
