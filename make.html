@@ -629,7 +629,7 @@
   // makes the current layout draggable.
   function captureSlots(){
     const st=$("pvStage").getBoundingClientRect();
-    const map={badge:".sc-badge",category:".sc-cat",box:".sc-box",num:".sc-num",howto:".sc-howto",answer:".sc-ans"};
+    const map={badge:".sc-badge",category:".sc-cat",box:".sc-box",howto:".sc-howto",answer:".sc-ans"};
     const out={};
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); if(!el) return;
@@ -643,11 +643,10 @@
   }
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
-    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", num:".sc-num", howto:".sc-howto", answer:".sc-ans" };
+    const map={ badge:".sc-badge", category:".sc-cat", box:".sc-box", howto:".sc-howto", answer:".sc-ans" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;
-      if(name==="num"){ const fs=getComputedStyle(el).fontSize; $("pvScreen").appendChild(el); el.style.fontSize=fs; }   // pull the number out of the box (keep its rendered size)
       el.style.position="absolute"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
       if(s.w!=null) el.style.width=s.w+"%";
