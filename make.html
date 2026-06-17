@@ -541,30 +541,47 @@
     const t1=$("title1").value||"TRIVIA", t2=$("title2").value||"", primary=$("primary").value, accent=$("accent").value,
       deep=$("deep").value, light=$("light").value, cat=esc($("scat").value||"CATEGORY"),
       q=esc($("squestion").value||"Your question shows here"), a=esc($("sanswer").value||"Answer");
-    const sh1=`3px 3px 0 ${primary},6px 6px 0 #000`, sh2=`2px 2px 0 ${darken(deep,.3)},4px 4px 0 #000`;
-    const tf=($("titleFont")&&$("titleFont").value)?`font-family:${$("titleFont").value};`:"";
+    // k = scale that maps the 1920×1080 game stage down to this preview, so every
+    // size is drawn at the SAME proportion as the real game (true WYSIWYG).
+    const k=($("pvStage").clientWidth||530)/1920;
+    const px=n=>(n*k).toFixed(2)+"px";
+    const titleFontV=($("titleFont")&&$("titleFont").value)||"'Anton',Impact,sans-serif";
+    const qFontV=($("qFont")&&$("qFont").value)||"'Anton',Impact,sans-serif";
+    const labelFontV=($("labelFont")&&$("labelFont").value)||"'Anton',Impact,sans-serif";
+    const headerBg=darken(deep,.34);
+    const stripe=pos=>`<div style="position:absolute;left:0;right:0;${pos}:0;height:${px(9)};display:flex"><i style="flex:1;background:${primary}"></i><i style="flex:1;background:${accent}"></i><i style="flex:1;background:${deep}"></i></div>`;
+    const bar=pos=>`<div style="height:${px(28)};background:${headerBg};position:relative;flex:0 0 auto">${stripe(pos)}</div>`;
     const bxOn=boxOn();
-    const boxFill=bxOn?`linear-gradient(180deg,${$("boxBg").value},${darken($("boxBg").value,.32)})`:`linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.6)})`;
+    const boxFill=bxOn?`linear-gradient(180deg,${$("boxBg").value},${darken($("boxBg").value,.32)})`:`linear-gradient(180deg,${darken(deep,.34)},${darken(deep,.62)})`;
     const boxBorder=bxOn?$("boxBorder").value:accent;
-    const qf=($("qFont")&&$("qFont").value)?`font-family:${$("qFont").value};`:"";
-    const lf=($("labelFont")&&$("labelFont").value)?`font-family:${$("labelFont").value};`:"";
     const bw=$("boxWidth")?+$("boxWidth").value:100;
-    const boxStyle=`background:${boxFill};border-color:${boxBorder};color:${light};${qf}max-width:${bw}%;width:100%;margin:0 auto`;
-    let html="";
+    const badge=(bg,fs,txt)=>`<span class="${txt[0]==='Q'||txt.indexOf('OF')>-1?'sc-badge':'sc-cat'}" style="background:${bg};color:${accent};font-family:${labelFontV};font-size:${px(fs)};letter-spacing:${px(4)};padding:${px(14)} ${px(34)};border:${px(5)} solid #000;border-radius:${px(14)};white-space:nowrap;text-shadow:${px(2)} ${px(2)} 0 #000">${txt}</span>`;
+    const boxStyle=`flex:1;display:flex;align-items:center;justify-content:center;width:100%;max-width:${bw}%;margin:0 auto;background:${boxFill};border:${px(5)} solid ${boxBorder};border-radius:${px(22)};padding:${px(40)} ${px(50)};overflow:hidden;color:${light};font-family:${qFontV}`;
+    const numStyle=`display:inline-block;background:${accent};color:${primary};border:${px(3)} solid #000;border-radius:${px(12)};padding:${px(4)} ${px(18)};margin-right:${px(18)};font-size:0.8em;vertical-align:middle`;
+    const howtoStyle=`align-self:center;max-width:${px(1400)};font-family:'Fredoka',sans-serif;font-size:${px(46)};font-weight:600;line-height:1.3;text-align:center;color:${light};background:rgba(20,39,100,.55);border:${px(2)} solid #000;border-radius:${px(16)};padding:${px(18)} ${px(32)}`;
+    const logo=$("logo").value.trim();
+    const logoTag=logo?`<img src="${logo}" style="max-width:${px(760)};max-height:${px(300)};display:block;margin:0 auto ${px(20)}" onerror="this.style.display='none'">`:"";
+    let content="";
     if(screen==="title"){
-      html=`<div class="sc">${logoTag()}<div class="sc-t1" style="${tf}color:${light};text-shadow:${sh1}">${esc(t1)}</div>${t2?`<div class="sc-t2" style="${tf}color:${accent};text-shadow:${sh2}">${esc(t2)}</div>`:""}</div>`;
+      content=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${px(8)};padding:${px(34)}">
+        ${logoTag}
+        <div class="sc-t1" style="font-family:${titleFontV};font-size:${px(130)};line-height:.95;letter-spacing:${px(4)};color:${primary};text-shadow:${px(5)} ${px(5)} 0 ${accent},${px(10)} ${px(10)} 0 ${deep},${px(14)} ${px(14)} 0 #000">${esc(t1)}</div>
+        ${t2?`<div class="sc-t2" style="font-family:${titleFontV};font-size:${px(80)};letter-spacing:${px(14)};color:${accent};text-shadow:${px(4)} ${px(4)} 0 ${deep},${px(8)} ${px(8)} 0 #000">${esc(t2)}</div>`:""}
+      </div>`;
     } else if(screen==="question"){
-      html=`<div class="sc" style="justify-content:flex-start;gap:10px">
-        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent};${lf}">QUESTION 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent};${lf}">${cat}</span></div>
-        <div class="sc-box" style="${boxStyle}"><span class="sc-num" style="background:${accent};color:${primary}">1</span><span>${q}</span></div>
-        <div class="sc-howto" style="color:${light}">📝 Just walked in? Grab an answer sheet.</div></div>`;
+      content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}">${badge(deep,44,'QUESTION 1 OF 10')}${badge(primary,48,cat)}</div>
+        <div class="sc-box" style="${boxStyle}"><div style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
+        <div class="sc-howto" style="${howtoStyle}">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
+      </div>`;
     } else {
-      html=`<div class="sc" style="justify-content:flex-start;gap:10px">
-        <div class="sc-row"><span class="sc-badge" style="background:${deep};color:${accent};${lf}">ANSWER 1 OF 10</span><span class="sc-cat" style="background:${primary};color:${accent};${lf}">${cat}</span></div>
-        <div class="sc-box" style="${boxStyle};flex:0 0 auto"><span>${q}</span></div>
-        <div class="sc-ans" style="background:${accent};color:${darken(primary,.1)}">✓ ${a}</div></div>`;
+      content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}">${badge(deep,44,'ROUND 1 ANSWERS')}${badge(primary,48,'ANSWER 1 OF 10')}</div>
+        <div class="sc-box" style="${boxStyle};flex:0 0 auto;height:40%"><div style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
+        <div style="margin-top:${px(8)};font-family:${qFontV};font-size:${px(64)};font-weight:900;text-align:center;color:${darken(primary,.1)};background:${accent};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(20)} ${px(40)}">✓ ${a}</div>
+      </div>`;
     }
-    $("pvScreen").innerHTML=html;
+    $("pvScreen").innerHTML=`<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
     positionBuiltins();
     fitPreviewBox();
     requestAnimationFrame(fitPreviewBox);   // re-fit once layout/fonts settle
@@ -705,7 +722,7 @@
     const dimv=$("dim")?Math.max(0,Math.min(0.9,(+$("dim").value)/100)):0;
     const dimLayer=dimv>0?`linear-gradient(rgba(0,0,0,${dimv}),rgba(0,0,0,${dimv})), `:"";
     $("pvStage").style.background=dimLayer+previewBg();
-    $("pvStripe").innerHTML=`<div style="flex:1;background:${$("primary").value}"></div><div style="flex:1;background:${$("accent").value}"></div><div style="flex:1;background:${$("deep").value}"></div>`;
+    $("pvStripe").style.display="none";   // the stripe is now drawn inside the screen (in the header bar)
     renderScreen();
     renderDesign();
     saveDesign();
