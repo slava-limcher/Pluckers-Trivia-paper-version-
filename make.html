@@ -336,7 +336,7 @@
           </select>
           <div id="bgImgWrap" style="display:none;margin-top:10px">
             <input class="inp" type="url" id="bgimg" placeholder="https://…/background.jpg" />
-            <div class="uploadrow"><label class="btn copy" style="cursor:pointer">⬆ Upload photo<input type="file" id="bgImgFile" accept="image/png,image/jpeg,image/webp" hidden></label></div>
+            <div class="uploadrow"><label class="btn copy" style="cursor:pointer">⬆ Upload photo<input type="file" id="bgImgFile" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn copy" type="button" id="bgImgRemove">✕ Remove image</button></div>
           </div>
           <p class="help">CSS styles are built from your <b>Background</b> color. For real photo textures (wood, marble, brick, nature, galaxy photos…) choose <b>Image</b> and upload or paste one.</p>
         </div>
@@ -865,6 +865,8 @@
   $("bgimg").addEventListener("input",refresh);
   $("bgSel").addEventListener("change",()=>{ bgStyle=$("bgSel").value; $("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; refresh(); });
   $("bgImgFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,1280,d=>{if(d){$("bgimg").value=d;refresh();}});});
+  // Remove the uploaded background image and fall back to the default gradient (so just the logo shows).
+  $("bgImgRemove").addEventListener("click",()=>{ bgStyle="gradient"; $("bgSel").value="gradient"; $("bgimg").value=""; $("bgImgFile").value=""; $("bgImgWrap").style.display="none"; refresh(); });
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
   $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
