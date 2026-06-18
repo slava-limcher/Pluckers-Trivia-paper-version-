@@ -1139,6 +1139,7 @@ if (MODE === "phone") document.body.classList.add("phone-mode");
 // BRAND holds the active theme's title text + logo, so the title screen can render
 // them. Populated by applyTheme() from either URL params or a cloud design.
 let BRAND = {};
+let DESIGN = null;   // full design (theme + built-in slots + freeform elements) from the builder
 const TW_SUPA_URL = "https://yfatjubmmnykwopnuoyk.supabase.co";
 const TW_SUPA_ANON = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
 function applyTheme(t) {
@@ -1181,10 +1182,11 @@ function applyTheme(t) {
 // Patch an already-rendered title screen with the brand logo/title (used after the
 // cloud design loads, which may resolve after the title screen first painted).
 function brandTitleScreen() {
-  // Branded phone version uses the background + colors + title text only — no logo
-  // (neither the uploaded brand logo nor the default chicken).
   const tl = document.querySelector(".title-logo");
-  if (tl) tl.style.display = "none";
+  if (tl) {
+    if (BRAND.logo) { tl.style.display = ""; tl.innerHTML = `<img src="${BRAND.logo}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block">`; }
+    else tl.style.display = "none";   // branded with no logo → background + title only
+  }
   const tt = document.querySelector("h1.title");
   if (tt && (BRAND.title1 || BRAND.title2)) tt.innerHTML = `${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title2 || "")}</span>`;
 }
@@ -1199,7 +1201,13 @@ function brandTitleScreen() {
     // colors, text) from the cloud so nothing has to ride in the URL.
     fetch(`${TW_SUPA_URL}/rest/v1/sessions?room_code=eq.dsgn_${encodeURIComponent(designId)}&select=state`, { headers: { apikey: TW_SUPA_ANON, Authorization: "Bearer " + TW_SUPA_ANON } })
       .then(r => r.json())
-      .then(rows => { try { const st = rows && rows[0] && rows[0].state; if (st) { const d = JSON.parse(st); applyTheme((d.design && d.design.theme) || d.theme); brandTitleScreen(); } } catch (e) {} })
+      .then(rows => { try {
+        const st = rows && rows[0] && rows[0].state; if (!st) return;
+        const p = JSON.parse(st); DESIGN = p.design || p;          // full design: theme + slots + freeform els
+        applyTheme(DESIGN.theme);
+        brandTitleScreen();
+        if (typeof render === "function") render();                // re-render so slots + custom elements apply
+      } catch (e) {} })
       .catch(() => {});
     return;
   }
@@ -1442,7 +1450,7 @@ if (MODE === "host") (async function hostMain() {
             <li><b>Host announces the winners!</b></li>
           </ol>
         </div>
-        ${(BRAND.logo || BRAND.title1 || BRAND.title2) ? "" : `<div class="title-logo"><span class="logo-em">🍗</span></div>`}
+        ${BRAND.logo ? `<div class="title-logo"><img src="${BRAND.logo}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block"></div>` : (BRAND.title1 || BRAND.title2) ? "" : `<div class="title-logo"><span class="logo-em">🍗</span></div>`}
         <h1 class="title">${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title1 ? (BRAND.title2 || "") : "WINGS")}</span></h1>
         <div class="status-pill ${isCustom ? "custom" : ""}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
         <div class="btn-row">
@@ -2326,10 +2334,71 @@ if (MODE === "host") (async function hostMain() {
       case State.ROUND_END: viewRoundEnd(); break;
       case State.END: viewEnd(); break;
     }
+    applyPhoneDesign();   // apply the builder's moved/resized built-ins + custom elements
     updateCornerQR();
     renderWinnerBanner();
     updateBackButton();
     syncRoomState();
+  }
+
+  // Screen key matching the builder's design slots.
+  function designScreenKeyTW() {
+    if (game.state === State.QUESTION) return "question";
+    if (game.state === State.TITLE) return "title";
+    return "";
+  }
+  // Apply the design (made in Trivia Studio) to the phone host screen: position the
+  // built-in items the host moved (logo/badge/category/box), refit the box text, and
+  // draw any freeform text/image elements. Positions are % of the screen, same as the
+  // builder, so moving an item in the builder moves it here too.
+  function applyPhoneDesign() {
+    if (!DESIGN) return;
+    const app = document.getElementById("app"); if (!app) return;
+    const k = (app.clientWidth || 1280) / 1920;   // stage px → phone px
+    const key = designScreenKeyTW();
+    const sl = DESIGN.slots && DESIGN.slots[key];
+    if (sl) {
+      const map = { logo: ".q-corner-logo", badge: ".q-badge", category: ".q-category", box: ".q-text" };
+      Object.keys(map).forEach(name => {
+        const el = getMain().querySelector(map[name]); const s = sl[name];
+        if (!el || !s) return;
+        el.style.position = "absolute"; el.style.left = s.x + "%"; el.style.top = s.y + "%"; el.style.margin = "0"; el.style.zIndex = "6";
+        if (name === "box") {
+          if (s.w != null) el.style.width = s.w + "%";
+          if (s.h != null) el.style.height = s.h + "%";
+          fitPhoneBox(el, k);
+        } else if (s.s != null) {
+          el.style.transform = "scale(" + s.s + ")"; el.style.transformOrigin = "top left";
+        }
+      });
+    }
+    renderPhoneOverlay(key, k);
+  }
+  // Auto-fit the question text inside the box (measures the inner text, not the box).
+  function fitPhoneBox(box, k) {
+    const body = box.firstElementChild; if (!body) return;
+    const cs = getComputedStyle(box);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const fits = F => { box.style.fontSize = (F * k) + "px"; return body.scrollWidth <= (box.clientWidth - padX) + 1 && body.scrollHeight <= (box.clientHeight - padY) + 1; };
+    let lo = 10, hi = 240, best = 10;
+    for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2; if (fits(mid)) { best = mid; lo = mid; } else hi = mid; }
+    box.style.fontSize = (best * k) + "px";
+  }
+  // Draw the freeform text/image elements the host placed for this screen.
+  function renderPhoneOverlay(key, k) {
+    let ov = document.getElementById("designOverlay");
+    const els = (DESIGN && Array.isArray(DESIGN.els)) ? DESIGN.els.filter(e => e.s === key || e.s === "all") : [];
+    if (!els.length) { if (ov) ov.remove(); return; }
+    const app = document.getElementById("app");
+    if (!ov) { ov = document.createElement("div"); ov.id = "designOverlay"; ov.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:7"; app.appendChild(ov); }
+    ov.innerHTML = "";
+    els.forEach(e => {
+      const d = document.createElement("div");
+      d.style.cssText = "position:absolute;left:" + e.x + "%;top:" + e.y + "%;width:" + e.w + "%";
+      if (e.t === "img") { const im = document.createElement("img"); im.src = e.src; im.style.cssText = "width:100%;height:auto;display:block"; d.appendChild(im); }
+      else { const tx = document.createElement("div"); tx.textContent = e.txt || ""; tx.style.cssText = "color:" + e.c + ";font-size:" + (e.sz * k) + "px;font-weight:" + e.b + ";text-align:" + e.a + ";line-height:1.15;white-space:pre-wrap;word-break:break-word;text-shadow:2px 2px 0 rgba(0,0,0,.5)"; if (e.font) tx.style.fontFamily = e.font; d.appendChild(tx); }
+      ov.appendChild(d);
+    });
   }
 
   function updateBackButton() {
