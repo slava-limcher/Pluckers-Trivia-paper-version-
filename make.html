@@ -464,7 +464,7 @@
   const phoneBase = () => PHONE_BASE;
   let els = [], selId = null, slots = {};
   const SLOT_DEFAULTS = {
-    question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:19,w:97,h:60}, num:{x:4,y:44}, howto:{x:15,y:88} },
+    question:{ logo:{x:1.5,y:5}, badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:19,w:97,h:55}, num:{x:4,y:44}, howto:{x:15,y:80}, next:{x:38,y:88}, hint:{x:22,y:95} },
     answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:17,w:97,h:40}, num:{x:4,y:34}, answer:{x:18,y:66} },
     title:{}
   };
@@ -655,6 +655,10 @@
     const scorePill=`<span class="sc-score" style="${scoreStyle}">🏆 SCOREBOARD</span>`;
     const logo=$("logo").value.trim();
     const logoTag=logo?`<img src="${logo}" style="max-width:${px(760)};max-height:${px(300)};display:block;margin:0 auto ${px(20)}" onerror="this.style.display='none'">`:"";
+    // Movable built-ins on the question screen: corner logo, NEXT button, hint line.
+    const qlogo=logo?`<img class="sc-qlogo" src="${logo}" style="height:${px(150)};max-width:${px(340)};object-fit:contain;display:block" onerror="this.style.display='none'">`:"";
+    const nextMock=`<button class="sc-next" type="button" style="align-self:center;font-family:${labelFontV};background:${accent};color:${darken(primary,.12)};border:${px(5)} solid #000;border-radius:${px(16)};font-size:${px(40)};font-weight:900;letter-spacing:${px(2)};padding:${px(16)} ${px(52)};white-space:nowrap;cursor:move">NEXT QUESTION ▶</button>`;
+    const hintMock=`<div class="sc-hint" style="align-self:center;font-family:'Inter',sans-serif;font-size:${px(24)};color:${light};opacity:.85;text-align:center;white-space:nowrap">Write your answer on the paper provided &nbsp;•&nbsp; Press SPACE or click NEXT to advance</div>`;
     let content="";
     if(screen==="title"){
       content=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${px(8)};padding:${px(34)}">
@@ -664,9 +668,11 @@
       </div>`;
     } else if(screen==="question"){
       content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}">${badge(deep,44,'QUESTION 1 OF 10')}${scorePill}${badge(primary,48,cat)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}"><div style="display:flex;align-items:center;gap:${px(16)}">${qlogo}${badge(deep,44,'QUESTION 1 OF 10')}</div>${scorePill}${badge(primary,48,cat)}</div>
         <div class="sc-box" style="${boxStyle}"><div style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
         <div class="sc-howto" style="${howtoStyle}">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
+        ${nextMock}
+        ${hintMock}
       </div>`;
     } else {
       content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
@@ -696,7 +702,7 @@
   // makes the current layout draggable.
   function captureSlots(){
     const st=$("pvStage").getBoundingClientRect();
-    const map={badge:".sc-badge",category:".sc-cat",score:".sc-score",box:".sc-box",howto:".sc-howto",answer:".sc-ans"};
+    const map={logo:".sc-qlogo",badge:".sc-badge",category:".sc-cat",score:".sc-score",box:".sc-box",howto:".sc-howto",answer:".sc-ans",next:".sc-next",hint:".sc-hint"};
     const out={};
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); if(!el) return;
@@ -710,7 +716,7 @@
   }
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
-    const map={ badge:".sc-badge", category:".sc-cat", score:".sc-score", box:".sc-box", howto:".sc-howto", answer:".sc-ans" };
+    const map={ logo:".sc-qlogo", badge:".sc-badge", category:".sc-cat", score:".sc-score", box:".sc-box", howto:".sc-howto", answer:".sc-ans", next:".sc-next", hint:".sc-hint" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;

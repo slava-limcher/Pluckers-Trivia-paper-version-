@@ -2400,7 +2400,7 @@ function applyBuiltinSlots() {
   if (!DESIGN || !DESIGN.slots) return;
   const sl = DESIGN.slots[designScreenKey()];
   if (!sl) return;
-  const map = { badge: ".q-badge", category: ".q-category", box: ".q-text, .ans-q", howto: ".q-howto", answer: ".ans-a", score: ".q-score" };
+  const map = { logo: ".q-corner-logo", badge: ".q-badge", category: ".q-category", box: ".q-text, .ans-q", howto: ".q-howto", answer: ".ans-a", score: ".q-score", next: "#qNextBtn", hint: ".q-screen .hint" };
   Object.keys(map).forEach(name => {
     const el = document.querySelector(map[name]); const s = sl[name];
     if (!el || !s) return;
