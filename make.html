@@ -88,6 +88,15 @@
   .pal-add input[type=text]{flex:1;min-width:80px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
   .pal-add input[type=color]{width:38px;height:34px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:2px;cursor:pointer;flex:0 0 auto}
   .pal-add .btn{font-size:13px;padding:8px 13px}
+  /* brand search */
+  .brand-results{display:none;margin-top:8px;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden auto;background:#fff;max-height:300px}
+  .brand-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 13px;background:#fff;border:0;border-bottom:1px solid #eef1f7;color:#10182a;cursor:pointer;text-align:left;font:inherit}
+  .brand-row:last-child{border-bottom:0}
+  .brand-row:hover{background:#eef3ff}
+  .brand-name{font-weight:600;font-size:14px}
+  .brand-sw{display:flex;gap:4px;flex:0 0 auto}
+  .brand-sw i{width:20px;height:20px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+  .brand-empty{padding:11px 13px;font-size:13px;color:#6c789a;background:#fff}
   /* presets */
   .preset-list{display:flex;flex-wrap:wrap;gap:8px}
   .preset{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:6px 8px 6px 11px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s,box-shadow .15s}
@@ -266,6 +275,12 @@
 
       <div class="sec">
         <div class="sec-h">Colors</div>
+        <div class="group">
+          <label class="lbl" for="brandSearch">🔎 Search a brand — auto-fill its colors</label>
+          <input class="inp" type="text" id="brandSearch" placeholder="Buffalo Wild Wings, Taco Mac, Coca-Cola…" autocomplete="off" />
+          <div id="brandResults" class="brand-results"></div>
+          <p class="help">Pick a brand to drop in its palette instantly, then fine-tune below. Not listed? Upload its logo above and hit <b>🎨 Use logo colors</b>.</p>
+        </div>
         <div class="swatches">
           <label class="swatch"><input type="color" id="primary" value="#c8102e"><span><div class="sw-name">Primary</div><div class="sw-hex" id="hxprimary">#c8102e</div></span></label>
           <label class="swatch"><input type="color" id="accent" value="#f4c430"><span><div class="sw-name">Accent</div><div class="sw-hex" id="hxaccent">#f4c430</div></span></label>
@@ -998,6 +1013,79 @@
   });
   $("palName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("palAdd").click(); });
   renderPalette();
+
+  // ---- Brand search: type a brand, drop in its known palette [primary, accent, background, light] ----
+  const BRAND_LIBRARY = [
+    // Sports bars / wings / casual dining
+    {n:"Buffalo Wild Wings", c:["#FFC72C","#D5202E","#161616","#FFFFFF"]},
+    {n:"Pluckers Wing Bar",  c:["#C8102E","#F4C430","#1D3A8A","#F7F1E3"]},
+    {n:"Taco Mac",           c:["#C8102E","#F2C75C","#1B2A5E","#FFFFFF"]},
+    {n:"Hooters",            c:["#FF7A00","#FFFFFF","#5A3A1A","#FFF7E8"]},
+    {n:"Twin Peaks",         c:["#C8102E","#E8A33D","#2B2018","#FFF7E8"]},
+    {n:"Wingstop",           c:["#0C8A44","#ED1C24","#0A2E1C","#FFFFFF"]},
+    {n:"Dave & Buster's",    c:["#E11B22","#00A0DF","#101820","#FFFFFF"]},
+    {n:"Topgolf",            c:["#003DA5","#93D500","#0A1A3A","#FFFFFF"]},
+    {n:"Applebee's",         c:["#E2231A","#6CC04A","#1C1C1C","#FFFFFF"]},
+    {n:"Chili's",            c:["#BA0C2F","#00843D","#231F20","#FFFFFF"]},
+    {n:"TGI Fridays",        c:["#C8102E","#FFFFFF","#1A1A1A","#FFFFFF"]},
+    {n:"Texas Roadhouse",    c:["#B11116","#E8A33D","#231F20","#FFF7E8"]},
+    // Fast food
+    {n:"McDonald's",         c:["#FFC72C","#DA291C","#27251F","#FFFFFF"]},
+    {n:"Chick-fil-A",        c:["#E51636","#FFFFFF","#3D1414","#FFFFFF"]},
+    {n:"Wendy's",            c:["#E2203B","#FFFFFF","#032E61","#FFFFFF"]},
+    {n:"Burger King",        c:["#EC1C24","#F5A623","#502314","#FFF3E0"]},
+    {n:"KFC",                c:["#A6192E","#FFFFFF","#231F20","#FFFFFF"]},
+    {n:"Taco Bell",          c:["#702082","#E4097E","#2B0A33","#FFFFFF"]},
+    {n:"Subway",             c:["#008C15","#FFC600","#00451B","#FFFFFF"]},
+    {n:"Domino's",           c:["#E31837","#006491","#0B1E2D","#FFFFFF"]},
+    {n:"Pizza Hut",          c:["#EE3124","#FFFFFF","#1A1A1A","#FFFFFF"]},
+    {n:"Papa John's",        c:["#C8102E","#2E7D32","#1C1C1C","#FFFFFF"]},
+    {n:"Raising Cane's",     c:["#D9241F","#F2C75C","#1A1A1A","#FFFFFF"]},
+    // Drinks
+    {n:"Coca-Cola",          c:["#F40009","#FFFFFF","#1A1A1A","#FFFFFF"]},
+    {n:"Pepsi",              c:["#004B93","#EB2330","#002A5C","#FFFFFF"]},
+    {n:"Budweiser",          c:["#C8102E","#C8A04B","#1A1A1A","#FFFFFF"]},
+    {n:"Bud Light",          c:["#0A3A82","#00A3E0","#041E45","#FFFFFF"]},
+    {n:"Modelo",             c:["#C8A24B","#003B7A","#1A2A4A","#FFF7E0"]},
+    {n:"Red Bull",           c:["#DB0A40","#FFD700","#001A70","#FFFFFF"]},
+    {n:"Gatorade",           c:["#FF6600","#00B5E2","#111111","#FFFFFF"]},
+    {n:"Monster Energy",     c:["#84C625","#FFFFFF","#0A0A0A","#FFFFFF"]},
+    // Sports / leagues / media
+    {n:"ESPN",               c:["#E32219","#FFFFFF","#000000","#FFFFFF"]},
+    {n:"NFL",                c:["#013369","#D50A0A","#00132E","#FFFFFF"]},
+    {n:"NBA",                c:["#C8102E","#1D428A","#10141A","#FFFFFF"]},
+    {n:"MLB",                c:["#041E42","#BF0D3E","#02132B","#FFFFFF"]},
+    {n:"NHL",                c:["#111111","#A2AAAD","#000000","#FFFFFF"]},
+    // Tech / other popular
+    {n:"Spotify",            c:["#1DB954","#FFFFFF","#121212","#FFFFFF"]},
+    {n:"YouTube",            c:["#FF0000","#FFFFFF","#0F0F0F","#FFFFFF"]},
+    {n:"Netflix",            c:["#E50914","#FFFFFF","#141414","#FFFFFF"]},
+    {n:"Twitch",             c:["#9146FF","#FFFFFF","#0E0E10","#FFFFFF"]},
+    {n:"Amazon",             c:["#FF9900","#00A8E1","#232F3E","#FFFFFF"]},
+    {n:"Starbucks",          c:["#00704A","#D4A24E","#1E3932","#FFFFFF"]}
+  ];
+  function applyBrand(b){
+    if(!b) return;
+    ["primary","accent","deep","light"].forEach((k,i)=>{ if($(k)&&b.c[i]) $(k).value=b.c[i]; });
+    refresh();   // updates hex labels + preview
+    if($("brandSearch")) $("brandSearch").value=b.n;
+    const box=$("brandResults"); if(box) box.style.display="none";
+  }
+  function renderBrandResults(q){
+    const box=$("brandResults"); if(!box) return;
+    q=(q||"").trim().toLowerCase();
+    if(!q){ box.innerHTML=""; box.style.display="none"; return; }
+    const hits=BRAND_LIBRARY.map((b,i)=>({b,i})).filter(o=>o.b.n.toLowerCase().includes(q)).slice(0,8);
+    if(!hits.length){ box.innerHTML='<div class="brand-empty">No match — upload the brand’s logo above and click “Use logo colors.”</div>'; box.style.display="block"; return; }
+    box.innerHTML=hits.map(o=>`<button type="button" class="brand-row" data-i="${o.i}"><span class="brand-name">${esc(o.b.n)}</span><span class="brand-sw">${o.b.c.map(h=>`<i style="background:${h}"></i>`).join("")}</span></button>`).join("");
+    box.style.display="block";
+    box.querySelectorAll(".brand-row").forEach(el=>el.addEventListener("click",()=>applyBrand(BRAND_LIBRARY[+el.dataset.i])));
+  }
+  if($("brandSearch")){
+    $("brandSearch").addEventListener("input",e=>renderBrandResults(e.target.value));
+    $("brandSearch").addEventListener("focus",e=>renderBrandResults(e.target.value));
+    document.addEventListener("click",e=>{ if(!e.target.closest("#brandSearch")&&!e.target.closest("#brandResults")){ const b=$("brandResults"); if(b) b.style.display="none"; } });
+  }
   $("copyBtn").addEventListener("click",()=>{$("hostLink").select();navigator.clipboard.writeText($("hostLink").value).then(()=>{$("copied").classList.add("show");setTimeout(()=>$("copied").classList.remove("show"),2000);});});
   ["title","question","answer"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
   updateBgScope();
