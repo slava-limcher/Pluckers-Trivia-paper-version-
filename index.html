@@ -509,9 +509,12 @@
   }
   /* Host-only scoreboard panel — top-center of the question screen (between the
      QUESTION badge and the category). Hidden on the TVs. */
-  .q-topbar-left { display: flex; align-items: center; gap: 16px; }
-  /* Brand logo in the top-left of each question, next to the QUESTION badge. */
-  .q-corner-logo { height: 88px; max-width: 300px; object-fit: contain; display: block; }
+  /* Logo + QUESTION badge cluster, pulled out to the ACTUAL top-left corner of the
+     stage (the content area is centered with a ~160px inset; -136 lands it ~24px
+     from the true left edge). */
+  .q-topbar-left { display: flex; align-items: center; gap: 22px; margin-left: -136px; }
+  /* Big brand logo in the top-left of each question. */
+  .q-corner-logo { height: 150px; max-width: 340px; object-fit: contain; display: block; }
   .q-score {
     background: var(--yellow); color: var(--red);
     border: 4px solid var(--black); border-radius: 12px;
