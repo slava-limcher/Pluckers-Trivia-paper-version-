@@ -442,7 +442,11 @@
   function writeBgFonts(s){ s=s||{}; bgStyle=s.bg||"gradient"; if($("bgSel"))$("bgSel").value=bgStyle; if($("bgimg"))$("bgimg").value=s.bgimg||""; if($("bgImgWrap"))$("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; if($("dim")){$("dim").value=s.dim||0;$("dimVal").textContent=($("dim").value)+"%";} if($("titleFont"))$("titleFont").value=s.font||""; if($("qFont"))$("qFont").value=s.qfont||""; if($("labelFont"))$("labelFont").value=s.labelfont||""; }
   function updateBgScope(){ const lbl=screen==="title"?"Title screen":screen==="question"?"Question screen":"Answer screen"; document.querySelectorAll(".scope-chip").forEach(c=>c.textContent=lbl); }
   const PAPER_BASE = "https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/";
-  const phoneBase = () => location.origin + "/trivia-wings/";
+  // Public address for the phone engine (deployed alongside the paper game on GitHub
+  // Pages). Hardcoded so published links never point at localhost — open links keep
+  // working after the local dev server stops and on other devices/phones.
+  const PHONE_BASE = "https://slava-limcher.github.io/Pluckers-Trivia-paper-version-/trivia-wings/";
+  const phoneBase = () => PHONE_BASE;
   let els = [], selId = null, slots = {};
   const SLOT_DEFAULTS = {
     question:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:19,w:97,h:60}, num:{x:4,y:44}, howto:{x:15,y:88} },

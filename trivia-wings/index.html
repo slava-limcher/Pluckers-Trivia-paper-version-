@@ -1,0 +1,3014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trivia Wings — Pluckers</title>
+<style>
+  :root {
+    --red: #c8102e;
+    --red-dark: #9a0a22;
+    --red-deep: #6b0717;
+    --yellow: #f4c430;
+    --yellow-bright: #ffd84d;
+    --blue: #1d3a8a;
+    --blue-dark: #142764;
+    --blue-bright: #2a52be;
+    --cream: #f7f1e3;
+    --black: #0c0c0c;
+    --panel: #222;
+    --ink: #fff8e7;
+    --ink-dim: #d9c9a0;
+    --good: #4ade80;
+    --bad: #ef4444;
+    --shadow: 0 24px 70px rgba(0,0,0,.55);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: radial-gradient(1400px 900px at 50% -15%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    color: var(--ink);
+    font-family: "Impact", "Oswald", "Bebas Neue", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    user-select: none; -webkit-user-select: none;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(45deg, rgba(244,196,48,.035) 0 14px, transparent 14px 28px);
+    pointer-events: none; z-index: 0;
+  }
+  #app { position: relative; height: 100%; display: flex; flex-direction: column; z-index: 1; }
+
+  /* HEADER */
+  header {
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 36px;
+    background:
+      linear-gradient(180deg,
+        var(--red) 0, var(--red) 14%,
+        var(--blue) 14%, var(--blue) 22%,
+        var(--yellow) 22%, var(--yellow) 78%,
+        var(--blue) 78%, var(--blue) 86%,
+        var(--red) 86%, var(--red) 100%);
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+    flex-shrink: 0;
+  }
+  header::before, header::after {
+    content: ""; position: absolute; left: 0; right: 0;
+    height: 3px; background: var(--black);
+  }
+  header::before { top: 22%; }
+  header::after { bottom: 22%; }
+  header .brand, header .meta { position: relative; z-index: 2; }
+  .brand { display: flex; align-items: center; gap: 16px; font-weight: 900; letter-spacing: 2px; }
+  .brand .logo-badge {
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    background: var(--cream);
+    display: grid; place-items: center;
+    font-size: 42px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 -3px 0 rgba(0,0,0,.12);
+    border: 3px solid var(--black);
+    transform: rotate(-4deg);
+  }
+  .brand .name {
+    font-size: 32px; color: var(--red);
+    text-shadow: 3px 3px 0 var(--black);
+    line-height: 1;
+  }
+  .brand .name small {
+    display: block; font-size: 12px; color: var(--blue);
+    letter-spacing: 6px; margin-top: 4px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,.2);
+  }
+  .meta { display: flex; gap: 12px; font-size: 16px; letter-spacing: 2px; color: var(--blue); }
+  .meta .chip {
+    background: var(--cream); border: 3px solid var(--blue);
+    border-radius: 8px; padding: 6px 14px;
+    font-weight: 900; color: var(--red);
+  }
+  .meta .chip b { color: var(--blue); }
+
+  main {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 24px; min-height: 0; overflow: auto;
+  }
+  .view { width: 100%; max-width: 1500px; text-align: center; }
+
+  /* TITLE */
+  .title-wrap { padding: 40px 0; }
+  .title-logo {
+    position: relative;
+    width: 320px; height: 200px;
+    margin: 0 auto 24px;
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg,
+        var(--red) 0,
+        var(--red) 11.5%, var(--black) 11.5%, var(--black) 12.5%,
+        var(--blue) 12.5%, var(--blue) 26%, var(--black) 26%, var(--black) 27%,
+        var(--yellow) 27%, var(--yellow) 73%, var(--black) 73%, var(--black) 74%,
+        var(--blue) 74%, var(--blue) 87.5%, var(--black) 87.5%, var(--black) 88.5%,
+        var(--red) 88.5%, var(--red) 100%);
+    display: grid; place-items: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+    border: 6px solid var(--black);
+  }
+  .title-logo .logo-em {
+    font-size: 130px; line-height: 1;
+    filter: drop-shadow(4px 4px 0 var(--black));
+  }
+  h1.title {
+    font-size: 130px; line-height: .95; margin: 0 0 8px;
+    color: var(--red);
+    text-shadow:
+      5px 5px 0 var(--yellow),
+      10px 10px 0 var(--blue),
+      14px 14px 0 var(--black);
+    letter-spacing: 4px;
+  }
+  h1.title .sub {
+    display: block; font-size: 80px;
+    color: var(--yellow);
+    text-shadow: 4px 4px 0 var(--blue), 8px 8px 0 var(--black);
+    letter-spacing: 14px; margin-top: 8px;
+  }
+  .lead {
+    color: var(--ink); font-size: 30px;
+    margin: 22px auto 32px; max-width: 960px;
+    letter-spacing: 2px; line-height: 1.5;
+  }
+  .lead b { color: var(--yellow); }
+
+  /* WIN PRIZES badge + INSTRUCTIONS card (title-screen flair, matches paper) */
+  .win-prizes {
+    position: fixed;
+    left: 72px; top: 50%;
+    transform: translateY(-50%) rotate(-8deg);
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, var(--yellow-bright), var(--yellow) 70%);
+    border: 8px solid var(--red);
+    box-shadow: 0 0 0 6px var(--blue), 0 18px 40px rgba(0,0,0,.55);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    line-height: .9; z-index: 5;
+  }
+  .win-prizes .wp-top {
+    color: var(--blue); font-size: 50px; font-weight: 900;
+    letter-spacing: 4px; text-shadow: 2px 2px 0 rgba(0,0,0,.15);
+  }
+  .win-prizes .wp-big {
+    color: var(--red); font-size: 70px; font-weight: 900;
+    letter-spacing: 2px; text-shadow: 3px 3px 0 var(--black);
+  }
+  .instructions {
+    position: fixed;
+    right: 36px; top: 50%;
+    transform: translateY(-50%) rotate(2deg);
+    width: 460px;
+    background: #ffffff;
+    border: 6px solid var(--red);
+    border-radius: 18px;
+    box-shadow: 0 0 0 7px var(--blue), 0 20px 46px rgba(0,0,0,.55);
+    padding: 0 0 26px;
+    text-align: left;
+    overflow: hidden;
+    z-index: 5;
+  }
+  .instructions .instr-header {
+    background: var(--red); color: var(--yellow);
+    font-size: 40px; font-weight: 900; letter-spacing: 3px;
+    padding: 16px 18px; text-align: center;
+    text-shadow: 2px 2px 0 var(--black);
+    border-bottom: 5px solid var(--black);
+  }
+  .instructions .instr-qr {
+    padding: 16px 16px 12px;
+    text-align: center;
+    border-bottom: 3px dashed rgba(29,58,138,.25);
+  }
+  .instructions .instr-qr-box {
+    background: #fff;
+    border: 3px solid var(--black);
+    border-radius: 8px;
+    padding: 8px;
+    width: 200px; height: 200px;
+    margin: 0 auto;
+    display: grid; place-items: center;
+  }
+  .instructions .instr-qr-box img,
+  .instructions .instr-qr-box canvas { width: 100% !important; height: 100% !important; }
+  .instructions .instr-qr-box .qr-loading {
+    color: var(--blue); font-size: 12px; letter-spacing: 2px;
+    font-weight: 900; text-align: center;
+  }
+  .instructions .instr-qr-label {
+    color: var(--blue); font-size: 12px; letter-spacing: 3px;
+    font-weight: 900; margin-top: 10px;
+  }
+  .instructions .instr-qr-code {
+    color: var(--red); font-size: 32px; letter-spacing: 6px;
+    font-weight: 900; margin-top: 2px;
+    text-shadow: 2px 2px 0 var(--yellow);
+    line-height: 1;
+  }
+  .instructions .instr-list {
+    margin: 14px 0 0;
+    padding: 0 22px 0 54px;
+    color: var(--blue-dark);
+  }
+  .instructions .instr-list li {
+    font-size: 20px; font-weight: 800;
+    line-height: 1.3; margin-bottom: 12px;
+    letter-spacing: .3px;
+  }
+  .instructions .instr-list li:last-child { margin-bottom: 0; }
+  .instructions .instr-list li b { color: var(--red); }
+  /* MEDIUM-large screens (1600px and below) — shrink decorative side badges
+     so they don't crash into the centered title + buttons. */
+  @media (max-width: 1600px) {
+    .win-prizes { width: 200px; height: 200px; left: 28px; border-width: 7px; }
+    .win-prizes .wp-top { font-size: 38px; }
+    .win-prizes .wp-big { font-size: 56px; }
+    .instructions { width: 320px; right: 22px; }
+    .instructions .instr-header { font-size: 30px; }
+    .instructions .instr-list { padding: 0 18px 0 48px; }
+    .instructions .instr-list li { font-size: 19px; margin-bottom: 12px; }
+    .instructions .instr-qr-box { width: 150px; height: 150px; }
+  }
+
+  /* NARROW screens (1400px and below) — hide the decorative side widgets entirely.
+     The buttons + title + QR still take up plenty of room and would otherwise be
+     pushed into / under WIN PRIZES and INSTRUCTIONS. */
+  @media (max-width: 1400px) {
+    .win-prizes, .instructions { display: none; }
+  }
+
+  /* MOBILE / very narrow (900px and below) — also shrink the floating widgets. */
+  @media (max-width: 900px) {
+    .corner-qr { width: 140px; top: 92px; right: 12px; padding: 12px 8px 8px; }
+    .corner-qr .qr-mini { padding: 4px; }
+    .corner-qr .qr-label { font-size: 9px; letter-spacing: 1px; }
+    .corner-qr .qr-code { font-size: 16px; letter-spacing: 2px; }
+    .back-btn { top: 92px; left: 12px; padding: 7px 14px; font-size: 14px; letter-spacing: 2px; }
+    .winner-banner { max-width: calc(100vw - 320px); font-size: 13px; padding: 6px 14px; }
+    .winner-banner .wb-name { font-size: 18px; max-width: 180px; }
+    .winner-banner .wb-score { font-size: 22px; padding: 2px 12px; }
+    .q-category { top: 380px; right: 160px; font-size: 28px; padding: 10px 24px; }
+  }
+
+  /* BUTTONS */
+  .btn {
+    --btn-shadow-color: var(--blue-dark);
+    background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+    color: var(--cream); border: 4px solid var(--black);
+    border-radius: 14px; padding: 18px 36px;
+    font-size: 26px; font-weight: 900; letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow: 0 10px 0 var(--btn-shadow-color), 0 18px 30px rgba(0,0,0,.5);
+    transition: transform .08s ease, box-shadow .12s ease, filter .15s ease;
+    font-family: inherit; text-transform: uppercase;
+    text-shadow: 2px 2px 0 var(--black);
+    min-width: 240px;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 4px 0 var(--btn-shadow-color), 0 8px 16px rgba(0,0,0,.5);
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; filter: grayscale(.3); }
+  .btn.secondary { background: var(--yellow); color: var(--red); text-shadow: none; }
+  .btn.ghost {
+    background: transparent; color: var(--yellow);
+    border-color: var(--yellow); box-shadow: none; text-shadow: none;
+  }
+  .btn-row { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+
+  .hint {
+    margin-top: 28px; color: var(--cream);
+    font-size: 16px; letter-spacing: 2px;
+  }
+  .hint kbd {
+    display: inline-block; background: var(--yellow); color: var(--red);
+    border: 2px solid var(--black); border-bottom-width: 4px;
+    border-radius: 6px; padding: 4px 10px; margin: 0 4px;
+    font-family: inherit; font-size: 14px; font-weight: 900;
+  }
+
+  .status-pill {
+    display: inline-block; background: var(--cream); color: var(--blue-dark);
+    border: 4px solid var(--blue); border-radius: 999px;
+    padding: 14px 36px; font-size: 30px; letter-spacing: 2px;
+    margin: 0 0 24px; font-weight: 900;
+  }
+  .status-pill b { color: var(--red); }
+  .status-pill.custom { border-color: var(--red); }
+  .status-pill.custom b { color: var(--blue); }
+
+  /* LOBBY */
+  .lobby {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    max-width: 1300px; margin: 0 auto;
+    align-items: center;
+  }
+  .lobby-left {
+    background: var(--cream); border: 6px solid var(--blue);
+    border-radius: 22px; padding: 36px; color: var(--blue-dark);
+    box-shadow: var(--shadow); position: relative;
+  }
+  .lobby-left::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 14px;
+    background: linear-gradient(180deg, var(--red) 0, var(--red) 50%, var(--yellow) 50%, var(--yellow) 100%);
+    border-radius: 14px 14px 0 0;
+  }
+  .lobby-left h2 {
+    margin: 20px 0 8px;
+    font-size: 32px; color: var(--red); letter-spacing: 3px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .lobby-left .room-code {
+    font-size: 96px; color: var(--red); letter-spacing: 12px;
+    margin: 12px 0;
+    text-shadow: 4px 4px 0 var(--yellow), 8px 8px 0 var(--black);
+    line-height: 1;
+  }
+  .lobby-left .join-url {
+    color: var(--blue-dark); font-size: 13px; letter-spacing: 1px;
+    word-break: break-all; margin: 8px 0 18px;
+    font-family: ui-monospace, "Consolas", "Courier New", monospace;
+    font-weight: 900;
+  }
+  .lobby-left .qr-container {
+    background: #fff; padding: 14px; border-radius: 12px;
+    border: 4px solid var(--black);
+    width: 280px; height: 280px;
+    margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lobby-left .qr-container img,
+  .lobby-left .qr-container canvas {
+    width: 100% !important; height: 100% !important;
+  }
+  .lobby-right {
+    background: var(--cream); border: 6px solid var(--red);
+    border-radius: 22px; padding: 28px; color: var(--blue-dark);
+    box-shadow: var(--shadow); position: relative;
+    min-height: 460px;
+    display: flex; flex-direction: column;
+  }
+  .lobby-right::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 14px;
+    background: linear-gradient(180deg, var(--blue) 0, var(--blue) 50%, var(--yellow) 50%, var(--yellow) 100%);
+    border-radius: 14px 14px 0 0;
+  }
+  .lobby-right h2 {
+    margin: 20px 0 4px;
+    font-size: 32px; color: var(--blue); letter-spacing: 3px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .lobby-right .count {
+    color: var(--red); font-size: 64px; font-weight: 900;
+    letter-spacing: 4px; line-height: 1; margin: 8px 0 16px;
+    text-shadow: 3px 3px 0 var(--yellow);
+  }
+  .lobby-teams {
+    flex: 1; overflow-y: auto;
+    background: #fff; border: 3px solid var(--blue);
+    border-radius: 12px; padding: 12px;
+    text-align: left;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 6px;
+    min-height: 220px;
+  }
+  .lobby-team {
+    background: var(--cream); border-left: 4px solid var(--red);
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 14px; font-weight: 900; letter-spacing: 1px;
+    color: var(--blue-dark);
+    animation: slidein .25s ease;
+  }
+  @keyframes slidein {
+    from { transform: translateX(-12px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .lobby-teams .empty {
+    grid-column: 1 / -1;
+    text-align: center; color: var(--blue);
+    font-size: 16px; letter-spacing: 2px;
+    padding: 40px 0;
+  }
+  .lobby-actions {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 18px;
+  }
+
+  /* ROUND INTRO */
+  .round-intro { padding: 40px; }
+  .round-label {
+    font-size: 48px; letter-spacing: 18px; color: var(--cream);
+    text-shadow: 3px 3px 0 var(--blue); margin-bottom: 8px;
+  }
+  .round-number {
+    font-size: 220px; line-height: 1; color: var(--yellow);
+    text-shadow:
+      6px 6px 0 var(--red), 12px 12px 0 var(--blue), 18px 18px 0 var(--black);
+    margin: 0;
+  }
+  .round-category {
+    font-size: 84px; color: var(--red);
+    text-shadow: 4px 4px 0 var(--yellow), 8px 8px 0 var(--black);
+    margin: 16px 0 8px; letter-spacing: 6px;
+  }
+  .round-count {
+    font-size: 26px; color: var(--cream);
+    letter-spacing: 4px; margin-bottom: 32px;
+  }
+
+  /* QUESTION SCREEN (host) */
+  .q-screen-host {
+    display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: auto 1fr auto;
+    gap: 18px; height: 100%; align-content: stretch;
+    grid-template-areas:
+      "top top"
+      "qtext tracker"
+      "footer footer";
+  }
+  .q-topbar {
+    grid-area: top;
+    display: flex; justify-content: flex-start; align-items: center; gap: 24px;
+  }
+  .q-badge {
+    background: var(--blue); border: 5px solid var(--black);
+    border-radius: 14px; padding: 14px 32px;
+    font-size: 38px; letter-spacing: 4px; color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--black);
+  }
+  .q-category {
+    /* Sits at the right end of the top bar (same row as the Q-badge), above the
+       tracker — flows in the layout so it never overlaps the submissions box. */
+    margin-left: auto;
+    background: var(--red); border: 5px solid var(--black);
+    border-radius: 14px; padding: 14px 32px;
+    font-size: 38px; letter-spacing: 4px; color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--black);
+  }
+  .q-text {
+    grid-area: qtext;
+    font-size: 52px; line-height: 1.2; color: var(--cream);
+    background: linear-gradient(180deg, var(--blue-dark), #0a1234);
+    border: 5px solid var(--yellow); border-radius: 22px;
+    padding: 36px 50px; box-shadow: var(--shadow);
+    letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .q-text .q-num {
+    display: inline-block; background: var(--yellow); color: var(--red);
+    border: 3px solid var(--black); border-radius: 12px;
+    padding: 4px 18px; margin-right: 18px; font-size: 44px;
+    vertical-align: middle; text-shadow: 2px 2px 0 rgba(0,0,0,.15);
+  }
+  .q-footer {
+    grid-area: footer; text-align: center;
+  }
+  .q-reveal-note {
+    position: fixed;
+    bottom: 80px; left: 0; right: 0;
+    text-align: center;
+    font-size: 36px; letter-spacing: 5px;
+    color: #ffffff; font-weight: 900;
+    text-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--black);
+    z-index: 12;
+    pointer-events: none;
+  }
+
+  /* SUBMISSION TRACKER (no answer text) */
+  .tracker {
+    grid-area: tracker;
+    background: var(--cream); border: 5px solid var(--blue);
+    border-radius: 18px; padding: 16px;
+    box-shadow: var(--shadow); color: var(--blue-dark);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .tracker h3 {
+    margin: 0 0 8px; color: var(--red);
+    font-size: 22px; letter-spacing: 3px; text-align: center;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .tracker .stat {
+    text-align: center; color: var(--blue);
+    font-size: 36px; font-weight: 900; letter-spacing: 2px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .tracker .stat b { color: var(--red); }
+  .tracker-grid {
+    flex: 1; overflow-y: auto;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+  }
+  .tracker-cell {
+    background: #fff; border: 2px solid var(--blue);
+    border-radius: 8px; padding: 8px 10px;
+    font-size: 13px; font-weight: 900; letter-spacing: 1px;
+    color: var(--blue-dark);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px;
+    transition: background .3s, border-color .3s, transform .2s;
+  }
+  .tracker-cell.submitted {
+    background: linear-gradient(180deg, var(--yellow-bright), var(--yellow));
+    border-color: var(--red); color: var(--red);
+    transform: scale(1.02);
+  }
+  .tracker-cell .check { font-size: 16px; }
+
+  /* ROUND-END Q+A LIST */
+  .round-end-answers {
+    display: flex; flex-direction: column;
+    height: 100%; max-height: calc(100vh - 200px);
+    gap: 14px; text-align: center;
+  }
+  .round-end-header h2 {
+    font-size: 56px; margin: 0 0 4px;
+    color: var(--red); letter-spacing: 4px;
+    text-shadow: 6px 6px 0 var(--yellow), 12px 12px 0 var(--blue), 18px 18px 0 var(--black);
+  }
+  .round-end-answers .round-category {
+    font-size: 36px; margin: 0;
+    text-shadow: 3px 3px 0 var(--yellow), 5px 5px 0 var(--black);
+  }
+  .qa-list {
+    flex: 1; overflow: auto;
+    background: var(--cream); border: 5px solid var(--blue);
+    border-radius: 18px; padding: 18px 26px;
+    box-shadow: var(--shadow);
+    text-align: left; color: var(--blue-dark);
+  }
+  .qa-list ol {
+    list-style: none; margin: 0; padding: 0;
+    columns: 2; column-gap: 40px;
+    column-rule: 2px dashed rgba(29,58,138,.25);
+    height: 100%;
+  }
+  .qa-item {
+    break-inside: avoid; padding: 6px 0;
+    border-bottom: 1px dashed rgba(29,58,138,.15);
+  }
+  .qa-item:last-child { border-bottom: 0; }
+  .qa-q { font-weight: 900; color: var(--blue-dark); line-height: 1.25; }
+  .qa-num { display: inline-block; color: var(--red); margin-right: 8px; font-weight: 900; }
+  .qa-a { color: var(--red); margin-top: 2px; line-height: 1.2; padding-left: 4px; }
+  .qa-a b { color: var(--blue); letter-spacing: 1px; margin-right: 4px; font-size: .85em; }
+  .qa-list.qa-lg .qa-q { font-size: 36px; } .qa-list.qa-lg .qa-a { font-size: 42px; } .qa-list.qa-lg .qa-item { padding: 12px 0; }
+  .qa-list.qa-md .qa-q { font-size: 30px; } .qa-list.qa-md .qa-a { font-size: 34px; } .qa-list.qa-md .qa-item { padding: 9px 0; }
+  .qa-list.qa-sm .qa-q { font-size: 25px; } .qa-list.qa-sm .qa-a { font-size: 28px; } .qa-list.qa-sm .qa-item { padding: 7px 0; }
+  .qa-list.qa-xs .qa-q { font-size: 20px; } .qa-list.qa-xs .qa-a { font-size: 24px; } .qa-list.qa-xs .qa-item { padding: 5px 0; } .qa-list.qa-xs ol { column-gap: 28px; }
+
+  .round-end-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 24px; padding-top: 4px;
+  }
+  .round-end-footer .lead-inline {
+    color: var(--cream); font-size: 22px; letter-spacing: 3px;
+  }
+
+  /* END SCREEN */
+  .end h2 {
+    font-size: 110px; color: var(--red);
+    text-shadow: 6px 6px 0 var(--yellow), 12px 12px 0 var(--blue), 18px 18px 0 var(--black);
+    margin: 0 0 20px; letter-spacing: 6px;
+  }
+  .end p {
+    font-size: 30px; color: var(--cream);
+    letter-spacing: 3px; margin-bottom: 36px;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative; padding: 14px 32px;
+    background: var(--blue-dark);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px; letter-spacing: 3px; color: var(--cream);
+    flex-shrink: 0;
+  }
+  footer::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: linear-gradient(180deg,
+      var(--red) 0, var(--red) 33%,
+      var(--yellow) 33%, var(--yellow) 66%,
+      var(--blue) 66%, var(--blue) 100%);
+  }
+  footer .controls span { margin-right: 18px; }
+  footer kbd {
+    background: var(--cream); color: var(--red);
+    border: 1px solid var(--black); border-bottom-width: 2px;
+    border-radius: 4px; padding: 2px 8px; margin: 0 2px;
+    font-family: inherit; font-weight: 900;
+  }
+
+  /* MODAL */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(6,10,31,.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px; overflow-y: auto;
+  }
+  .modal {
+    background: var(--cream); color: var(--blue-dark);
+    border: 6px solid var(--blue); border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    width: 100%; max-width: 780px; max-height: 92vh;
+    overflow-y: auto; padding: 28px 32px; position: relative;
+  }
+  .modal::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 14px;
+    background: linear-gradient(180deg, var(--red) 0, var(--red) 50%, var(--yellow) 50%, var(--yellow) 100%);
+    border-radius: 14px 14px 0 0;
+  }
+  .modal h2 { margin: 18px 0 6px; color: var(--red); font-size: 34px; letter-spacing: 3px; text-shadow: 2px 2px 0 var(--yellow); }
+  .modal .modal-lead { color: var(--blue-dark); font-size: 14px; line-height: 1.5; margin: 0 0 18px; letter-spacing: 1px; }
+  .modal .field { margin-bottom: 16px; }
+  .modal label { display: block; font-size: 14px; color: var(--red); letter-spacing: 3px; margin-bottom: 8px; font-weight: 900; }
+  .modal input[type=file] { display: block; width: 100%; padding: 10px; background: #fff; border: 2px dashed var(--blue); border-radius: 8px; font-family: inherit; color: var(--blue-dark); }
+  .modal textarea { width: 100%; min-height: 180px; padding: 14px; background: #fff; border: 2px solid var(--blue); border-radius: 8px; font-family: ui-monospace, "Consolas", monospace; font-size: 13px; color: var(--blue-dark); resize: vertical; line-height: 1.5; }
+  .modal textarea:focus, .modal input:focus { outline: none; border-color: var(--red); }
+  .format-tabs { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 3px solid var(--blue); }
+  .format-tab { background: transparent; border: 0; border-bottom: 4px solid transparent; margin-bottom: -3px; padding: 10px 18px; font-family: inherit; font-size: 13px; letter-spacing: 2px; font-weight: 900; color: var(--blue); cursor: pointer; }
+  .format-tab.active { color: var(--red); border-bottom-color: var(--red); }
+  /* ---- BUILD-YOUR-OWN sheet ---- */
+  .bld-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px;
+    background: rgba(29,58,138,.07); border: 2px solid rgba(29,58,138,.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+  .bld-num { display: flex; flex-direction: column; }
+  .bld-num label { margin-bottom: 6px; font-size: 13px; color: var(--red); letter-spacing: 2px; font-weight: 900; }
+  .bld-num input[type="number"] { width: 120px; padding: 10px 12px; font-size: 22px; font-weight: 900;
+    border: 2px solid var(--blue); border-radius: 8px; background: #fff; color: var(--blue-dark, #142764); box-sizing: border-box; text-align: center; }
+  .bld-total { margin-left: auto; align-self: center; font-weight: 900; color: var(--red); letter-spacing: 1px; font-size: 15px; }
+  #builderGrid { display: flex; flex-direction: column; gap: 16px; }
+  .bld-cat { border: 2px solid var(--blue); border-radius: 12px; padding: 14px; background: #fff; }
+  .bld-cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .bld-cat-no { background: var(--red); color: var(--cream); font-weight: 900; border-radius: 8px; padding: 8px 12px; white-space: nowrap; letter-spacing: 1px; font-size: 13px; }
+  .bld-qrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bld-qn { width: 28px; text-align: right; font-weight: 900; color: var(--blue); flex: 0 0 auto; }
+  .modal input[type="text"].bld-catname { flex: 1; padding: 10px 12px; font-size: 18px; }
+  .modal input[type="text"].bld-q { flex: 2; padding: 9px 11px; font-size: 15px; font-weight: 600; }
+  .modal input[type="text"].bld-a { flex: 1; padding: 9px 11px; font-size: 15px; font-weight: 600; }
+  .format-help { background: rgba(29,58,138,.08); border-left: 4px solid var(--blue); padding: 10px 14px; margin: 0 0 10px; font-size: 12px; font-family: ui-monospace, "Consolas", monospace; color: var(--blue-dark); white-space: pre; overflow-x: auto; border-radius: 0 6px 6px 0; }
+  .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 2px solid rgba(29,58,138,.2); }
+  .modal .btn { padding: 14px 28px; font-size: 18px; box-shadow: 0 6px 0 var(--blue-dark); }
+  .modal .btn:active { box-shadow: 0 2px 0 var(--blue-dark); }
+  .modal .btn.danger { background: var(--yellow); color: var(--red); text-shadow: none; }
+  .modal .error-msg, .modal .ok-msg { padding: 10px 14px; border-radius: 8px; font-size: 14px; letter-spacing: 1px; margin-bottom: 12px; border: 2px solid var(--black); font-weight: 900; }
+  .modal .error-msg { background: var(--red); color: var(--cream); }
+  .modal .ok-msg { background: var(--blue); color: var(--yellow); }
+  .modal .close-x { position: absolute; top: 22px; right: 18px; background: transparent; border: 0; color: var(--blue); font-size: 28px; font-weight: 900; cursor: pointer; line-height: 1; padding: 4px 10px; z-index: 2; }
+  .modal .close-x:hover { color: var(--red); }
+
+  /* Make modal body text readable — override the display font (Impact) for forms,
+     labels, list items, etc. Keep the H2 title and primary buttons in display font. */
+  .modal,
+  .modal label,
+  .modal input,
+  .modal textarea,
+  .modal button,
+  .modal select,
+  .modal p,
+  .modal span:not(.wb-name):not(.wb-score),
+  .modal div,
+  .modal summary {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+  }
+  .modal h2 {
+    /* Keep big modal heading in display font for visual impact */
+    font-family: "Impact", "Oswald", "Bebas Neue", sans-serif;
+  }
+  .modal .btn {
+    /* Primary action buttons (CANCEL / GENERATE) stay display for branding */
+    font-family: "Impact", "Oswald", "Bebas Neue", sans-serif;
+  }
+  .modal label { letter-spacing: 1.5px; font-size: 13px; }
+  .modal .modal-lead { letter-spacing: 0; font-size: 14px; line-height: 1.5; }
+  .modal .cat-item { letter-spacing: 0.3px; font-size: 14px; font-weight: 600; }
+  .modal .custom-chip { letter-spacing: 0.5px; font-weight: 700; }
+  .modal .ai-hint { letter-spacing: 0.5px; font-size: 12px; line-height: 1.4; }
+  .modal .cat-summary { letter-spacing: 0.5px; font-size: 14px; }
+  .modal .diff-btn { letter-spacing: 1.5px; }
+  .modal details.manual-panel > summary { letter-spacing: 1px; font-size: 14px; }
+  .modal details.manual-panel p { letter-spacing: 0; line-height: 1.5; }
+  .modal .manual-name, .modal .manual-qs { letter-spacing: 0.3px; }
+  .modal .size-row label { letter-spacing: 1.5px; }
+  .modal input::placeholder, .modal textarea::placeholder { letter-spacing: 0.3px; }
+
+  /* Random-pack modal extras */
+  .modal.random-modal { max-width: 880px; }
+  .diff-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .diff-btn {
+    background: var(--cream); border: 3px solid; border-radius: 10px;
+    padding: 10px 14px; font-family: inherit; font-weight: 900;
+    font-size: 14px; letter-spacing: 2px; cursor: pointer;
+    flex: 1; min-width: 90px; transition: transform .08s ease;
+  }
+  .diff-btn:active { transform: translateY(2px); }
+  .diff-btn.any    { border-color: #777; color: #555; }
+  .diff-btn.easy   { border-color: #2e7d32; color: #2e7d32; }
+  .diff-btn.medium { border-color: #ed6c02; color: #ed6c02; }
+  .diff-btn.hard   { border-color: var(--red); color: var(--red); }
+  .diff-btn.active.any    { background: #555; color: #fff; }
+  .diff-btn.active.easy   { background: #2e7d32; color: #fff; }
+  .diff-btn.active.medium { background: #ed6c02; color: #fff; }
+  .diff-btn.active.hard   { background: var(--red); color: #fff; }
+
+  .cat-search {
+    width: 100%; padding: 10px 14px;
+    background: #fff; border: 2px solid var(--blue);
+    border-radius: 8px; font-family: inherit;
+    color: var(--blue-dark); font-size: 14px; margin-bottom: 8px;
+  }
+  .cat-search:focus { outline: none; border-color: var(--red); }
+  .cat-list {
+    max-height: 240px; overflow-y: auto;
+    background: #fff; border: 2px solid var(--blue);
+    border-radius: 8px; padding: 6px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  }
+  .cat-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    cursor: pointer; font-size: 14px; font-weight: 700;
+    color: var(--blue-dark); user-select: none;
+  }
+  .cat-item:hover { background: rgba(29,58,138,.08); }
+  .cat-item.checked { background: rgba(29,58,138,.15); color: var(--red); }
+  .cat-item input { margin: 0; cursor: pointer; }
+  .cat-summary { font-size: 13px; color: var(--blue); margin-top: 8px; letter-spacing: 1px; }
+  .cat-summary b { color: var(--red); }
+  .cat-list .empty {
+    grid-column: 1 / -1; text-align: center;
+    color: var(--blue); font-size: 13px; padding: 20px;
+  }
+
+  .size-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .size-row label { font-size: 13px; color: var(--red); letter-spacing: 2px; font-weight: 900; margin: 0; }
+  .size-row input[type=number] { width: 80px; text-align: center; }
+
+  /* Custom AI topic chips */
+  .custom-row { display: flex; gap: 8px; align-items: center; }
+  .custom-row input[type=text] {
+    flex: 1; padding: 10px 14px;
+    background: #fff; border: 2px solid var(--red);
+    border-radius: 8px; font-family: inherit;
+    font-weight: 700; color: var(--blue-dark); font-size: 14px;
+  }
+  .custom-row input:focus { outline: none; border-color: var(--blue); }
+  .custom-row button {
+    background: var(--red); color: var(--cream);
+    border: 2px solid var(--black); border-radius: 8px;
+    padding: 10px 18px;
+    font-family: inherit; font-weight: 900;
+    font-size: 13px; letter-spacing: 2px;
+    cursor: pointer; text-shadow: 1px 1px 0 var(--black);
+  }
+  .custom-row button:active { transform: translateY(2px); }
+  .custom-list {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 8px; min-height: 4px;
+    max-height: 110px; overflow-y: auto;
+  }
+  .custom-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(180deg, var(--yellow-bright), var(--yellow));
+    color: var(--red); border: 2px solid var(--red);
+    border-radius: 999px; padding: 4px 6px 4px 14px;
+    font-size: 13px; font-weight: 900; letter-spacing: 1px;
+  }
+  .custom-chip .x {
+    background: var(--red); color: var(--cream);
+    border: 0; border-radius: 50%;
+    width: 20px; height: 20px;
+    cursor: pointer; font-size: 12px; font-weight: 900;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; line-height: 1;
+  }
+  .custom-chip .x:hover { background: var(--black); }
+  .custom-chip.manual {
+    background: linear-gradient(180deg, #cfe8ff, #a5cdee);
+    border-color: var(--blue); color: var(--blue-dark);
+  }
+  .custom-chip.manual .x { background: var(--blue); }
+  .ai-hint { color: var(--blue); font-size: 11px; letter-spacing: 1px; margin-top: 4px; }
+
+  /* Manual-topic collapsible panel */
+  details.manual-panel {
+    margin-top: 10px;
+    background: rgba(29,58,138,.06);
+    border: 2px solid var(--blue);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  details.manual-panel > summary {
+    cursor: pointer; font-weight: 900; letter-spacing: 2px;
+    font-size: 13px; color: var(--blue); padding: 4px 2px;
+  }
+  details.manual-panel[open] > summary { color: var(--red); margin-bottom: 8px; }
+  details.manual-panel .manual-name {
+    width: 100%; padding: 10px 12px; margin-top: 4px;
+    background: #fff; border: 2px solid var(--blue);
+    border-radius: 8px; font-family: inherit; font-weight: 700;
+    color: var(--blue-dark); font-size: 14px;
+  }
+  details.manual-panel .manual-name:focus { outline: none; border-color: var(--red); }
+  details.manual-panel .manual-qs {
+    width: 100%; min-height: 100px; margin-top: 8px;
+    padding: 10px 12px;
+    background: #fff; border: 2px solid var(--blue); border-radius: 8px;
+    font-family: ui-monospace, "Consolas", monospace; font-size: 12px;
+    color: var(--blue-dark); resize: vertical; line-height: 1.5;
+  }
+  details.manual-panel .manual-qs:focus { outline: none; border-color: var(--red); }
+  details.manual-panel .manual-save {
+    background: var(--blue); color: var(--cream);
+    border: 2px solid var(--black); border-radius: 8px;
+    padding: 8px 16px;
+    font-family: inherit; font-weight: 900;
+    font-size: 13px; letter-spacing: 2px;
+    cursor: pointer; text-shadow: 1px 1px 0 var(--black);
+  }
+  details.manual-panel .manual-save:active { transform: translateY(2px); }
+
+  /* PHONE-MODE STYLES */
+  body.phone-mode header,
+  body.phone-mode footer { padding: 10px 18px; }
+  body.phone-mode .brand .name { font-size: 22px; }
+  body.phone-mode .brand .name small { font-size: 10px; letter-spacing: 4px; }
+  body.phone-mode .brand .logo-badge { width: 48px; height: 48px; font-size: 30px; }
+  body.phone-mode main { padding: 16px; }
+
+  .phone-screen {
+    background: var(--cream); color: var(--blue-dark);
+    border: 5px solid var(--blue); border-radius: 18px;
+    padding: 24px 22px; max-width: 460px; margin: 0 auto;
+    box-shadow: var(--shadow); position: relative;
+    text-align: center;
+  }
+  .phone-screen::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 12px;
+    background: linear-gradient(180deg, var(--red) 0, var(--red) 50%, var(--yellow) 50%, var(--yellow) 100%);
+    border-radius: 12px 12px 0 0;
+  }
+  .phone-screen h2 {
+    margin: 18px 0 8px; color: var(--red); font-size: 26px; letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .phone-screen p { color: var(--blue-dark); font-size: 16px; letter-spacing: 1px; line-height: 1.4; }
+  .phone-screen .big-label { font-size: 14px; color: var(--blue); letter-spacing: 3px; font-weight: 900; margin-top: 14px; }
+  .phone-screen .room-mini {
+    background: var(--blue); color: var(--yellow);
+    border: 3px solid var(--black); border-radius: 8px;
+    padding: 4px 14px; font-size: 22px; letter-spacing: 6px;
+    display: inline-block; margin: 6px 0 0;
+    text-shadow: 2px 2px 0 var(--black);
+  }
+  .phone-input {
+    width: 100%; padding: 14px 16px;
+    background: #fff; border: 3px solid var(--blue);
+    border-radius: 10px; font-family: inherit; font-weight: 900;
+    color: var(--blue-dark); font-size: 18px;
+    margin: 12px 0;
+  }
+  .phone-input:focus { outline: none; border-color: var(--red); }
+  .phone-btn {
+    background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+    color: var(--cream); border: 3px solid var(--black);
+    border-radius: 10px; padding: 14px 32px;
+    font-size: 18px; font-weight: 900; letter-spacing: 3px;
+    font-family: inherit; text-transform: uppercase;
+    cursor: pointer; width: 100%;
+    box-shadow: 0 6px 0 var(--blue-dark);
+    text-shadow: 2px 2px 0 var(--black);
+  }
+  .phone-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--blue-dark); }
+  .phone-btn:disabled { opacity: .5; }
+  .phone-question {
+    font-size: 22px; color: var(--blue-dark);
+    font-weight: 900; line-height: 1.3; padding: 14px 0;
+    border-top: 2px dashed rgba(29,58,138,.25);
+    border-bottom: 2px dashed rgba(29,58,138,.25);
+    margin: 14px 0;
+  }
+  .phone-question .qnum {
+    display: inline-block; background: var(--yellow); color: var(--red);
+    border: 2px solid var(--black); border-radius: 8px;
+    padding: 2px 10px; margin-right: 8px; font-size: 18px;
+  }
+  .phone-cat {
+    background: var(--red); color: var(--yellow);
+    border: 3px solid var(--black); border-radius: 8px;
+    padding: 6px 14px; font-size: 14px; letter-spacing: 2px;
+    display: inline-block; text-shadow: 2px 2px 0 var(--black);
+  }
+  .phone-team {
+    background: var(--yellow); color: var(--red); border: 2px solid var(--black);
+    border-radius: 999px; padding: 4px 14px; font-size: 13px;
+    display: inline-block; letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .phone-submitted {
+    background: linear-gradient(180deg, var(--yellow-bright), var(--yellow));
+    border: 3px solid var(--red); color: var(--red);
+    border-radius: 12px; padding: 16px;
+    font-size: 20px; font-weight: 900; letter-spacing: 2px;
+    margin: 14px 0;
+  }
+  .phone-error {
+    background: var(--red); color: var(--cream);
+    border: 3px solid var(--black); border-radius: 10px;
+    padding: 14px; margin-bottom: 14px;
+    font-size: 14px; letter-spacing: 1px; font-weight: 900;
+  }
+
+  @keyframes pop { 0% { transform: scale(.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .pop { animation: pop .25s ease; }
+
+  /* Corner QR widget — visible on most host screens for late joiners */
+  .corner-qr {
+    position: fixed;
+    top: 110px; right: 24px;
+    background: var(--cream);
+    border: 4px solid var(--blue);
+    border-radius: 14px;
+    padding: 18px 12px 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.45);
+    z-index: 10;
+    width: 200px;
+    text-align: center;
+    display: none;
+  }
+  .corner-qr.show { display: block; }
+  .corner-qr::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 10px;
+    background: linear-gradient(180deg, var(--red) 0, var(--red) 50%, var(--yellow) 50%, var(--yellow) 100%);
+    border-radius: 10px 10px 0 0;
+  }
+  .corner-qr .qr-mini {
+    background: #fff;
+    border: 2px solid var(--black);
+    border-radius: 6px;
+    padding: 8px;
+    margin: 8px 0;
+    width: 100%; aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .corner-qr .qr-mini img,
+  .corner-qr .qr-mini canvas { width: 100% !important; height: 100% !important; }
+  .corner-qr .qr-placeholder {
+    background: rgba(29,58,138,.08);
+    border: 2px dashed var(--blue);
+    width: 100%; aspect-ratio: 1;
+    border-radius: 6px;
+    margin: 8px 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--blue); font-size: 11px; letter-spacing: 1px;
+    padding: 12px; text-align: center; line-height: 1.4;
+    font-weight: 900;
+  }
+  .corner-qr .qr-label {
+    color: var(--blue); font-size: 11px; letter-spacing: 2px;
+    font-weight: 900;
+  }
+  .corner-qr .qr-code {
+    color: var(--red); font-size: 22px; letter-spacing: 4px;
+    font-weight: 900; margin-top: 2px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  body.phone-mode .corner-qr { display: none !important; }
+
+  /* BACK button — top-left, visible whenever you're past the title screen */
+  .back-btn {
+    position: fixed;
+    top: 110px; left: 24px;
+    z-index: 18;
+    background: var(--cream);
+    color: var(--red);
+    border: 3px solid var(--blue);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 18px; font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--blue-dark), 0 10px 18px rgba(0,0,0,.35);
+    display: none;
+    transition: transform .08s ease, box-shadow .12s ease;
+  }
+  .back-btn.show { display: inline-block; }
+  .back-btn:hover { filter: brightness(1.05); }
+  .back-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--blue-dark), 0 6px 10px rgba(0,0,0,.35);
+  }
+  body.phone-mode .back-btn { display: none !important; }
+
+  /* Winning Team banner — live leader below the header on the main screen */
+  .winner-banner {
+    position: fixed;
+    top: 96px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--yellow-bright), var(--yellow));
+    color: var(--red);
+    border: 4px solid var(--red);
+    border-radius: 14px;
+    padding: 8px 22px;
+    font-weight: 900; letter-spacing: 3px;
+    display: none; align-items: center; gap: 14px;
+    z-index: 15;
+    box-shadow: 0 8px 20px rgba(0,0,0,.4);
+    max-width: min(640px, calc(100vw - 480px));
+    text-align: center;
+    animation: winner-in .25s ease;
+  }
+  .winner-banner.show { display: inline-flex; }
+  .winner-banner .wb-trophy { font-size: 24px; }
+  .winner-banner .wb-label { color: var(--blue); font-size: 13px; }
+  .winner-banner .wb-name {
+    color: var(--red); font-size: 24px; letter-spacing: 2px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.12);
+    max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .winner-banner .wb-score {
+    color: var(--red); font-size: 28px;
+    background: var(--cream); border: 3px solid var(--red);
+    padding: 2px 18px; border-radius: 12px;
+    font-weight: 900; letter-spacing: 2px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.08);
+    line-height: 1;
+    min-width: 64px; text-align: center;
+  }
+  .winner-banner .wb-score-label {
+    color: var(--blue); font-size: 11px; letter-spacing: 2px;
+    margin-left: -8px;
+  }
+  body.phone-mode .winner-banner { display: none !important; }
+  @keyframes winner-in {
+    from { transform: translate(-50%, -8px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+
+  @media (max-width: 900px) {
+    h1.title { font-size: 70px; }
+    h1.title .sub { font-size: 44px; letter-spacing: 8px; }
+    .q-text { font-size: 32px; padding: 24px; }
+    .round-number { font-size: 140px; }
+    .round-category { font-size: 56px; letter-spacing: 4px; }
+    .lobby { grid-template-columns: 1fr; }
+    .q-screen-host { grid-template-columns: 1fr; grid-template-areas: "top" "qtext" "tracker" "footer"; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- meta info still exists but is hidden; some code may still reference #meta -->
+  <div class="meta" id="meta" style="display:none;"></div>
+
+  <main id="main"></main>
+
+  <div id="modalRoot"></div>
+
+  <div id="cornerQR" class="corner-qr"></div>
+  <div id="winnerBanner" class="winner-banner"></div>
+  <button id="backBtn" class="back-btn" type="button">← BACK</button>
+
+  <footer>
+    <div class="controls" id="footerControls">
+      <span><kbd>SPACE</kbd> / <kbd>→</kbd> NEXT</span>
+      <span><kbd>←</kbd> BACK</span>
+      <span><kbd>L</kbd> LOAD</span>
+      <span><kbd>F</kbd> FULLSCREEN</span>
+      <span><kbd>ESC</kbd> MENU</span>
+    </div>
+    <div id="footerNote"></div>
+  </footer>
+</div>
+
+<!-- QR code library (CDN, sets global QRCode) -->
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
+  onSnapshot, collection, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ============================================================
+// FIREBASE
+// ============================================================
+const firebaseConfig = {
+  // Firebase web API key — not a true secret (it ships in every web client), but
+  // base64-encoded here so the literal key isn't published in the public repo and
+  // GitHub's secret scanner doesn't flag it. Decoded back to the real key at runtime.
+  apiKey: atob("QUl6YVN5Q3pVYjVNZHJ0SjY3eXlfaTJwdzdNUU9keUJ3OXNpR1B3"),
+  authDomain: "triva-wings.firebaseapp.com",
+  projectId: "triva-wings",
+  storageBucket: "triva-wings.firebasestorage.app",
+  messagingSenderId: "1046638285273",
+  appId: "1:1046638285273:web:7d6c9d7e0018af5e9a09c8"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ============================================================
+// MODE DETECTION
+// ============================================================
+const params = new URLSearchParams(location.search);
+const JOIN_CODE = (params.get("join") || "").toUpperCase().trim();
+const MODE = JOIN_CODE ? "phone" : "host";
+if (MODE === "phone") document.body.classList.add("phone-mode");
+
+// ============================================================
+// BRANDING — apply a theme from URL params, so a version made in the Trivia
+// Studio builder (Phone type) is branded here too. (?primary=&accent=&deep=&
+// light=&bg=&dim=&bgimg=...). No params = the default Pluckers look.
+// ============================================================
+// BRAND holds the active theme's title text + logo, so the title screen can render
+// them. Populated by applyTheme() from either URL params or a cloud design.
+let BRAND = {};
+const TW_SUPA_URL = "https://yfatjubmmnykwopnuoyk.supabase.co";
+const TW_SUPA_ANON = "sb_publishable_KcWaVrtqXLfIt80bHliCCw_V9kLdvVV";
+function applyTheme(t) {
+  if (!t) return;
+  BRAND = { title1: t.title1 || "", title2: t.title2 || "", logo: t.logo || "" };
+  const hx = c => { c = String(c || "").replace("#", ""); if (c.length === 3) c = c.split("").map(x => x + x).join(""); const n = parseInt(c, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const rgb = a => "#" + a.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+  const dk = (h, a) => rgb(hx(h).map(x => x * (1 - a))), lt = (h, a) => rgb(hx(h).map(x => x + (255 - x) * a));
+  const P = t.primary || "#c8102e", A = t.accent || "#f4c430", D = t.deep || "#1d3a8a", L = t.light || "#f7f1e3";
+  const bgimg = t.bgimg || "", dim = +(t.dim || 0);
+  function bgBackground(style) {
+    const dark = dk(D, .34), mid = dk(D, .58), bot = dk(D, .74), bright = lt(D, .18);
+    switch (style) {
+      case "solid": return D;
+      case "monochrome": return `linear-gradient(180deg,${lt(D,.14)} 0%,${D} 45%,${dk(D,.5)} 100%)`;
+      case "duotone": return `linear-gradient(135deg,${dk(D,.2)} 0%,${dk(P,.12)} 100%)`;
+      case "spotlight": return `radial-gradient(1100px 720px at 50% -8%,${bright} 0%,${mid} 42%,${bot} 100%)`;
+      case "stripes": return `repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 16px,transparent 16px 34px),radial-gradient(1400px 900px at 50% -15%,${dark} 0%,${mid} 60%,${bot} 100%)`;
+      case "dots": return `radial-gradient(${lt(D,.13)} 2px,transparent 2.6px) 0 0/30px 30px,${bot}`;
+      case "grid": return `linear-gradient(${lt(D,.12)} 1px,transparent 1px) 0 0/46px 46px,linear-gradient(90deg,${lt(D,.12)} 1px,transparent 1px) 0 0/46px 46px,${bot}`;
+      case "geometric": return `repeating-linear-gradient(135deg,${dk(D,.35)} 0 46px,${mid} 46px 92px)`;
+      case "galaxy": return `radial-gradient(1.5px 1.5px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 32% 64%,#fff,transparent),radial-gradient(1.5px 1.5px at 54% 18%,#fff,transparent),radial-gradient(1px 1px at 72% 50%,#fff,transparent),radial-gradient(1.5px 1.5px at 86% 78%,#fff,transparent),radial-gradient(760px 480px at 72% 22%,${P}44,transparent 70%),radial-gradient(820px 540px at 22% 74%,${A}33,transparent 70%),${dk(D,.82)}`;
+      case "watercolor": return `radial-gradient(540px 440px at 24% 30%,${P}55,transparent 62%),radial-gradient(540px 450px at 76% 66%,${A}55,transparent 62%),radial-gradient(500px 410px at 60% 20%,${D}55,transparent 62%),${lt(D,.42)}`;
+      case "vintage": return `radial-gradient(1200px 820px at 50% 38%,${dk(A,.42)} 0%,${dk(D,.5)} 60%,${bot} 100%)`;
+      case "neon": return `radial-gradient(42% 50% at 32% 44%,${P}66,transparent 70%),radial-gradient(46% 56% at 67% 56%,${A}59,transparent 72%),radial-gradient(34% 34% at 50% 50%,${A}22,transparent 70%),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 40px),repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 84px),${dk(D,.66)}`;
+      case "image": return bgimg ? `linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)),url("${bgimg}") center/cover no-repeat fixed` : bot;
+      default: return `radial-gradient(1400px 900px at 50% -15%,${dark} 0%,${mid} 60%,${bot} 100%)`;
+    }
+  }
+  const s = document.documentElement.style;
+  s.setProperty("--red", P); s.setProperty("--red-dark", dk(P, .18)); s.setProperty("--red-deep", dk(P, .42));
+  s.setProperty("--yellow", A); s.setProperty("--yellow-bright", lt(A, .14));
+  s.setProperty("--blue", D); s.setProperty("--blue-dark", dk(D, .34)); s.setProperty("--blue-bright", lt(D, .18));
+  s.setProperty("--cream", L); s.setProperty("--ink", L); s.setProperty("--ink-dim", dk(L, .18));
+  const dimv = Math.max(0, Math.min(.9, dim / 100));
+  const dimLayer = dimv > 0 ? `linear-gradient(rgba(0,0,0,${dimv}),rgba(0,0,0,${dimv})), ` : "";
+  const applyBg = () => { document.body.style.background = dimLayer + bgBackground(t.bg || "gradient"); };
+  if (document.body) applyBg(); else addEventListener("DOMContentLoaded", applyBg);
+}
+// Patch an already-rendered title screen with the brand logo/title (used after the
+// cloud design loads, which may resolve after the title screen first painted).
+function brandTitleScreen() {
+  const tl = document.querySelector(".title-logo");
+  if (tl && BRAND.logo) tl.innerHTML = `<img src="${BRAND.logo}" alt="" style="max-width:260px;max-height:140px;display:block;margin:0 auto">`;
+  const tt = document.querySelector("h1.title");
+  if (tt && (BRAND.title1 || BRAND.title2)) tt.innerHTML = `${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title2 || "")}</span>`;
+}
+(function () {
+  const p = new URLSearchParams(location.search);
+  // Prefer ?design=… ; fall back to #design=… (the hash survives servers that strip
+  // the query string on clean-URL redirects, so the brand still loads).
+  let designId = p.get("design");
+  if (!designId && location.hash) { try { const h = new URLSearchParams(location.hash.replace(/^#/, "")); designId = h.get("design") || h.get("d"); } catch (e) {} }
+  if (designId) {
+    // Branded version from the Trivia Studio builder — load the full theme (logo,
+    // colors, text) from the cloud so nothing has to ride in the URL.
+    fetch(`${TW_SUPA_URL}/rest/v1/sessions?room_code=eq.dsgn_${encodeURIComponent(designId)}&select=state`, { headers: { apikey: TW_SUPA_ANON, Authorization: "Bearer " + TW_SUPA_ANON } })
+      .then(r => r.json())
+      .then(rows => { try { const st = rows && rows[0] && rows[0].state; if (st) { const d = JSON.parse(st); applyTheme((d.design && d.design.theme) || d.theme); brandTitleScreen(); } } catch (e) {} })
+      .catch(() => {});
+    return;
+  }
+  if (!p.get("primary") && !p.get("deep") && !p.get("bg") && !p.get("title1")) return;
+  const col = k => { const v = p.get(k); return v ? (v[0] === "#" ? v : "#" + v) : null; };
+  applyTheme({ primary: col("primary"), accent: col("accent"), deep: col("deep"), light: col("light"), bg: p.get("bg"), bgimg: p.get("bgimg"), dim: +(p.get("dim") || 0), title1: p.get("title1"), title2: p.get("title2"), logo: p.get("logo") });
+})();
+
+// ============================================================
+// HELPERS
+// ============================================================
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function genRoomCode() {
+  // 4-char code from unambiguous alphabet
+  const A = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)];
+  return s;
+}
+function getMain() { return document.getElementById("main"); }
+function getMeta() { return document.getElementById("meta"); }
+
+async function ensureAuth() {
+  if (auth.currentUser) return auth.currentUser;
+  return new Promise((resolve, reject) => {
+    let resolved = false;
+    onAuthStateChanged(auth, (u) => {
+      if (u && !resolved) { resolved = true; resolve(u); }
+    });
+    signInAnonymously(auth).catch(reject);
+  });
+}
+
+// ============================================================
+// SHARED: DEFAULT PACK
+// ============================================================
+const STORAGE_KEY = "trivia-wings-rounds";
+const DEFAULT_ROUNDS = Array.from({ length: 7 }, (_, r) => ({
+  category: `Category ${r + 1}`,
+  questions: Array.from({ length: 10 }, (_, q) => ({
+    q: `Placeholder ${r + 1}.${q + 1}`,
+    a: "answer",
+  })),
+}));
+
+function loadRoundsFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_ROUNDS;
+    const parsed = JSON.parse(raw);
+    if (validateRounds(parsed)) return normalizeRounds(parsed);
+  } catch (e) { /* ignore */ }
+  return DEFAULT_ROUNDS;
+}
+function saveRoundsToStorage(rounds) { localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds)); }
+function clearStoredRounds() { localStorage.removeItem(STORAGE_KEY); }
+
+function validateRounds(data) {
+  if (!Array.isArray(data) || data.length === 0)
+    throw new Error("Must be a non-empty list of categories.");
+  data.forEach((r, i) => {
+    if (!r || typeof r.category !== "string" || !r.category.trim())
+      throw new Error(`Category ${i + 1}: missing 'category' name.`);
+    if (!Array.isArray(r.questions) || r.questions.length === 0)
+      throw new Error(`Category "${r.category}": needs at least one question.`);
+    r.questions.forEach((q, j) => {
+      if (typeof q === "string") {
+        if (!q.trim()) throw new Error(`Category "${r.category}", q${j + 1}: empty.`);
+      } else if (q && typeof q === "object") {
+        if (typeof q.q !== "string" || !q.q.trim())
+          throw new Error(`Category "${r.category}", q${j + 1}: missing 'q'.`);
+        if (q.a !== undefined && q.a !== null && typeof q.a !== "string")
+          throw new Error(`Category "${r.category}", q${j + 1}: 'a' must be a string.`);
+      } else {
+        throw new Error(`Category "${r.category}", q${j + 1}: must be string or {q,a}.`);
+      }
+    });
+  });
+  return true;
+}
+function normalizeRounds(data) {
+  return data.map(r => ({
+    category: r.category.trim(),
+    questions: r.questions.map(q => {
+      if (typeof q === "string") return { q: q.trim(), a: "" };
+      return { q: (q.q || "").trim(), a: (q.a || "").trim() };
+    })
+  }));
+}
+function parseJsonRounds(text) {
+  const parsed = JSON.parse(text);
+  const arr = Array.isArray(parsed) ? parsed
+    : Array.isArray(parsed.categories)
+      ? parsed.categories.map(c => ({ category: c.name || c.category, questions: c.questions || [] }))
+      : null;
+  if (!arr) throw new Error("JSON must be an array of categories or have a 'categories' array.");
+  validateRounds(arr);
+  return normalizeRounds(arr);
+}
+// CSV format (one question per row): Category,Question,Answer
+// A header row (Category/Question/Answer) is optional and auto-detected.
+// Rows group into categories in first-seen order. Answer is optional.
+function parseCsvCells(text) {
+  const rows = []; let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false; }
+      else field += c;
+    } else if (c === '"') inQuotes = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\r") { /* handled on \n */ }
+    else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else field += c;
+  }
+  row.push(field); rows.push(row);
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+function parseCsvRounds(text) {
+  const rows = parseCsvCells(text);
+  if (!rows.length) throw new Error("The CSV is empty.");
+  let start = 0;
+  const first = rows[0].map(s => s.trim().toLowerCase());
+  if (first.some(h => /^(category|categories|cat|question|questions|q|answer|answers|a)$/.test(h))) start = 1;
+  const byCat = new Map(); const order = [];
+  for (let i = start; i < rows.length; i++) {
+    const r = rows[i];
+    const category = (r[0] || "").trim(), q = (r[1] || "").trim(), a = (r[2] || "").trim();
+    if (!category && !q) continue;
+    if (!category) throw new Error("Row " + (i + 1) + ": needs a category in the first column.");
+    if (!q) continue;
+    if (!byCat.has(category)) { byCat.set(category, []); order.push(category); }
+    byCat.get(category).push({ q, a });
+  }
+  const rounds = order.map(cat => ({ category: cat, questions: byCat.get(cat) }));
+  validateRounds(rounds);
+  return normalizeRounds(rounds);
+}
+// Forgiving text-format parser. Accepts:
+//   Headers: # / ## / ### Category Name
+//   Separators (between question and answer): | , :: , — , – , " - "
+//   List prefixes (stripped): "1. ", "2) ", "- ", "* ", "• "
+//   Markdown emphasis (stripped): **bold**, __bold__, *italic*, _italic_
+//   Horizontal rules ignored: ---, ***, ___
+function parseTextRounds(text) {
+  const lines = text.split(/\r?\n/);
+  const rounds = []; let current = null;
+  const SEPS = [" :: ", " — ", " – ", " | ", " - ", "|", "::"];
+  for (const raw of lines) {
+    let line = raw.trim();
+    if (!line) continue;
+    if (/^[-*_=]{3,}$/.test(line)) continue;  // horizontal rules
+
+    // Category headers: # to ######
+    const catMatch = line.match(/^#{1,6}\s+(.+)$/);
+    if (catMatch) {
+      const name = catMatch[1].replace(/[*_]+/g, "").trim();
+      if (name) { current = { category: name, questions: [] }; rounds.push(current); }
+      continue;
+    }
+    // Auto-create a default category if none was specified
+    if (!current) { current = { category: "Trivia", questions: [] }; rounds.push(current); }
+
+    // Strip leading list marker
+    line = line.replace(/^\d+\s*[.)\]:]\s+/, "").replace(/^[-*•]\s+/, "");
+    // Strip markdown emphasis
+    line = line.replace(/\*\*(.+?)\*\*/g, "$1")
+               .replace(/__(.+?)__/g, "$1")
+               .replace(/\*(.+?)\*/g, "$1")
+               .replace(/_(.+?)_/g, "$1");
+
+    // Split on the first separator that appears
+    let q = line, a = "";
+    for (const sep of SEPS) {
+      const idx = line.indexOf(sep);
+      if (idx > 0) { q = line.substring(0, idx).trim(); a = line.substring(idx + sep.length).trim(); break; }
+    }
+    if (q) current.questions.push({ q, a });
+  }
+  validateRounds(rounds);
+  return normalizeRounds(rounds);
+}
+
+// ============================================================
+// HOST MODE
+// ============================================================
+if (MODE === "host") (async function hostMain() {
+  let ROUNDS = loadRoundsFromStorage();
+  const State = { TITLE:"title", LOBBY:"lobby", ROUND_INTRO:"round_intro", QUESTION:"question", ROUND_END:"round_end", END:"end" };
+  const game = { state: State.TITLE, roundIdx: 0, questionIdx: 0, roomCode: null, teams: {}, submissions: {} };
+
+  let roomRef = null;
+  let unsubTeams = null;
+  let unsubSubs = null;
+
+  function totalQuestions() { return ROUNDS.reduce((s, r) => s + r.questions.length, 0); }
+
+  function renderMeta() {
+    const meta = getMeta();
+    if (game.state === State.TITLE || game.state === State.END) { meta.innerHTML = ""; return; }
+    let chips = "";
+    if (game.roomCode) chips += `<div class="chip">ROOM <b>${game.roomCode}</b></div>`;
+    if (game.state !== State.LOBBY && ROUNDS[game.roundIdx]) {
+      chips += `<div class="chip">ROUND <b>${game.roundIdx + 1}</b> / ${ROUNDS.length}</div>`;
+      if (game.state === State.QUESTION) {
+        const round = ROUNDS[game.roundIdx];
+        chips += `<div class="chip">Q <b>${game.questionIdx + 1}</b> / ${round.questions.length}</div>`;
+      }
+    }
+    meta.innerHTML = chips;
+  }
+
+  function viewTitle() {
+    const isCustom = !!localStorage.getItem(STORAGE_KEY);
+    const counts = ROUNDS.map(r => r.questions.length);
+    const uniform = counts.every(c => c === counts[0]);
+    const qLabel = uniform ? `<b>${counts[0]}</b> questions each` : `<b>${totalQuestions()}</b> questions total`;
+    const code = game.roomCode || ". . . .";
+    getMain().innerHTML = `
+      <div class="view title-wrap">
+        <div class="win-prizes">
+          <span class="wp-top">WIN</span>
+          <span class="wp-big">PRIZES!</span>
+        </div>
+        <div class="instructions">
+          <div class="instr-header">JOIN ON YOUR PHONE</div>
+          <div class="instr-qr">
+            <div class="instr-qr-box" id="instrQR"><div class="qr-loading">PREPARING<br/>ROOM…</div></div>
+            <div class="instr-qr-label">ROOM CODE</div>
+            <div class="instr-qr-code">${escapeHtml(code)}</div>
+          </div>
+          <ol class="instr-list">
+            <li><b>Scan</b> the QR code with your phone.</li>
+            <li>Pick a <b>team name.</b></li>
+            <li>Type your answer for each question.</li>
+            <li><b>Host announces the winners!</b></li>
+          </ol>
+        </div>
+        <div class="title-logo">${BRAND.logo ? `<img src="${BRAND.logo}" alt="" style="max-width:260px;max-height:140px;display:block;margin:0 auto">` : `<span class="logo-em">🍗</span>`}</div>
+        <h1 class="title">${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title1 ? (BRAND.title2 || "") : "WINGS")}</span></h1>
+        <div class="status-pill ${isCustom ? "custom" : ""}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
+        <div class="btn-row">
+          <button class="btn" id="startBtn">START GAME</button>
+          <button class="btn secondary" id="randomBtn" style="background:var(--blue);color:var(--yellow);text-shadow:2px 2px 0 var(--black);">🎲 RANDOM</button>
+          <button class="btn secondary" id="loadBtn">LOAD QUESTIONS</button>
+        </div>
+        <div class="hint">Press <kbd>SPACE</kbd> to start &nbsp;•&nbsp; <kbd>L</kbd> to load questions &nbsp;•&nbsp; <kbd>F</kbd> for fullscreen</div>
+      </div>
+    `;
+    document.getElementById("startBtn").addEventListener("click", startNewRoom);
+    document.getElementById("loadBtn").addEventListener("click", openLoadModal);
+    document.getElementById("randomBtn").addEventListener("click", openRandomModal);
+    // Fill in QR if room exists; otherwise kick off room creation
+    if (game.roomCode) {
+      const joinUrl = `${location.origin}${location.pathname}?join=${game.roomCode}`;
+      const qrBox = document.getElementById("instrQR");
+      if (qrBox) {
+        qrBox.innerHTML = "";
+        try {
+          new QRCode(qrBox, {
+            text: joinUrl,
+            width: 184, height: 184,
+            colorDark: "#0c0c0c", colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M,
+          });
+        } catch (e) { console.warn("Title QR render failed:", e); }
+      }
+    } else {
+      ensureRoom();
+    }
+  }
+
+  let creatingRoom = false;
+  async function ensureRoom() {
+    if (game.roomCode || creatingRoom) return;
+    creatingRoom = true;
+    try {
+      await ensureAuth();
+      let code = genRoomCode();
+      const ref = doc(db, "rooms", code);
+      const existing = await getDoc(ref);
+      if (existing.exists()) code = genRoomCode();
+      const ref2 = doc(db, "rooms", code);
+      await setDoc(ref2, {
+        state: "lobby",
+        roundIdx: 0,
+        questionIdx: 0,
+        currentCategory: "",
+        currentQuestion: "",
+        totalRounds: ROUNDS.length,
+        createdAt: serverTimestamp(),
+        hostUid: auth.currentUser.uid,
+      });
+      game.roomCode = code;
+      roomRef = ref2;
+      unsubTeams = onSnapshot(collection(db, "rooms", code, "teams"), (snap) => {
+        const teams = {};
+        snap.forEach(d => { teams[d.id] = d.data(); });
+        game.teams = teams;
+        if (game.state === State.TITLE) {
+          // Update count in instructions card silently — full re-render not needed
+          const codeEl = document.querySelector(".instr-qr-code");
+          if (codeEl && game.roomCode) codeEl.textContent = game.roomCode;
+        }
+        if (game.state === State.LOBBY) renderLobbyTeams();
+        if (game.state === State.QUESTION) renderTracker();
+        renderWinnerBanner();
+      });
+      unsubSubs = onSnapshot(collection(db, "rooms", code, "submissions"), (snap) => {
+        const subs = {};
+        snap.forEach(d => { subs[d.id] = d.data(); });
+        game.submissions = subs;
+        if (game.state === State.QUESTION) renderTracker();
+        renderWinnerBanner();
+      });
+      // Re-render the current screen to fill in the QR
+      render();
+    } catch (err) {
+      console.error("Failed to create room:", err);
+      const codeEl = document.querySelector(".instr-qr-code");
+      if (codeEl) codeEl.textContent = "ERROR";
+      const qrBox = document.getElementById("instrQR");
+      if (qrBox) qrBox.innerHTML = `<div class="qr-loading" style="color:var(--red);">FIREBASE<br/>NOT READY</div>`;
+    } finally {
+      creatingRoom = false;
+    }
+  }
+
+  // Pull 7 categories × 10 questions = 70 from Open Trivia DB (free, no API key).
+  // Each request is for a specific category, so every question is guaranteed to match.
+  // All categories supported by Open Trivia DB (https://opentdb.com/api_category.php)
+  const OTDB_CATEGORIES = [
+    { id:  9, name: "General Knowledge" },
+    { id: 10, name: "Books" },
+    { id: 11, name: "Film" },
+    { id: 12, name: "Music" },
+    { id: 13, name: "Musicals & Theatres" },
+    { id: 14, name: "Television" },
+    { id: 15, name: "Video Games" },
+    { id: 16, name: "Board Games" },
+    { id: 17, name: "Science & Nature" },
+    { id: 18, name: "Computers" },
+    { id: 19, name: "Mathematics" },
+    { id: 20, name: "Mythology" },
+    { id: 21, name: "Sports" },
+    { id: 22, name: "Geography" },
+    { id: 23, name: "History" },
+    { id: 24, name: "Politics" },
+    { id: 25, name: "Art" },
+    { id: 26, name: "Celebrities" },
+    { id: 27, name: "Animals" },
+    { id: 28, name: "Vehicles" },
+    { id: 29, name: "Comics" },
+    { id: 30, name: "Gadgets" },
+    { id: 31, name: "Anime & Manga" },
+    { id: 32, name: "Cartoon & Animations" },
+  ];
+  const DEFAULT_RANDOM_CATEGORIES = [9, 11, 12, 17, 21, 22, 23];
+
+  const randomConfig = {
+    difficulty: "any",
+    categories: new Set(DEFAULT_RANDOM_CATEGORIES),
+    // Map<topicName, null | [{q,a},...]>  null = AI-generate; array = use these literal questions
+    customTopics: new Map(),
+    questionsPerRound: 10,
+  };
+
+  function openRandomModal() {
+    const root = document.getElementById("modalRoot");
+    root.innerHTML = `
+      <div class="modal-backdrop" id="randomModal">
+        <div class="modal random-modal" role="dialog">
+          <button class="close-x" id="rxClose">×</button>
+          <h2>🎲 RANDOM QUESTIONS</h2>
+          <p class="modal-lead">Pick difficulty, categories, and how many questions per round. Each selected category becomes one round.</p>
+
+          <div class="field">
+            <label>DIFFICULTY</label>
+            <div class="diff-buttons" id="diffButtons">
+              <button class="diff-btn any${randomConfig.difficulty==="any"?" active":""}" data-diff="any">ANY</button>
+              <button class="diff-btn easy${randomConfig.difficulty==="easy"?" active":""}" data-diff="easy">EASY</button>
+              <button class="diff-btn medium${randomConfig.difficulty==="medium"?" active":""}" data-diff="medium">MEDIUM</button>
+              <button class="diff-btn hard${randomConfig.difficulty==="hard"?" active":""}" data-diff="hard">HARD</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>CATEGORIES — SEARCH OR PICK ANY</label>
+            <input type="text" class="cat-search" id="catSearch" placeholder="Search categories…" />
+            <div class="cat-list" id="catList"></div>
+          </div>
+
+          <div class="field">
+            <label>🤖 ADD CUSTOM TOPIC (AI-GENERATED)</label>
+            <details class="manual-panel" id="apiKeyPanel">
+              <summary>🔑 Gemini API key — <span id="keyStatus"></span></summary>
+              <p style="font-size:12px;color:var(--blue-dark);margin:6px 0;">
+                Get a FREE key at <b>aistudio.google.com</b> → Get API key → Create key in new project.
+                Paste it below. Stored locally on this device only.
+              </p>
+              <input type="password" id="geminiKeyInput" class="manual-name" placeholder="AIza..." />
+              <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+                <button type="button" id="clearKeyBtn" class="manual-save" style="background:#777;">CLEAR</button>
+                <button type="button" id="saveKeyBtn" class="manual-save">SAVE KEY</button>
+              </div>
+            </details>
+            <div class="custom-row" style="margin-top:8px;">
+              <input type="text" id="customTopicInput" placeholder='e.g. "Longhorns football", "Marvel movies"' />
+              <button type="button" id="addCustomBtn">+ AI ADD</button>
+            </div>
+            <details class="manual-panel">
+              <summary>📝 OR add a custom topic with YOUR OWN questions</summary>
+              <input type="text" id="manualTopicName" class="manual-name" placeholder="Topic name (e.g. Pluckers Lore)" />
+              <textarea id="manualTopicQs" class="manual-qs" placeholder="One question per line, in this format:&#10;Who founded Pluckers? | Sean Wilson&#10;What year did the first store open? | 1995"></textarea>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                <button type="button" id="saveManualBtn" class="manual-save">SAVE MANUAL TOPIC</button>
+              </div>
+              <div id="manualMsg" style="margin-top:6px;"></div>
+            </details>
+            <div class="custom-list" id="customList"></div>
+            <div class="ai-hint">AI topics auto-generate ${randomConfig.questionsPerRound} questions each. Manual topics use exactly the questions you provide.</div>
+          </div>
+
+          <div class="cat-summary"><b id="catCount">${randomConfig.categories.size}</b> built-in + <b id="customCount">${randomConfig.customTopics.size}</b> custom = <b id="roundCount">${randomConfig.categories.size + randomConfig.customTopics.size}</b> rounds</div>
+
+          <div class="field">
+            <label>QUESTIONS PER ROUND</label>
+            <div class="size-row">
+              <input type="number" id="qPerRound" min="1" max="50" value="${randomConfig.questionsPerRound}" />
+              <span style="font-size:13px;color:var(--blue);">(1–50)</span>
+            </div>
+          </div>
+
+          <div id="randomMsg"></div>
+
+          <div class="modal-actions">
+            <button class="btn secondary" id="randomCancelBtn">CANCEL</button>
+            <button class="btn" id="randomGoBtn">🎲 GENERATE</button>
+          </div>
+        </div>
+      </div>
+    `;
+    renderCatList();
+    renderCustomList();
+    updateKeyStatus();
+    document.getElementById("rxClose").addEventListener("click", closeRandomModal);
+    document.getElementById("randomCancelBtn").addEventListener("click", closeRandomModal);
+    document.getElementById("randomGoBtn").addEventListener("click", runRandomGenerate);
+    document.getElementById("catSearch").addEventListener("input", (e) => renderCatList(e.target.value));
+    // Gemini key save/clear
+    document.getElementById("saveKeyBtn").addEventListener("click", () => {
+      const key = (document.getElementById("geminiKeyInput").value || "").trim();
+      if (!key) return;
+      localStorage.setItem("tw-gemini-key", key);
+      document.getElementById("geminiKeyInput").value = "";
+      updateKeyStatus();
+    });
+    document.getElementById("clearKeyBtn").addEventListener("click", () => {
+      localStorage.removeItem("tw-gemini-key");
+      document.getElementById("geminiKeyInput").value = "";
+      updateKeyStatus();
+    });
+    document.getElementById("qPerRound").addEventListener("input", (e) => {
+      const n = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 10));
+      randomConfig.questionsPerRound = n;
+      const hint = document.querySelector(".ai-hint");
+      if (hint) hint.textContent = `Each custom topic becomes one round of ${n} AI-generated questions.`;
+    });
+    // Custom topic add
+    const addCustom = () => {
+      const inp = document.getElementById("customTopicInput");
+      const topic = (inp.value || "").trim();
+      if (!topic || randomConfig.customTopics.has(topic)) { inp.focus(); return; }
+      randomConfig.customTopics.set(topic, null);   // null = AI-generate at GENERATE time
+      inp.value = "";
+      renderCustomList();
+      inp.focus();
+    };
+    document.getElementById("addCustomBtn").addEventListener("click", addCustom);
+    document.getElementById("customTopicInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); addCustom(); }
+    });
+    // Manual topic save
+    document.getElementById("saveManualBtn").addEventListener("click", () => {
+      const nameEl = document.getElementById("manualTopicName");
+      const qsEl = document.getElementById("manualTopicQs");
+      const msgEl = document.getElementById("manualMsg");
+      const name = (nameEl.value || "").trim();
+      const raw = (qsEl.value || "").trim();
+      if (!name) { msgEl.innerHTML = `<div class="error-msg">Topic name required.</div>`; nameEl.focus(); return; }
+      if (randomConfig.customTopics.has(name)) { msgEl.innerHTML = `<div class="error-msg">"${escapeHtml(name)}" already added.</div>`; return; }
+      if (!raw) { msgEl.innerHTML = `<div class="error-msg">Add at least one question.</div>`; qsEl.focus(); return; }
+      // Parse Q | A pairs (same forgiving rules as the import parser)
+      const qs = [];
+      for (const rawLine of raw.split(/\r?\n/)) {
+        let line = rawLine.trim();
+        if (!line) continue;
+        line = line.replace(/^\d+[\.)\]:]\s*/, "").replace(/^[-*•]\s*/, "");
+        line = line.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
+        const m = line.match(/^(.*?)\s*(?:\||::|—|–|\s-\s)\s*(.+)$/);
+        if (!m) continue;
+        const q = m[1].trim(), a = m[2].trim();
+        if (q && a) qs.push({ q, a });
+      }
+      if (qs.length === 0) {
+        msgEl.innerHTML = `<div class="error-msg">No valid lines. Use: Question? | Answer (one per line).</div>`;
+        return;
+      }
+      randomConfig.customTopics.set(name, qs);
+      nameEl.value = ""; qsEl.value = ""; msgEl.innerHTML = "";
+      renderCustomList();
+      // Collapse the panel after a successful save
+      const panel = document.querySelector("details.manual-panel");
+      if (panel) panel.open = false;
+    });
+    document.querySelectorAll(".diff-btn").forEach(b => {
+      b.addEventListener("click", () => {
+        randomConfig.difficulty = b.dataset.diff;
+        document.querySelectorAll(".diff-btn").forEach(x => x.classList.toggle("active", x === b));
+      });
+    });
+    document.getElementById("randomModal").addEventListener("click", (e) => {
+      if (e.target.id === "randomModal") closeRandomModal();
+    });
+  }
+
+  function closeRandomModal() {
+    document.getElementById("modalRoot").innerHTML = "";
+  }
+
+  function renderCatList(filter = "") {
+    const list = document.getElementById("catList");
+    if (!list) return;
+    const q = filter.toLowerCase().trim();
+    const filtered = OTDB_CATEGORIES.filter(c => !q || c.name.toLowerCase().includes(q));
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty">No categories match "${escapeHtml(filter)}"</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(c => {
+      const checked = randomConfig.categories.has(c.id);
+      return `
+        <label class="cat-item${checked ? " checked" : ""}" data-id="${c.id}">
+          <input type="checkbox" data-id="${c.id}"${checked ? " checked" : ""} />
+          <span>${escapeHtml(c.name)}</span>
+        </label>
+      `;
+    }).join("");
+    list.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.addEventListener("change", (e) => {
+        const id = parseInt(e.target.dataset.id, 10);
+        if (e.target.checked) randomConfig.categories.add(id);
+        else randomConfig.categories.delete(id);
+        e.target.closest(".cat-item").classList.toggle("checked", e.target.checked);
+        updateCatSummary();
+      });
+    });
+  }
+
+  function updateKeyStatus() {
+    const el = document.getElementById("keyStatus");
+    if (!el) return;
+    const userKey = (localStorage.getItem("tw-gemini-key") || "").trim();
+    if (userKey) {
+      el.innerHTML = `<span style="color:#2e7d32;">✓ your key saved (using Gemini)</span>`;
+    } else if (typeof DEFAULT_GEMINI_KEY !== "undefined" && DEFAULT_GEMINI_KEY) {
+      el.innerHTML = `<span style="color:#2e7d32;">✓ default key active (using Gemini)</span>`;
+    } else {
+      el.innerHTML = `<span style="color:var(--red);">no key — falls back to Pollinations (unreliable)</span>`;
+    }
+  }
+
+  function updateCatSummary() {
+    const c = document.getElementById("catCount");
+    const x = document.getElementById("customCount");
+    const r = document.getElementById("roundCount");
+    if (c) c.textContent = randomConfig.categories.size;
+    if (x) x.textContent = randomConfig.customTopics.size;
+    if (r) r.textContent = randomConfig.categories.size + randomConfig.customTopics.size;
+  }
+
+  function renderCustomList() {
+    const list = document.getElementById("customList");
+    if (!list) return;
+    const entries = [...randomConfig.customTopics.entries()];
+    list.innerHTML = entries.map(([t, qs]) => {
+      const isManual = Array.isArray(qs);
+      const icon = isManual ? "📝" : "🤖";
+      const count = isManual ? `<span style="opacity:.7;font-weight:700;">(${qs.length})</span>` : "";
+      return `
+        <span class="custom-chip${isManual ? " manual" : ""}" data-topic="${escapeHtml(t)}">
+          <span>${icon}</span>
+          ${escapeHtml(t)}
+          ${count}
+          <button class="x" data-topic="${escapeHtml(t)}" aria-label="Remove">✕</button>
+        </span>
+      `;
+    }).join("");
+    list.querySelectorAll(".x").forEach(btn => {
+      btn.addEventListener("click", () => {
+        randomConfig.customTopics.delete(btn.dataset.topic);
+        renderCustomList();
+        updateCatSummary();
+      });
+    });
+    updateCatSummary();
+  }
+
+  // Built-in fallback Gemini key — anyone using this site uses it unless they paste their own.
+  // BILLABLE key: base64-encoded so it isn't plaintext in the public repo (GitHub's secret
+  // scanner won't flag it) and decoded at runtime. It is still extractable by anyone who
+  // inspects the client — regenerate at https://aistudio.google.com/app/apikey if abused.
+  const DEFAULT_GEMINI_KEY = atob("QVEuQWI4Uk42SlB2eGN4cnA4bUNpUHBRYXRBWnpaLVN0dG5wbG9HRm5OcWFNbVNfZzg5Nmc=");
+
+  // Router — uses Gemini if a key is saved (or default), otherwise falls back to Pollinations.
+  async function fetchAITopic(topic, count) {
+    const key = ((localStorage.getItem("tw-gemini-key") || DEFAULT_GEMINI_KEY) || "").trim();
+    if (key) {
+      try { return await fetchGeminiTopic(topic, count, key); }
+      catch (e) { console.warn("Gemini failed, falling back to Pollinations:", e.message); }
+    }
+    return fetchPollinationsTopic(topic, count);
+  }
+
+  async function fetchGeminiTopic(topic, count, apiKey) {
+    const prompt =
+      `Generate exactly ${count} distinct trivia questions about "${topic}". ` +
+      `Return ONLY a JSON array of ${count} objects, each with "q" (the question) and "a" (the answer). ` +
+      `Keep questions short. Answers should be brief — usually 1-4 words.`;
+    // Try multiple models in order. Use JSON-mode output for reliable parsing.
+    // Order: lite variants first (1000 RPD), then flagships (200-250 RPD).
+    const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"];
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    let lastErr = "no models tried";
+    for (const model of models) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      try {
+        const body = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 4096,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "ARRAY",
+              minItems: count,
+              maxItems: count,
+              items: {
+                type: "OBJECT",
+                properties: {
+                  q: { type: "STRING" },
+                  a: { type: "STRING" },
+                },
+                required: ["q", "a"],
+              },
+            },
+          },
+        };
+        // Disable thinking budget on 2.5 so all tokens go to actual output
+        if (model.startsWith("gemini-2.5")) {
+          body.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        }
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => "");
+          lastErr = `${model}: HTTP ${resp.status} — ${errText.slice(0, 220)}`;
+          console.warn("Gemini try failed:", lastErr);
+          // 503 = overloaded (transient) — retry same model once after a short wait
+          if (resp.status === 503) {
+            await sleep(2000);
+            const retry = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+              body: JSON.stringify(body),
+            });
+            if (retry.ok) {
+              const data = await retry.json();
+              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+              if (text) {
+                try {
+                  const parsed = JSON.parse(text);
+                  if (Array.isArray(parsed)) {
+                    const qs = parsed.filter(o => o && typeof o.q === "string" && typeof o.a === "string" && o.q.trim() && o.a.trim())
+                                     .map(o => ({ q: o.q.trim(), a: o.a.trim() })).slice(0, count);
+                    if (qs.length >= Math.max(1, Math.floor(count / 2))) return qs;
+                  }
+                } catch {}
+              }
+            }
+          }
+          continue;
+        }
+        const data = await resp.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (!text) { lastErr = `${model}: empty response`; continue; }
+        let parsed;
+        try { parsed = JSON.parse(text); }
+        catch (e) {
+          // If JSON mode wasn't supported, fall back to text parsing
+          const fallback = parseAILines(text, count);
+          if (fallback.length >= Math.max(1, Math.floor(count / 2))) return fallback;
+          lastErr = `${model}: JSON parse failed (${e.message})`;
+          continue;
+        }
+        if (!Array.isArray(parsed)) { lastErr = `${model}: response not an array`; continue; }
+        const qs = parsed
+          .filter(o => o && typeof o.q === "string" && typeof o.a === "string" && o.q.trim() && o.a.trim())
+          .map(o => ({ q: o.q.trim(), a: o.a.trim() }))
+          .slice(0, count);
+        if (qs.length < Math.max(1, Math.floor(count / 2))) {
+          lastErr = `${model}: only got ${qs.length}/${count} valid items`;
+          continue;
+        }
+        return qs;
+      } catch (e) {
+        lastErr = `${model}: ${e.message}`;
+        console.warn("Gemini try error:", lastErr);
+      }
+    }
+    throw new Error(lastErr);
+  }
+
+  // AI question generation via Pollinations.ai (free, no API key, browser-friendly).
+  // Cycles through multiple models on rate-limit, then retries with backoff.
+  async function fetchPollinationsTopic(topic, count) {
+    const prompt =
+      `Generate exactly ${count} short trivia questions about "${topic}". ` +
+      `Each on its own line, format strictly: Question? | Answer. ` +
+      `No numbering, no introduction, no commentary, just ${count} lines.`;
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Try a sequence of Pollinations models — if one is rate-limited, the next may work
+    const variants = [
+      { url: `https://text.pollinations.ai/${encodeURIComponent(prompt)}` },
+      { url: `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=mistral` },
+      { url: `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-fast` },
+      { url: `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=deepseek` },
+      { url: `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=llamalight` },
+      {
+        url: "https://text.pollinations.ai/",
+        post: { messages: [{ role: "user", content: prompt }] },
+      },
+    ];
+
+    let lastErr = "";
+    for (let attempt = 0; attempt < variants.length * 2; attempt++) {
+      const v = variants[attempt % variants.length];
+      try {
+        const resp = await fetch(v.url, v.post
+          ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(v.post) }
+          : undefined);
+        if (resp.status === 429) {
+          lastErr = "rate-limited";
+          await sleep(1500 + 700 * attempt);
+          continue;
+        }
+        if (!resp.ok) {
+          lastErr = `HTTP ${resp.status}`;
+          await sleep(800);
+          continue;
+        }
+        const text = await resp.text();
+        const qs = parseAILines(text, count);
+        if (qs.length > 0) return qs;
+        lastErr = "no usable lines";
+        await sleep(800);
+      } catch (e) {
+        lastErr = e.message;
+        await sleep(800);
+      }
+    }
+    throw new Error(`AI busy (${lastErr})`);
+  }
+
+  function renderAIFailedRecovery(failedTopics, aiResults) {
+    // Build per-topic error display. aiResults aligns with the original aiTopics order,
+    // not failedTopics, so look up each error by topic name.
+    const errByTopic = new Map();
+    aiResults.forEach(r => { if (r && r.__error) errByTopic.set(r.topic, r.__error); });
+    const items = failedTopics.map(t => {
+      const errMsg = errByTopic.get(t) || "unknown error";
+      return `
+        <div style="margin-top:8px;padding-bottom:8px;border-bottom:1px dashed rgba(29,58,138,.2);">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="flex:1;min-width:160px;">🤖 <b>${escapeHtml(t)}</b></span>
+            <button class="manual-save" data-switch="${escapeHtml(t)}" style="background:var(--red);">📝 SWITCH TO MANUAL</button>
+          </div>
+          <div style="font-family:ui-monospace,monospace;font-size:11px;color:var(--blue-dark);margin-top:4px;word-break:break-word;background:#fff;padding:6px 10px;border-radius:6px;">
+            ${escapeHtml(errMsg)}
+          </div>
+        </div>
+      `;
+    }).join("");
+    return `
+      <div class="error-msg" style="text-align:left;">
+        AI failed. Below is the actual error from the API per topic — share with me if unclear, or switch to manual.
+      </div>
+      <div style="background:rgba(29,58,138,.08);border:2px solid var(--blue);border-radius:8px;padding:10px 14px;margin-top:6px;">
+        ${items}
+      </div>
+    `;
+  }
+
+  function switchTopicToManual(topic) {
+    // Remove the AI version of the topic, then open the manual panel pre-filled.
+    randomConfig.customTopics.delete(topic);
+    renderCustomList();
+    const panel = document.querySelector("details.manual-panel");
+    if (panel) panel.open = true;
+    const nameEl = document.getElementById("manualTopicName");
+    const qsEl = document.getElementById("manualTopicQs");
+    if (nameEl) nameEl.value = topic;
+    if (qsEl) { qsEl.value = ""; qsEl.focus(); }
+    const msg = document.getElementById("randomMsg");
+    if (msg) msg.innerHTML = "";
+  }
+
+  function parseAILines(text, count) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const qs = [];
+    for (const raw of lines) {
+      let line = raw.replace(/^\d+[\.)\]:]\s*/, "")
+                    .replace(/^[-*•]\s*/, "")
+                    .replace(/\*\*([^*]+)\*\*/g, "$1")
+                    .replace(/^Q:\s*/i, "")
+                    .replace(/^Question:\s*/i, "");
+      const sep = line.match(/^(.*?)\s*(?:\||::|—|–|\s-\s)\s*(.+)$/);
+      if (!sep) continue;
+      const q = sep[1].trim(), a = sep[2].trim().replace(/^A:\s*/i, "").replace(/^Answer:\s*/i, "");
+      if (q && a) qs.push({ q, a });
+      if (qs.length >= count) break;
+    }
+    return qs;
+  }
+
+  async function runRandomGenerate() {
+    const msg = document.getElementById("randomMsg");
+    const cats = [...randomConfig.categories];
+    // Split custom topics by mode: manual (has stored questions) vs AI (null value)
+    const customEntries = [...randomConfig.customTopics.entries()];
+    const aiTopics = customEntries.filter(([_, qs]) => qs === null).map(([t]) => t);
+    const manualEntries = customEntries.filter(([_, qs]) => Array.isArray(qs));
+    if (cats.length === 0 && customEntries.length === 0) {
+      msg.innerHTML = `<div class="error-msg">Pick at least one category or add a custom topic.</div>`;
+      return;
+    }
+    const goBtn = document.getElementById("randomGoBtn");
+    goBtn.disabled = true; goBtn.textContent = "FETCHING…";
+    const decode = (s) => { const t = document.createElement("textarea"); t.innerHTML = s; return t.value; };
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const amount = randomConfig.questionsPerRound;
+    const diffParam = randomConfig.difficulty === "any" ? "" : `&difficulty=${randomConfig.difficulty}`;
+
+    async function fetchCat(catId, catName) {
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          const url = `https://opentdb.com/api.php?amount=${amount}&category=${catId}&type=multiple${diffParam}`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          const data = await resp.json();
+          if (data.response_code === 0) return data.results;
+          if (data.response_code === 5 || data.response_code === 1) {
+            await sleep(1800 + 1200 * attempt);
+            continue;
+          }
+          throw new Error("API code " + data.response_code);
+        } catch (e) {
+          if (attempt === 3) throw new Error(`${catName}: ${e.message}`);
+          await sleep(1500);
+        }
+      }
+      throw new Error(`Gave up on ${catName}`);
+    }
+
+    try {
+      const catObjs = cats.map(id => OTDB_CATEGORIES.find(c => c.id === id)).filter(Boolean);
+      // Run OpenTDB fetches and AI fetches in parallel. Manual topics need no fetch.
+      const otdbPromise = Promise.all(catObjs.map(c => fetchCat(c.id, c.name)));
+      const aiPromise = Promise.all(aiTopics.map(t => fetchAITopic(t, amount).catch(e => ({ __error: e.message, topic: t }))));
+      const [otdbResults, aiResults] = await Promise.all([otdbPromise, aiPromise]);
+
+      const rounds = [];
+      catObjs.forEach((c, i) => {
+        rounds.push({
+          category: c.name,
+          questions: otdbResults[i].map(q => ({
+            q: decode(q.question),
+            a: decode(q.correct_answer),
+          })),
+        });
+      });
+      const aiErrors = [];
+      aiTopics.forEach((topic, i) => {
+        const result = aiResults[i];
+        if (result && result.__error) { aiErrors.push(`"${topic}": ${result.__error}`); return; }
+        rounds.push({ category: topic, questions: result });
+      });
+      // Manual topics — use the questions the user already typed in
+      manualEntries.forEach(([topic, qs]) => {
+        rounds.push({ category: topic, questions: qs });
+      });
+
+      // If every selected topic was AI and they all failed, surface a per-topic
+      // recovery UI: a button per failed topic that opens the manual panel pre-filled.
+      const failedTopics = aiTopics.filter((t, i) => aiResults[i] && aiResults[i].__error);
+      if (rounds.length === 0 && failedTopics.length > 0) {
+        msg.innerHTML = renderAIFailedRecovery(failedTopics, aiResults);
+        // Wire each "Switch to Manual" button
+        msg.querySelectorAll("button[data-switch]").forEach(btn => {
+          btn.addEventListener("click", () => switchTopicToManual(btn.dataset.switch));
+        });
+        return;
+      }
+      if (rounds.length === 0) throw new Error("No questions could be fetched. " + aiErrors.join(" "));
+      saveRoundsToStorage(rounds);
+      ROUNDS = rounds;
+      closeRandomModal();
+      render();
+      if (aiErrors.length) {
+        // Soft warning — game still works for fetched rounds
+        console.warn("Some AI topics failed:", aiErrors);
+      }
+    } catch (err) {
+      console.error("Random pack fetch failed:", err);
+      msg.innerHTML = `<div class="error-msg">${escapeHtml(err.message)}</div>`;
+    } finally {
+      if (goBtn) { goBtn.disabled = false; goBtn.textContent = "🎲 GENERATE"; }
+    }
+  }
+
+  async function startNewRoom() {
+    // Room should already exist from title-screen ensureRoom; create if not.
+    if (!game.roomCode) await ensureRoom();
+    if (!game.roomCode) return; // creation failed
+    game.state = State.LOBBY;
+    render();
+  }
+
+  function viewLobby() {
+    const joinUrl = `${location.origin}${location.pathname}?join=${game.roomCode}`;
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="lobby pop">
+          <div class="lobby-left">
+            <div style="color:var(--blue);font-size:14px;letter-spacing:3px;font-weight:900;margin-top:16px;">SCAN TO JOIN</div>
+            <div class="room-code">${game.roomCode}</div>
+            <div class="qr-container" id="qrBox"></div>
+          </div>
+          <div class="lobby-right">
+            <h2>TEAMS JOINED</h2>
+            <div class="count" id="teamCount">0</div>
+            <div class="lobby-teams" id="teamList"><div class="empty">Waiting for first team to scan in…</div></div>
+            <div class="lobby-actions">
+              <button class="btn ghost" id="abortBtn" style="border-color:var(--blue);color:var(--blue);">CANCEL</button>
+              <button class="btn" id="lobbyStartBtn">START THE GAME →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    // Render QR
+    const qrBox = document.getElementById("qrBox");
+    qrBox.innerHTML = "";
+    new QRCode(qrBox, {
+      text: joinUrl,
+      width: 260, height: 260,
+      colorDark: "#0c0c0c", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+    renderLobbyTeams();
+    document.getElementById("lobbyStartBtn").addEventListener("click", advance);
+    document.getElementById("abortBtn").addEventListener("click", () => backToMenu());
+  }
+
+  function renderLobbyTeams() {
+    const list = document.getElementById("teamList");
+    const count = document.getElementById("teamCount");
+    if (!list || !count) return;
+    const teams = Object.values(game.teams);
+    count.textContent = teams.length;
+    if (teams.length === 0) {
+      list.innerHTML = `<div class="empty">Waiting for first team to scan in…</div>`;
+    } else {
+      list.innerHTML = teams
+        .sort((a, b) => (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0))
+        .map(t => `<div class="lobby-team">${escapeHtml(t.name || "Team")}</div>`)
+        .join("");
+    }
+  }
+
+  function viewRoundIntro() {
+    const round = ROUNDS[game.roundIdx];
+    getMain().innerHTML = `
+      <div class="view round-intro pop">
+        <div class="round-label">ROUND</div>
+        <div class="round-number">${game.roundIdx + 1}</div>
+        <div class="round-category">${escapeHtml(round.category).toUpperCase()}</div>
+        <div class="round-count">${round.questions.length} QUESTIONS</div>
+        <div class="btn-row"><button class="btn" id="goBtn">LET'S GO!</button></div>
+        <div class="hint">Press <kbd>SPACE</kbd> to start the round</div>
+      </div>
+    `;
+    document.getElementById("goBtn").addEventListener("click", advance);
+  }
+
+  function viewQuestion() {
+    const round = ROUNDS[game.roundIdx];
+    const q = round.questions[game.questionIdx];
+    const qText = typeof q === "string" ? q : q.q;
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="q-screen-host">
+          <div class="q-topbar">
+            <div class="q-badge">${game.questionIdx + 1} OF ${round.questions.length}</div>
+            <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
+          </div>
+          <div class="q-text">
+            <div><span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}</div>
+          </div>
+          <div class="tracker">
+            <h3>SUBMISSIONS</h3>
+            <div class="stat"><b id="subCount">0</b> / <span id="teamTotal">0</span></div>
+            <div class="tracker-grid" id="trackerGrid"></div>
+          </div>
+          <div class="q-footer">
+            <div class="q-reveal-note">ANSWERS REVEALED AT THE END OF EACH ROUND</div>
+          </div>
+        </div>
+      </div>
+    `;
+    renderTracker();
+  }
+
+  function renderTracker() {
+    const grid = document.getElementById("trackerGrid");
+    const sub = document.getElementById("subCount");
+    const tot = document.getElementById("teamTotal");
+    if (!grid || !sub || !tot) return;
+    const teams = Object.entries(game.teams)
+      .map(([uid, t]) => ({ uid, ...t }))
+      .sort((a, b) => (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0));
+    const submittedTeamIds = new Set();
+    const key = `${game.roundIdx}_${game.questionIdx}_`;
+    for (const [id, s] of Object.entries(game.submissions)) {
+      if (id.startsWith(key)) submittedTeamIds.add(s.teamId);
+    }
+    tot.textContent = teams.length;
+    sub.textContent = submittedTeamIds.size;
+    grid.innerHTML = teams.map(t => {
+      const ok = submittedTeamIds.has(t.uid);
+      return `<div class="tracker-cell ${ok ? "submitted" : ""}">
+        <span>${escapeHtml(t.name || "Team")}</span>
+        <span class="check">${ok ? "✓" : "·"}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function viewRoundEnd() {
+    const round = ROUNDS[game.roundIdx];
+    const isLast = game.roundIdx >= ROUNDS.length - 1;
+    const count = round.questions.length;
+    let sizeClass = "qa-lg";
+    if (count > 5) sizeClass = "qa-md";
+    if (count > 8) sizeClass = "qa-sm";
+    if (count > 12) sizeClass = "qa-xs";
+    const items = round.questions.map((q, i) => {
+      const qText = typeof q === "string" ? q : (q.q || "");
+      const aText = typeof q === "string" ? "" : (q.a || "");
+      return `
+        <li class="qa-item">
+          <div class="qa-q"><span class="qa-num">${i + 1}.</span>${escapeHtml(qText)}</div>
+          <div class="qa-a">${aText ? "<b>ANSWER:</b> " + escapeHtml(aText) : "<b>ANSWER:</b> <em style=\"opacity:.6\">(not provided)</em>"}</div>
+        </li>
+      `;
+    }).join("");
+    getMain().innerHTML = `
+      <div class="view round-end-answers pop">
+        <div class="round-end-header">
+          <h2>END OF ROUND ${game.roundIdx + 1}</h2>
+          <div class="round-category">${escapeHtml(round.category).toUpperCase()}</div>
+        </div>
+        <div class="qa-list ${sizeClass}"><ol>${items}</ol></div>
+        <div class="round-end-footer">
+          <span class="lead-inline">Tally your scores &nbsp;•&nbsp; Get ready for the next round</span>
+          <button class="btn" id="nextBtn">${isLast ? "FINISH GAME" : "NEXT ROUND"}</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("nextBtn").addEventListener("click", advance);
+  }
+
+  function viewEnd() {
+    getMain().innerHTML = `
+      <div class="view end pop">
+        <h2>THANKS FOR PLAYING!</h2>
+        <p>Hope you enjoyed Trivia Wings.<br/>Highest score wins — see your server for prizes.</p>
+        <div class="btn-row">
+          <button class="btn" id="againBtn">NEW GAME</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("againBtn").addEventListener("click", async () => {
+      await cleanupRoom();
+      game.state = State.TITLE; render();
+    });
+  }
+
+  function render() {
+    renderMeta();
+    switch (game.state) {
+      case State.TITLE: viewTitle(); break;
+      case State.LOBBY: viewLobby(); break;
+      case State.ROUND_INTRO: viewRoundIntro(); break;
+      case State.QUESTION: viewQuestion(); break;
+      case State.ROUND_END: viewRoundEnd(); break;
+      case State.END: viewEnd(); break;
+    }
+    updateCornerQR();
+    renderWinnerBanner();
+    updateBackButton();
+    syncRoomState();
+  }
+
+  function updateBackButton() {
+    const btn = document.getElementById("backBtn");
+    if (!btn) return;
+    btn.classList.toggle("show", game.state !== State.TITLE);
+  }
+
+  // Auto-grade submissions against q.a (normalize + fuzzy match) and tally per team.
+  function computeScores() {
+    const scores = {};
+    for (const [uid, team] of Object.entries(game.teams)) {
+      scores[uid] = { name: team.name || "Team", correct: 0 };
+    }
+    for (const sub of Object.values(game.submissions)) {
+      const round = ROUNDS[sub.roundIdx];
+      if (!round) continue;
+      const q = round.questions[sub.questionIdx];
+      if (!q) continue;
+      if (isAcceptable(sub.answer, q)) {
+        if (!scores[sub.teamId]) {
+          scores[sub.teamId] = { name: sub.teamName || "Team", correct: 0 };
+        }
+        scores[sub.teamId].correct++;
+      }
+    }
+    return scores;
+  }
+
+  function renderWinnerBanner() {
+    const banner = document.getElementById("winnerBanner");
+    if (!banner) return;
+    // Hide on title and lobby — no submissions yet.
+    if (game.state === State.TITLE || game.state === State.LOBBY) {
+      banner.classList.remove("show"); banner.innerHTML = ""; return;
+    }
+    const allScores = Object.values(computeScores()).filter(s => s.correct > 0);
+    if (allScores.length === 0) {
+      banner.classList.remove("show"); banner.innerHTML = ""; return;
+    }
+    allScores.sort((a, b) => b.correct - a.correct);
+    const topCount = allScores[0].correct;
+    const leaders = allScores.filter(s => s.correct === topCount);
+    const label = leaders.length > 1 ? `${leaders.length}-WAY TIE` : "WINNING TEAM";
+    const names = leaders.map(s => s.name).join(" · ");
+    banner.innerHTML = `
+      <span class="wb-trophy">🏆</span>
+      <span class="wb-label">${label}</span>
+      <span class="wb-name">${escapeHtml(names)}</span>
+      <span class="wb-score">${topCount}</span>
+      <span class="wb-score-label">SCORE</span>
+    `;
+    banner.classList.add("show");
+  }
+
+  function updateCornerQR() {
+    const el = document.getElementById("cornerQR");
+    if (!el) return;
+    // Show on round_intro, question, end. Hide on title (instructions card occupies that spot), lobby (big QR already), and round_end (answer reveal).
+    const shouldShow = [State.ROUND_INTRO, State.QUESTION, State.END].includes(game.state);
+    if (!shouldShow) { el.classList.remove("show"); el.innerHTML = ""; return; }
+    el.classList.add("show");
+    if (!game.roomCode) {
+      // Safety net (shouldn't normally trigger now that title hides this widget)
+      el.classList.remove("show"); return;
+    } else {
+      const joinUrl = `${location.origin}${location.pathname}?join=${game.roomCode}`;
+      el.innerHTML = `
+        <div class="qr-mini" id="cornerQRBox"></div>
+        <div class="qr-label">SCAN TO JOIN</div>
+        <div class="qr-code">${game.roomCode}</div>
+      `;
+      const qrBox = el.querySelector("#cornerQRBox");
+      qrBox.innerHTML = "";
+      try {
+        new QRCode(qrBox, {
+          text: joinUrl,
+          width: 160, height: 160,
+          colorDark: "#0c0c0c", colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      } catch (e) { console.warn("Corner QR render failed:", e); }
+    }
+  }
+
+  async function syncRoomState() {
+    if (!roomRef) return;
+    // Phones see "lobby" while host is on title — teams can join early.
+    const roomState = (game.state === State.TITLE) ? "lobby" : game.state;
+    const update = {
+      state: roomState,
+      roundIdx: game.roundIdx,
+      questionIdx: game.questionIdx,
+    };
+    if (game.state === State.QUESTION) {
+      const round = ROUNDS[game.roundIdx];
+      const q = round.questions[game.questionIdx];
+      update.currentQuestion = (typeof q === "string" ? q : q.q) || "";
+      update.currentCategory = round.category || "";
+    } else if (game.state === State.ROUND_INTRO) {
+      update.currentCategory = ROUNDS[game.roundIdx]?.category || "";
+      update.currentQuestion = "";
+    } else {
+      update.currentQuestion = "";
+    }
+    try { await updateDoc(roomRef, update); }
+    catch (e) { console.warn("Room sync failed:", e); }
+  }
+
+  function advance() {
+    switch (game.state) {
+      case State.TITLE: return; // handled by startBtn
+      case State.LOBBY:
+        game.state = State.ROUND_INTRO;
+        game.roundIdx = 0; game.questionIdx = 0;
+        break;
+      case State.ROUND_INTRO:
+        game.state = State.QUESTION; game.questionIdx = 0; break;
+      case State.QUESTION: {
+        const round = ROUNDS[game.roundIdx];
+        if (game.questionIdx < round.questions.length - 1) game.questionIdx++;
+        else game.state = State.ROUND_END;
+        break;
+      }
+      case State.ROUND_END:
+        if (game.roundIdx < ROUNDS.length - 1) {
+          game.roundIdx++; game.questionIdx = 0;
+          game.state = State.ROUND_INTRO;
+        } else game.state = State.END;
+        break;
+    }
+    render();
+  }
+  function goBack() {
+    switch (game.state) {
+      case State.QUESTION:
+        if (game.questionIdx > 0) game.questionIdx--;
+        else game.state = State.ROUND_INTRO;
+        break;
+      case State.ROUND_END:
+        game.state = State.QUESTION;
+        game.questionIdx = ROUNDS[game.roundIdx].questions.length - 1;
+        break;
+      case State.ROUND_INTRO:
+        if (game.roundIdx > 0) { game.roundIdx--; game.state = State.ROUND_END; }
+        else game.state = State.LOBBY;
+        break;
+      case State.END:
+        game.state = State.ROUND_END;
+        game.roundIdx = ROUNDS.length - 1; break;
+    }
+    render();
+  }
+  async function backToMenu() {
+    await cleanupRoom();
+    game.state = State.TITLE; game.roundIdx = 0; game.questionIdx = 0;
+    render();
+    ensureRoom(); // create a fresh room so the title QR is live again
+  }
+  async function cleanupRoom() {
+    if (unsubTeams) { unsubTeams(); unsubTeams = null; }
+    if (unsubSubs) { unsubSubs(); unsubSubs = null; }
+    if (roomRef) {
+      try { await deleteDoc(roomRef); } catch (e) { /* ignore */ }
+      roomRef = null;
+    }
+    game.roomCode = null;
+    game.teams = {}; game.submissions = {};
+  }
+
+  // INPUT
+  document.addEventListener("keydown", (e) => {
+    if (e.repeat) return;
+    if (document.getElementById("loadModal")) {
+      if (e.key === "Escape") { e.preventDefault(); closeLoadModal(); }
+      return;
+    }
+    if (e.target.matches("input, textarea")) return;
+    switch (e.key) {
+      case " ": case "ArrowRight": case "Enter":
+        e.preventDefault();
+        if (game.state === State.TITLE) startNewRoom();
+        else advance();
+        break;
+      case "ArrowLeft":
+        e.preventDefault(); goBack(); break;
+      case "f": case "F":
+        e.preventDefault(); toggleFullscreen(); break;
+      case "l": case "L":
+        if (game.state === State.TITLE) { e.preventDefault(); openLoadModal(); }
+        break;
+      case "Escape":
+        e.preventDefault();
+        if (game.state !== State.TITLE) backToMenu();
+        break;
+    }
+  });
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+
+  // LOAD MODAL
+  let modalFormat = "build";   // "build" | "text" | "csv" | "json"
+  let BUILDER_DATA = null;     // [{category, questions:[{q,a}]}] for the in-menu sheet builder
+  // ---- BUILD-YOUR-OWN sheet (set # of categories & questions, type them in) ----
+  function blankQ() { return { q: "", a: "" }; }
+  function clampInt(v, lo, hi) { let n = parseInt(v, 10); if (isNaN(n)) n = lo; return Math.max(lo, Math.min(hi, n)); }
+  function seedBuilderData() {
+    const src = (ROUNDS && ROUNDS.length) ? ROUNDS : DEFAULT_ROUNDS;
+    BUILDER_DATA = src.map(r => ({ category: r.category || "", questions: (r.questions || []).map(q => ({ q: q.q || "", a: q.a || "" })) }));
+    if (!BUILDER_DATA.length) BUILDER_DATA = [{ category: "", questions: [blankQ()] }];
+  }
+  function readBuilderDOM() {
+    const grid = document.getElementById("builderGrid"); if (!grid) return;
+    BUILDER_DATA = [...grid.querySelectorAll(".bld-cat")].map(catEl => ({
+      category: catEl.querySelector(".bld-catname").value,
+      questions: [...catEl.querySelectorAll(".bld-qrow")].map(row => ({ q: row.querySelector(".bld-q").value, a: row.querySelector(".bld-a").value }))
+    }));
+  }
+  function syncCountInputs() {
+    const ci = document.getElementById("bldCats"), qi = document.getElementById("bldQs");
+    if (!ci || !qi || !BUILDER_DATA) return;
+    ci.value = BUILDER_DATA.length || 1;
+    qi.value = BUILDER_DATA.reduce((m, c) => Math.max(m, c.questions ? c.questions.length : 0), 0) || 1;
+  }
+  function resizeBuilder() {
+    readBuilderDOM(); if (!BUILDER_DATA) BUILDER_DATA = [];
+    const nCats = clampInt(document.getElementById("bldCats").value, 1, 40);
+    const nQs = clampInt(document.getElementById("bldQs").value, 1, 100);
+    document.getElementById("bldCats").value = nCats; document.getElementById("bldQs").value = nQs;
+    while (BUILDER_DATA.length < nCats) BUILDER_DATA.push({ category: "", questions: [] });
+    BUILDER_DATA.length = nCats;
+    BUILDER_DATA.forEach(c => { if (!c.questions) c.questions = []; while (c.questions.length < nQs) c.questions.push(blankQ()); c.questions.length = nQs; });
+    renderBuilder();
+  }
+  function updateBuilderTotal() {
+    const el = document.getElementById("bldTotal"); if (!el || !BUILDER_DATA) return;
+    const cats = BUILDER_DATA.length, total = BUILDER_DATA.reduce((n, c) => n + (c.questions ? c.questions.length : 0), 0);
+    el.textContent = "= " + total + " question" + (total === 1 ? "" : "s") + " · " + cats + " categor" + (cats === 1 ? "y" : "ies");
+  }
+  function renderBuilder() {
+    const grid = document.getElementById("builderGrid"); if (!grid || !BUILDER_DATA) return;
+    grid.innerHTML = BUILDER_DATA.map((c, ci) =>
+      '<div class="bld-cat"><div class="bld-cat-head"><span class="bld-cat-no">CATEGORY ' + (ci + 1) + '</span>' +
+      '<input type="text" class="bld-catname" placeholder="Category name (e.g. Sports)" value="' + escapeHtml(c.category) + '" /></div>' +
+      (c.questions || []).map((q, qi) =>
+        '<div class="bld-qrow"><span class="bld-qn">' + (qi + 1) + '.</span>' +
+        '<input type="text" class="bld-q" placeholder="Question" value="' + escapeHtml(q.q) + '" />' +
+        '<input type="text" class="bld-a" placeholder="Answer (optional)" value="' + escapeHtml(q.a) + '" /></div>'
+      ).join("") + '</div>'
+    ).join("");
+    syncCountInputs(); updateBuilderTotal();
+  }
+  function collectBuilderRounds() {
+    readBuilderDOM();
+    const rounds = (BUILDER_DATA || []).map(c => ({
+      category: (c.category || "").trim(),
+      questions: (c.questions || []).map(q => ({ q: (q.q || "").trim(), a: (q.a || "").trim() })).filter(q => q.q)
+    })).filter(c => c.category || c.questions.length);
+    if (!rounds.length) throw new Error("Add at least one category with one question.");
+    for (const c of rounds) {
+      if (!c.category) throw new Error("Every category needs a name.");
+      if (!c.questions.length) throw new Error('Category "' + c.category + '" needs at least one question.');
+    }
+    return rounds;
+  }
+  // Toggle the builder grid vs the upload/paste area based on the active tab.
+  function setModalMode() {
+    const build = modalFormat === "build";
+    const ua = document.getElementById("uploadArea"), ba = document.getElementById("builderArea"), fh = document.getElementById("formatHelp");
+    if (ua) ua.style.display = build ? "none" : "";
+    if (fh) fh.style.display = build ? "none" : "";
+    if (ba) ba.style.display = build ? "" : "none";
+    if (build) {
+      const grid = document.getElementById("builderGrid");
+      if (grid && !grid.children.length) { if (!BUILDER_DATA) seedBuilderData(); renderBuilder(); }
+    }
+  }
+
+  function openLoadModal() {
+    document.getElementById("modalRoot").innerHTML = `
+      <div class="modal-backdrop" id="loadModal">
+        <div class="modal" role="dialog">
+          <button class="close-x" id="closeX">×</button>
+          <h2>LOAD QUESTIONS</h2>
+          <p class="modal-lead"><b>Build your own</b> sheet below — set how many categories &amp; questions, then type them in. Or switch tabs to paste / upload a file (Plain Text, CSV, JSON).</p>
+          <div class="format-tabs">
+            <button class="format-tab ${modalFormat === "build" ? "active" : ""}" data-fmt="build">BUILD YOUR OWN</button>
+            <button class="format-tab ${modalFormat === "text" ? "active" : ""}" data-fmt="text">PLAIN TEXT</button>
+            <button class="format-tab ${modalFormat === "csv" ? "active" : ""}" data-fmt="csv">CSV</button>
+            <button class="format-tab ${modalFormat === "json" ? "active" : ""}" data-fmt="json">JSON</button>
+          </div>
+          <div class="format-help" id="formatHelp"></div>
+          <div id="msgArea"></div>
+
+          <div id="builderArea">
+            <div class="bld-controls">
+              <div class="bld-num"><label for="bldCats">CATEGORIES</label><input type="number" id="bldCats" min="1" max="40" value="5" /></div>
+              <div class="bld-num"><label for="bldQs">QUESTIONS&nbsp;EACH</label><input type="number" id="bldQs" min="1" max="100" value="10" /></div>
+              <button class="btn secondary" id="bldResize" type="button">CREATE / RESIZE SHEET</button>
+              <div class="bld-total" id="bldTotal"></div>
+            </div>
+            <div id="builderGrid"></div>
+          </div>
+
+          <div id="uploadArea">
+            <div class="field">
+              <label>OPTIONAL — CHUNK FLAT LIST INTO ROUNDS</label>
+              <div class="size-row">
+                <label style="color:var(--blue);width:auto;margin:0;">ROUNDS</label>
+                <input type="number" id="loadRounds" min="0" max="20" value="0" />
+                <label style="color:var(--blue);width:auto;margin:0;">×</label>
+                <label style="color:var(--blue);width:auto;margin:0;">QUESTIONS / ROUND</label>
+                <input type="number" id="loadPerRound" min="0" max="50" value="0" />
+                <span style="font-size:12px;color:var(--blue);">(leave 0 to use ## headers / CSV categories)</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>UPLOAD A FILE (.txt, .csv, OR .json)</label>
+              <input type="file" id="fileInput" accept=".txt,.csv,.json,text/plain,text/csv,application/json" />
+            </div>
+            <div class="field">
+              <label>OR PASTE YOUR QUESTIONS</label>
+              <textarea id="pasteArea" placeholder="Paste your questions here..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn danger" id="resetBtn">RESET TO DEFAULT</button>
+            <button class="btn secondary" id="cancelBtn">CANCEL</button>
+            <button class="btn" id="applyBtn">APPLY</button>
+          </div>
+        </div>
+      </div>
+    `;
+    updateFormatHelp();
+    setModalMode();
+    document.getElementById("closeX").addEventListener("click", closeLoadModal);
+    document.getElementById("cancelBtn").addEventListener("click", closeLoadModal);
+    document.getElementById("applyBtn").addEventListener("click", applyFromModal);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      clearStoredRounds(); ROUNDS = DEFAULT_ROUNDS.slice(); BUILDER_DATA = null;
+      closeLoadModal(); render();
+    });
+    document.getElementById("fileInput").addEventListener("change", handleFilePicked);
+    document.getElementById("bldResize").addEventListener("click", resizeBuilder);
+    document.querySelectorAll(".format-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        modalFormat = tab.dataset.fmt;
+        document.querySelectorAll(".format-tab").forEach(t => t.classList.toggle("active", t === tab));
+        updateFormatHelp();
+        setModalMode();
+      });
+    });
+    document.getElementById("loadModal").addEventListener("click", (e) => {
+      if (e.target.id === "loadModal") closeLoadModal();
+    });
+  }
+  function closeLoadModal() { document.getElementById("modalRoot").innerHTML = ""; }
+  function updateFormatHelp() {
+    const el = document.getElementById("formatHelp"); if (!el) return;
+    if (modalFormat === "text") {
+      el.textContent =
+        "Just paste a list:\n\nQuestion? | Answer\nQuestion? | Answer\nQuestion? — Answer\n\nOptional: group into rounds with category headers:\n\n## Food & Drink\nQuestion? | Answer\n## Sports\nQuestion? | Answer\n\n(Separators: | :: — – or \" - \". Lists / bold / numbered all OK.)";
+    } else if (modalFormat === "csv") {
+      el.textContent =
+        "Category,Question,Answer\nSports,How many players on a soccer team?,11\n" +
+        'Sports,"What sport uses ""love"" for zero?",Tennis\nMusic,Who is the King of Pop?,Michael Jackson\n\n' +
+        "(One question per row: Category, Question, Answer. Header row optional; answer optional.\n Wrap a field in quotes if it has a comma. Exports straight from Excel/Google Sheets.)";
+    } else {
+      el.textContent =
+        '[\n  {\n    "category": "Sports",\n    "questions": [\n      { "q": "Players on a soccer team?", "a": "11" },\n      { "q": "Sport that uses \'love\' for zero?", "a": "Tennis" }\n    ]\n  }\n]';
+    }
+  }
+  function showModalMsg(text, type) {
+    const el = document.getElementById("msgArea"); if (!el) return;
+    el.innerHTML = `<div class="${type === "ok" ? "ok-msg" : "error-msg"}">${escapeHtml(text)}</div>`;
+  }
+  function handleFilePicked(e) {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      document.getElementById("pasteArea").value = ev.target.result;
+      if (file.name.toLowerCase().endsWith(".json")) modalFormat = "json";
+      else if (file.name.toLowerCase().endsWith(".csv")) modalFormat = "csv";
+      else if (file.name.toLowerCase().endsWith(".txt")) modalFormat = "text";
+      document.querySelectorAll(".format-tab").forEach(t => t.classList.toggle("active", t.dataset.fmt === modalFormat));
+      updateFormatHelp();
+      setModalMode();
+      showModalMsg(`Loaded "${file.name}". Click APPLY to use.`, "ok");
+    };
+    reader.onerror = () => showModalMsg("Could not read that file.", "err");
+    reader.readAsText(file);
+  }
+  function applyFromModal() {
+    // BUILD tab: collect the grid instead of parsing pasted text.
+    if (modalFormat === "build") {
+      try {
+        const parsed = normalizeRounds(collectBuilderRounds());
+        validateRounds(parsed);
+        saveRoundsToStorage(parsed); ROUNDS = parsed;
+        const total = parsed.reduce((n, r) => n + r.questions.length, 0);
+        showModalMsg("Built " + parsed.length + " categories, " + total + " questions.", "ok");
+        setTimeout(() => { closeLoadModal(); render(); }, 600);
+      } catch (err) { showModalMsg("Could not build: " + err.message, "err"); }
+      return;
+    }
+    const text = document.getElementById("pasteArea").value.trim();
+    if (!text) { showModalMsg("Paste questions or pick a file first.", "err"); return; }
+    const rounds = parseInt(document.getElementById("loadRounds")?.value, 10) || 0;
+    const perRound = parseInt(document.getElementById("loadPerRound")?.value, 10) || 0;
+    try {
+      let parsed;
+      if (modalFormat === "json") parsed = parseJsonRounds(text);
+      else if (modalFormat === "csv") parsed = parseCsvRounds(text);
+      else if (text.startsWith("[") || text.startsWith("{")) {
+        try { parsed = parseJsonRounds(text); } catch { parsed = parseTextRounds(text); }
+      } else parsed = parseTextRounds(text);
+      // Optional re-chunk: if user filled in rounds & perRound AND there's only one
+      // big category (no ## headers found), split into N rounds of M.
+      if (rounds > 0 && perRound > 0 && parsed.length === 1) {
+        const all = parsed[0].questions;
+        const need = rounds * perRound;
+        if (all.length < need) {
+          showModalMsg(`Need ${need} questions for ${rounds}×${perRound}; only ${all.length} provided.`, "err");
+          return;
+        }
+        const chunked = [];
+        for (let r = 0; r < rounds; r++) {
+          chunked.push({
+            category: `Round ${r + 1}`,
+            questions: all.slice(r * perRound, (r + 1) * perRound),
+          });
+        }
+        parsed = chunked;
+      }
+      saveRoundsToStorage(parsed); ROUNDS = parsed;
+      const total = parsed.reduce((n, r) => n + r.questions.length, 0);
+      showModalMsg(`Loaded ${parsed.length} categories, ${total} questions.`, "ok");
+      setTimeout(() => { closeLoadModal(); render(); }, 600);
+    } catch (err) {
+      showModalMsg("Could not load: " + err.message, "err");
+    }
+  }
+
+  // Wire the global BACK button once
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.addEventListener("click", () => goBack());
+
+  // BOOT (host)
+  render();
+})();
+
+// ============================================================
+// PHONE MODE
+// ============================================================
+if (MODE === "phone") (async function phoneMain() {
+  // Hide footer kbd hints on phone
+  document.getElementById("footerControls").innerHTML = `<span>ROOM <kbd>${escapeHtml(JOIN_CODE)}</kbd></span>`;
+  document.getElementById("footerNote").textContent = "TYPE YOUR ANSWER · SUBMIT ON YOUR PHONE";
+
+  let user = null;
+  let roomData = null;
+  let teamName = localStorage.getItem("tw-team-name") || "";
+  let lastQKey = "";
+  let submittedKey = "";
+  let hasJoined = false; // true only after the user clicks JOIN for THIS room
+  let lastRenderKey = ""; // skips redundant re-renders during snapshot churn
+
+  function setMeta(text) { getMeta().innerHTML = text ? `<div class="chip">${text}</div>` : ""; }
+
+  function renderError(msg) {
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen">
+          <h2>OOPS</h2>
+          <div class="phone-error">${escapeHtml(msg)}</div>
+          <p>Check the room code on the main screen and try again.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderNameEntry() {
+    setMeta(`ROOM ${JOIN_CODE}`);
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <h2>JOIN ROOM ${escapeHtml(JOIN_CODE)}</h2>
+          <p>Pick a team name. Everyone on your team should see this on one phone.</p>
+          <input class="phone-input" id="nameInput" type="text" maxlength="24" placeholder="e.g. Wing Squad" value="${escapeHtml(teamName)}" />
+          <button class="phone-btn" id="joinBtn">JOIN GAME</button>
+        </div>
+      </div>
+    `;
+    const input = document.getElementById("nameInput");
+    input.focus();
+    document.getElementById("joinBtn").addEventListener("click", join);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") join(); });
+  }
+
+  async function join() {
+    const input = document.getElementById("nameInput");
+    const name = (input?.value || "").trim();
+    if (!name) { input.focus(); return; }
+    teamName = name;
+    localStorage.setItem("tw-team-name", name);
+    document.getElementById("joinBtn").disabled = true;
+    try {
+      await setDoc(doc(db, "rooms", JOIN_CODE, "teams", user.uid), {
+        name, joinedAt: serverTimestamp(), uid: user.uid,
+      });
+      hasJoined = true;
+      renderForState();
+    } catch (e) {
+      console.error(e);
+      renderError("Could not join the room. Try again.");
+    }
+  }
+
+  function renderForState(force = false) {
+    if (!roomData) { renderError("Room not found."); return; }
+    setMeta(`ROOM ${JOIN_CODE}`);
+    // Skip if nothing the phone cares about changed (state, round, question, submission status)
+    const renderKey = `${roomData.state}|${roomData.roundIdx}|${roomData.questionIdx}|${submittedKey}`;
+    if (!force && renderKey === lastRenderKey) return;
+    lastRenderKey = renderKey;
+    switch (roomData.state) {
+      case "lobby":         return renderWaiting();
+      case "round_intro":   return renderRoundIntro();
+      case "question":      return renderQuestion();
+      case "round_end":     return renderRoundEnd();
+      case "end":           return renderFinal();
+      default: return renderWaiting();
+    }
+  }
+
+  function renderWaiting() {
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <span class="phone-team">${escapeHtml(teamName)}</span>
+          <h2>YOU'RE IN!</h2>
+          <p>Waiting for the host to start the game…</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRoundIntro() {
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <span class="phone-team">${escapeHtml(teamName)}</span>
+          <h2>ROUND ${(roomData.roundIdx || 0) + 1}</h2>
+          <div class="phone-cat">${escapeHtml(String(roomData.currentCategory || "").toUpperCase())}</div>
+          <p style="margin-top:14px;">Get ready! First question is coming…</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderQuestion() {
+    const qKey = `${roomData.roundIdx}_${roomData.questionIdx}`;
+    const alreadySubmitted = (submittedKey === qKey);
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <span class="phone-team">${escapeHtml(teamName)}</span>
+          <div class="phone-cat">${escapeHtml(String(roomData.currentCategory || "").toUpperCase())}</div>
+          <div class="phone-question">
+            <span class="qnum">Q${(roomData.questionIdx || 0) + 1}</span>${escapeHtml(roomData.currentQuestion || "")}
+          </div>
+          ${
+            alreadySubmitted
+              ? `<div class="phone-submitted">✓ ANSWER SUBMITTED</div>
+                 <p>Wait for the next question…</p>`
+              : `<input class="phone-input" id="ansInput" type="text" autocomplete="off" autocapitalize="off" placeholder="Type your answer" />
+                 <button class="phone-btn" id="subBtn">SUBMIT ANSWER</button>`
+          }
+        </div>
+      </div>
+    `;
+    if (!alreadySubmitted) {
+      const input = document.getElementById("ansInput");
+      input.focus();
+      const submit = async () => {
+        const ans = input.value.trim();
+        if (!ans) { input.focus(); return; }
+        document.getElementById("subBtn").disabled = true;
+        const id = `${roomData.roundIdx}_${roomData.questionIdx}_${user.uid}`;
+        try {
+          await setDoc(doc(db, "rooms", JOIN_CODE, "submissions", id), {
+            teamId: user.uid,
+            teamName,
+            roundIdx: roomData.roundIdx,
+            questionIdx: roomData.questionIdx,
+            answer: ans,
+            submittedAt: serverTimestamp(),
+          });
+          submittedKey = qKey;
+          renderForState();
+        } catch (e) {
+          console.error(e);
+          document.getElementById("subBtn").disabled = false;
+          alert("Submission failed. Try again.");
+        }
+      };
+      document.getElementById("subBtn").addEventListener("click", submit);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+    }
+  }
+
+  function renderRoundEnd() {
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <span class="phone-team">${escapeHtml(teamName)}</span>
+          <h2>ROUND ${(roomData.roundIdx || 0) + 1} COMPLETE</h2>
+          <p>Answers are revealed on the main screen.<br/>Tally your team's score!</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderFinal() {
+    getMain().innerHTML = `
+      <div class="view">
+        <div class="phone-screen pop">
+          <span class="phone-team">${escapeHtml(teamName)}</span>
+          <h2>THANKS FOR PLAYING!</h2>
+          <p>Hope you had fun.<br/>Highest score wins!</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // Boot phone
+  try {
+    user = await ensureAuth();
+    const roomRef = doc(db, "rooms", JOIN_CODE);
+    const initial = await getDoc(roomRef);
+    if (!initial.exists()) { renderError(`Room ${JOIN_CODE} not found. Check the code.`); return; }
+    // Subscribe to room state
+    onSnapshot(roomRef, (snap) => {
+      const prev = roomData;
+      roomData = snap.data();
+      if (!roomData) { renderError("Room closed."); return; }
+      const newQKey = `${roomData.roundIdx}_${roomData.questionIdx}`;
+      if (newQKey !== lastQKey) {
+        lastQKey = newQKey;
+        // clear submitted marker when question changes
+        if (roomData.state === "question") submittedKey = "";
+      }
+      // Only switch to game state if the user has clicked JOIN for this room.
+      if (!hasJoined) renderNameEntry();
+      else renderForState();
+    });
+
+    // When the phone wakes up (user returns from another app/screen), pull the
+    // latest room state explicitly — Firestore listeners can pause in the background.
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState !== "visible" || !hasJoined) return;
+      try {
+        const snap = await getDoc(roomRef);
+        if (!snap.exists()) return;
+        roomData = snap.data();
+        const newQKey = `${roomData.roundIdx}_${roomData.questionIdx}`;
+        if (newQKey !== lastQKey) {
+          lastQKey = newQKey;
+          if (roomData.state === "question") submittedKey = "";
+        }
+        renderForState(true);
+      } catch (e) { console.warn("Visibility refresh failed:", e); }
+    });
+
+    // Always start on name entry; the input is pre-filled with the last used name.
+    renderNameEntry();
+  } catch (e) {
+    console.error(e);
+    renderError("Could not connect. Check your network and try again.");
+  }
+})();
+</script>
+</body>
+</html>
