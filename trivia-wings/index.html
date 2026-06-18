@@ -445,6 +445,8 @@
     font-size: 38px; letter-spacing: 4px; color: var(--yellow);
     text-shadow: 3px 3px 0 var(--black);
   }
+  /* Brand logo in the top-left of each question (in the top bar, left of the badge). */
+  .q-corner-logo { height: 64px; max-width: 220px; object-fit: contain; display: block; }
   .q-category {
     /* Sits at the right end of the top bar (same row as the Q-badge), above the
        tracker — flows in the layout so it never overlaps the submissions box. */
@@ -2219,6 +2221,7 @@ if (MODE === "host") (async function hostMain() {
       <div class="view">
         <div class="q-screen-host">
           <div class="q-topbar">
+            ${BRAND.logo ? `<img class="q-corner-logo" src="${BRAND.logo}" alt="">` : ""}
             <div class="q-badge">${game.questionIdx + 1} OF ${round.questions.length}</div>
             <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
           </div>

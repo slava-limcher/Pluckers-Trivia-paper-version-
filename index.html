@@ -510,6 +510,8 @@
   /* Host-only scoreboard panel — top-center of the question screen (between the
      QUESTION badge and the category). Hidden on the TVs. */
   .q-topbar-left { display: flex; align-items: center; gap: 16px; }
+  /* Brand logo in the top-left of each question, next to the QUESTION badge. */
+  .q-corner-logo { height: 88px; max-width: 300px; object-fit: contain; display: block; }
   .q-score {
     background: var(--yellow); color: var(--red);
     border: 4px solid var(--black); border-radius: 12px;
@@ -2095,7 +2097,10 @@ function viewQuestion() {
     <div class="view view-fill">
       <div class="q-screen ${TIMER_SECS > 0 ? 'has-timer' : ''}">
         <div class="q-topbar">
-          <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          <div class="q-topbar-left">
+            ${brandLogoSrc() ? `<img class="q-corner-logo" src="${brandLogoSrc()}" alt="" onerror="this.style.display='none'" />` : ""}
+            <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
+          </div>
           <div class="q-topcenter">
             <div class="q-timer${TIMER_SECS > 0 ? '' : ' q-timer-off'}" id="qTimer">${TIMER_SECS > 0 ? TIMER_SECS : 0}</div>
             <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
