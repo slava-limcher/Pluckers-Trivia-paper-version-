@@ -1179,8 +1179,10 @@ function applyTheme(t) {
 // Patch an already-rendered title screen with the brand logo/title (used after the
 // cloud design loads, which may resolve after the title screen first painted).
 function brandTitleScreen() {
+  // Branded phone version uses the background + colors + title text only — no logo
+  // (neither the uploaded brand logo nor the default chicken).
   const tl = document.querySelector(".title-logo");
-  if (tl && BRAND.logo) tl.innerHTML = `<img src="${BRAND.logo}" alt="" style="max-width:260px;max-height:140px;display:block;margin:0 auto">`;
+  if (tl) tl.style.display = "none";
   const tt = document.querySelector("h1.title");
   if (tt && (BRAND.title1 || BRAND.title2)) tt.innerHTML = `${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title2 || "")}</span>`;
 }
@@ -1438,7 +1440,7 @@ if (MODE === "host") (async function hostMain() {
             <li><b>Host announces the winners!</b></li>
           </ol>
         </div>
-        <div class="title-logo">${BRAND.logo ? `<img src="${BRAND.logo}" alt="" style="max-width:260px;max-height:140px;display:block;margin:0 auto">` : `<span class="logo-em">🍗</span>`}</div>
+        ${(BRAND.logo || BRAND.title1 || BRAND.title2) ? "" : `<div class="title-logo"><span class="logo-em">🍗</span></div>`}
         <h1 class="title">${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title1 ? (BRAND.title2 || "") : "WINGS")}</span></h1>
         <div class="status-pill ${isCustom ? "custom" : ""}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
         <div class="btn-row">
