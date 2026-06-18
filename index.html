@@ -2407,9 +2407,15 @@ function applyBuiltinSlots() {
     el.style.position = "fixed";
     el.style.left = s.x + "%"; el.style.top = s.y + "%";
     el.style.margin = "0"; el.style.flex = "none";
-    if (s.w != null) el.style.width = s.w + "%";
-    if (s.h != null) el.style.height = s.h + "%";
-    if (s.s != null && name !== "box") { el.style.transform = "scale(" + s.s + ")"; el.style.transformOrigin = "top left"; }
+    if (name === "box") {
+      // The question box is a sized container; fitQuestion() auto-fits the text inside.
+      if (s.w != null) el.style.width = s.w + "%";
+      if (s.h != null) el.style.height = s.h + "%";
+    } else if (s.s != null) {
+      // Text pills + logo keep their CONTENT size (text stays inside) and only scale —
+      // never force a w/h that could clip the text.
+      el.style.transform = "scale(" + s.s + ")"; el.style.transformOrigin = "top left";
+    }
   });
 }
 

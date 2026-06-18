@@ -728,10 +728,16 @@
       if(!el||!s) return;
       el.style.position="absolute"; el.style.left=s.x+"%"; el.style.top=s.y+"%";
       el.style.margin="0"; el.style.flex="none"; el.style.cursor="move"; el.style.zIndex="6";
-      if(s.w!=null) el.style.width=s.w+"%";
-      if(s.h!=null) el.style.height=s.h+"%";
-      if(name==="box" && s.fs!=null) el.style.fontSize=s.fs+"px";   // keep the captured fitted size
-      if(name!=="box" && s.s!=null){ el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left"; }
+      if(name==="box"){
+        // The question box is a sized container; the text auto-fits inside it.
+        if(s.w!=null) el.style.width=s.w+"%";
+        if(s.h!=null) el.style.height=s.h+"%";
+        if(s.fs!=null) el.style.fontSize=s.fs+"px";   // keep the captured fitted size
+      } else if(s.s!=null){
+        // Text pills + logo size to their CONTENT (text always stays inside) and only
+        // grow/shrink via scale — never force a w/h that could clip the text.
+        el.style.transform="scale("+s.s+")"; el.style.transformOrigin="top left";
+      }
       el.style.outline="1px dashed rgba(255,255,255,.35)"; el.style.outlineOffset="3px";
       attachBuiltinDrag(el,s);
       addHandles(el,(ev,dirX,dirY,handle)=>resizeBuiltin(ev,dirX,dirY,handle,el,name,s));
