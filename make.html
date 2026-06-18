@@ -543,7 +543,8 @@
   // ---- Presets: save/load a full look (theme + placed text & images) ----
   const BUILTIN_PRESETS = [
     {name:"Pluckers", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#c8102e",accent:"#f4c430",deep:"#1d3a8a",light:"#f7f1e3",bg:"gradient",bgimg:"",logo:""}, els:[]},
-    {name:"Buffalo Wild Wings", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#FFD200",accent:"#FFFFFF",deep:"#161616",light:"#FFFFFF",bg:"gradient",bgimg:"",logo:""}, els:[]}
+    {name:"Buffalo Wild Wings", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#FFD200",accent:"#FFFFFF",deep:"#161616",light:"#FFFFFF",bg:"gradient",bgimg:"",logo:""}, els:[]},
+    {name:"Twin Peaks", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#B11F1A",accent:"#F2E8D4",deep:"#262422",light:"#F2E8D4",bg:"gradient",bgimg:"",logo:""}, els:[]}
   ];
   function loadPresets(){ try{ return JSON.parse(localStorage.getItem("trivia-presets")||"[]"); }catch(e){ return []; } }
   function savePresets(){ try{ localStorage.setItem("trivia-presets", JSON.stringify(PRESETS)); }catch(e){} }
@@ -1039,7 +1040,7 @@
     {n:"Pluckers Wing Bar",  c:["#C8102E","#F4C430","#1D3A8A","#F7F1E3"]},
     {n:"Taco Mac",           c:["#C8102E","#F2C75C","#1B2A5E","#FFFFFF"]},
     {n:"Hooters",            c:["#FF7A00","#FFFFFF","#5A3A1A","#FFF7E8"]},
-    {n:"Twin Peaks",         c:["#C8102E","#E8A33D","#2B2018","#FFF7E8"]},
+    {n:"Twin Peaks",         c:["#B11F1A","#F2E8D4","#262422","#F2E8D4"]},
     {n:"Wingstop",           c:["#0C8A44","#ED1C24","#0A2E1C","#FFFFFF"]},
     {n:"Dave & Buster's",    c:["#E11B22","#00A0DF","#101820","#FFFFFF"]},
     {n:"Topgolf",            c:["#003DA5","#93D500","#0A1A3A","#FFFFFF"]},
