@@ -2337,7 +2337,7 @@ function fitQuestion() {
     body.scrollWidth <= (box.clientWidth - padX) + 1 &&
     body.scrollHeight <= (box.clientHeight - padY) + 1;
 
-  const MIN = 18, MAX = 240;
+  const MIN = 10, MAX = 240;   // low floor so the text always shrinks to fit the box (matches the builder)
   let lo = MIN, hi = MAX, best = MIN;
   for (let i = 0; i < 22; i++) {
     const mid = (lo + hi) / 2;
