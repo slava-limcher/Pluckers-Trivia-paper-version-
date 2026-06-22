@@ -3704,7 +3704,17 @@ function applyRemote(row) {
         LB_SHOWN = !!ex.lb.shown;
       }
       if (ex.theme && typeof ex.theme === "object") {
-        THEME = Object.assign({}, DEFAULT_THEME, ex.theme);   // mirror the host's brand (colors/fonts/bg style)
+        const merged = Object.assign({}, DEFAULT_THEME, ex.theme);   // mirror the host's brand (colors/fonts/bg style)
+        // The live push strips the heavy assets (logo / background image / uploaded fonts)
+        // to stay small — keep the ones the design link already loaded so they aren't
+        // wiped on every state update.
+        if (ex.designId) {
+          if (!merged.logo && THEME.logo) merged.logo = THEME.logo;
+          if (!merged.bgimg && THEME.bgimg) merged.bgimg = THEME.bgimg;
+          if (THEME.fontFaces && !(merged.fontFaces && merged.fontFaces.length)) merged.fontFaces = THEME.fontFaces;
+          if (merged.screens && THEME.screens) Object.keys(merged.screens).forEach(k => { const a = merged.screens[k], b = THEME.screens[k]; if (a && b && !a.bgimg && b.bgimg) a.bgimg = b.bgimg; });
+        }
+        THEME = merged;
         applyTheme(THEME);
       }
       // Full brand (logo, background image, uploaded fonts, custom layout) loads once
