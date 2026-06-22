@@ -1893,6 +1893,8 @@ function designScreenKey() {
   if (game.state === State.QUESTION) return "question";
   if (game.state === State.ANSWER) return "answer";
   if (game.state === State.TITLE) return "title";
+  if (game.state === State.FINAL_BOARD) return "standings";
+  if (game.state === State.WINNER) return "winner";
   return String(game.state || "");
 }
 function renderDesignOverlay() {
@@ -2427,7 +2429,9 @@ function applyBuiltinSlots() {
   if (!DESIGN || !DESIGN.slots) return;
   const sl = DESIGN.slots[designScreenKey()];
   if (!sl) return;
-  const map = { logo: ".q-corner-logo", badge: ".q-badge", category: ".q-category", box: ".q-text, .ans-q", howto: ".q-howto", answer: ".ans-a", score: ".q-score", next: "#qNextBtn", hint: ".q-screen .hint" };
+  const map = { logo: ".q-corner-logo", badge: ".q-badge", category: ".q-category", box: ".q-text, .ans-q", howto: ".q-howto", answer: ".ans-a", score: ".q-score", next: "#qNextBtn", hint: ".q-screen .hint",
+    fbtitle: ".fb-title", fbmsg: ".fb-empty", fbbtn: ".final-board .btn-row", fbhint: ".final-board .hint",
+    winburst: ".win-burst, .champ-crown", winlabel: ".win-label", winname: ".win-name", winbtn: ".winner-screen .btn-row" };
   Object.keys(map).forEach(name => {
     const el = document.querySelector(map[name]); const s = sl[name];
     if (!el || !s) return;

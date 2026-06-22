@@ -446,6 +446,8 @@
               <button data-sc="title" class="active">Title</button>
               <button data-sc="question">Question</button>
               <button data-sc="answer">Answer</button>
+              <button data-sc="standings">Standings</button>
+              <button data-sc="winner">Winner</button>
             </div>
             <button class="btn copy" id="fsBtn" type="button" title="Fullscreen edit" style="padding:7px 12px;font-size:15px">⛶</button>
           </div>
@@ -490,7 +492,7 @@
   // Per-screen look: each screen (title/question/answer) keeps its OWN background +
   // fonts, so they can differ. The Game-background + Fonts controls edit whichever
   // screen tab is active above the preview.
-  const SCREENS = { title:null, question:null, answer:null };
+  const SCREENS = { title:null, question:null, answer:null, standings:null, winner:null };
   function readBgFonts(){ return { bg:bgStyle, bgimg:($("bgimg")?$("bgimg").value.trim():""), fit:($("bgFit")?$("bgFit").value:"cover"), dim:+(($("dim")&&$("dim").value)||0), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:"") }; }
   function writeBgFonts(s){ s=s||{}; bgStyle=s.bg||"gradient"; if($("bgSel"))$("bgSel").value=bgStyle; if($("bgimg"))$("bgimg").value=s.bgimg||""; if($("bgFit"))$("bgFit").value=s.fit||"cover"; if($("bgImgWrap"))$("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; if($("dim")){$("dim").value=s.dim||0;$("dimVal").textContent=($("dim").value)+"%";} if($("titleFont"))$("titleFont").value=s.font||""; if($("qFont"))$("qFont").value=s.qfont||""; if($("labelFont"))$("labelFont").value=s.labelfont||""; }
   function updateBgScope(){ const lbl=screen==="title"?"Title screen":screen==="question"?"Question screen":"Answer screen"; document.querySelectorAll(".scope-chip").forEach(c=>c.textContent=lbl); }
@@ -504,6 +506,8 @@
   const SLOT_DEFAULTS = {
     question:{ logo:{x:1.5,y:5}, badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:19,w:97,h:55}, num:{x:4,y:44}, howto:{x:15,y:80}, next:{x:38,y:88}, hint:{x:22,y:95} },
     answer:{ badge:{x:1.5,y:6}, category:{x:73,y:6}, score:{x:37,y:5}, box:{x:1.5,y:17,w:97,h:40}, num:{x:4,y:34}, answer:{x:18,y:66} },
+    standings:{ fbtitle:{x:18,y:32}, fbmsg:{x:30,y:46}, fbbtn:{x:41,y:54}, fbhint:{x:40,y:64} },
+    winner:{ winburst:{x:47,y:34}, winlabel:{x:35,y:46}, winname:{x:38,y:56}, winbtn:{x:42,y:68} },
     title:{}
   };
   const DESIGN_ID = "d" + Math.random().toString(36).slice(2, 9);
@@ -511,7 +515,7 @@
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
   const themeObj = () => {
     const sc = {};
-    ["title","question","answer"].forEach(k=>{ sc[k] = Object.assign({}, SCREENS[k]||{}); });
+    ["title","question","answer","standings","winner"].forEach(k=>{ sc[k] = Object.assign({}, SCREENS[k]||{}); });
     sc[screen] = readBgFonts();   // capture live edits to the active screen
     const base = sc.question || sc.title || readBgFonts();   // global fallback (misc states + phone)
     return { title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(),
@@ -611,7 +615,7 @@
     // Per-screen looks: use t.screens if present, else replicate the single bg/fonts
     // to all three screens (backward compatible with older designs/presets).
     const one={ bg:t.bg||"gradient", bgimg:t.bgimg||"", fit:t.fit||"cover", dim:t.dim||0, font:t.font||"", qfont:t.qfont||"", labelfont:t.labelfont||"" };
-    ["title","question","answer"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
+    ["title","question","answer","standings","winner"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
     // Imported (uploaded) fonts carried by the design — embed them + list them.
     if(Array.isArray(t.fontFaces) && typeof addImportedFont==="function") t.fontFaces.forEach(ff=>{ if(ff&&ff.family&&ff.src) addImportedFont({n:ff.family, f:"'"+ff.family+"',sans-serif", src:ff.src}); });
     writeBgFonts(SCREENS[screen]); updateBgScope();
@@ -748,12 +752,31 @@
         ${nextMock}
         ${hintMock}
       </div>`;
-    } else {
+    } else if(screen==="answer"){
       content=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:${px(34)} ${px(32)};gap:${px(18)}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${px(24)}">${badge(deep,44,'ROUND 1 ANSWERS')}${scorePill}${badge(primary,48,'ANSWER 1 OF 10')}</div>
         <div class="sc-box" style="${boxStyle};flex:0 0 auto;height:40%"><div class="sc-box-body" style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
         <div class="sc-ans" style="margin-top:${px(8)};font-family:${qFontV};font-size:${px(64)};font-weight:900;text-align:center;color:${darken(primary,.1)};background:${accent};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(20)} ${px(40)}">✓ ${a}</div>
       </div>`;
+    } else {
+      // Standings + Winner screens — reusable button + hint styling.
+      const btnSt=`align-self:center;font-family:${labelFontV};background:${primary};color:${light};border:${px(5)} solid #000;border-radius:${px(16)};font-size:${px(40)};font-weight:900;letter-spacing:${px(2)};padding:${px(16)} ${px(54)};white-space:nowrap;cursor:move`;
+      const hintSt=`align-self:center;font-family:'Inter',sans-serif;font-size:${px(24)};color:${light};opacity:.85;text-align:center;white-space:nowrap`;
+      if(screen==="standings"){
+        content=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${px(22)};padding:${px(40)}">
+          <div class="sc-fbtitle" style="font-family:${titleFontV};font-size:${px(80)};letter-spacing:${px(4)};color:${accent};text-align:center;text-shadow:${px(4)} ${px(4)} 0 ${primary},${px(8)} ${px(8)} 0 #000">🏆 STANDINGS — AFTER ROUND 1</div>
+          <div class="sc-fbmsg" style="font-family:${qFontV};font-size:${px(34)};color:${light};text-align:center">No teams entered — add them in 🏆 SCOREBOARD.</div>
+          <div class="sc-fbbtn" style="${btnSt}">SEE THE LEADER ▶</div>
+          <div class="sc-fbhint" style="${hintSt}">Press SPACE or click to continue</div>
+        </div>`;
+      } else {
+        content=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${px(18)};padding:${px(40)}">
+          <div class="sc-winburst" style="font-size:${px(96)};line-height:1">🎉</div>
+          <div class="sc-winlabel" style="font-family:${titleFontV};font-size:${px(64)};letter-spacing:${px(3)};color:${accent};text-align:center;text-shadow:${px(3)} ${px(3)} 0 ${primary},${px(6)} ${px(6)} 0 #000">ROUND 1 WINNER</div>
+          <div class="sc-winname" style="font-family:${titleFontV};font-size:${px(100)};color:${light};text-align:center">Team Name</div>
+          <div class="sc-winbtn" style="${btnSt}">NEXT ROUND ▶</div>
+        </div>`;
+      }
     }
     $("pvScreen").innerHTML=`<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
     positionBuiltins();
@@ -782,7 +805,7 @@
   // makes the current layout draggable.
   function captureSlots(){
     const st=$("pvStage").getBoundingClientRect();
-    const map={logo:".sc-qlogo",badge:".sc-badge",category:".sc-cat",score:".sc-score",box:".sc-box",howto:".sc-howto",answer:".sc-ans",next:".sc-next",hint:".sc-hint"};
+    const map={logo:".sc-qlogo",badge:".sc-badge",category:".sc-cat",score:".sc-score",box:".sc-box",howto:".sc-howto",answer:".sc-ans",next:".sc-next",hint:".sc-hint",fbtitle:".sc-fbtitle",fbmsg:".sc-fbmsg",fbbtn:".sc-fbbtn",fbhint:".sc-fbhint",winburst:".sc-winburst",winlabel:".sc-winlabel",winname:".sc-winname",winbtn:".sc-winbtn"};
     const out={};
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); if(!el) return;
@@ -796,7 +819,7 @@
   }
   function positionBuiltins(){
     const sl=slots[screen]; if(!sl) return;
-    const map={ logo:".sc-qlogo", badge:".sc-badge", category:".sc-cat", score:".sc-score", box:".sc-box", howto:".sc-howto", answer:".sc-ans", next:".sc-next", hint:".sc-hint" };
+    const map={ logo:".sc-qlogo", badge:".sc-badge", category:".sc-cat", score:".sc-score", box:".sc-box", howto:".sc-howto", answer:".sc-ans", next:".sc-next", hint:".sc-hint", fbtitle:".sc-fbtitle", fbmsg:".sc-fbmsg", fbbtn:".sc-fbbtn", fbhint:".sc-fbhint", winburst:".sc-winburst", winlabel:".sc-winlabel", winname:".sc-winname", winbtn:".sc-winbtn" };
     Object.keys(map).forEach(name=>{
       const el=$("pvScreen").querySelector(map[name]); const s=sl[name];
       if(!el||!s) return;
@@ -938,7 +961,7 @@
     selBuiltin=null;   // a freeform element is selected — clear any built-in selection
     box.style.display="block";
     const scrSel='<div class="prow"><span class="pl">Screen</span><div class="seg" id="elScreen">'+
-      ["title","question","answer","all"].map(s=>'<button type="button" data-s="'+s+'"'+(e.s===s?' class="active"':'')+'>'+s[0].toUpperCase()+s.slice(1)+'</button>').join('')+'</div></div>';
+      ["title","question","answer","standings","winner","all"].map(s=>'<button type="button" data-s="'+s+'"'+(e.s===s?' class="active"':'')+'>'+s[0].toUpperCase()+s.slice(1)+'</button>').join('')+'</div></div>';
     const layerRow='<div class="prow"><span class="pl">Layer</span><div class="seg"><button type="button" id="elBack">⬇ Send back</button><button type="button" id="elFront">⬆ Bring front</button></div></div>';
     if(e.t==="img"){
       box.innerHTML='<div class="prow"><span class="pl">Size</span><input type="range" id="elW" min="5" max="100" value="'+e.w+'"></div>'+layerRow+scrSel+
@@ -1345,7 +1368,7 @@
     document.addEventListener("click",e=>{ if(!e.target.closest("#brandSearch")&&!e.target.closest("#brandResults")){ const b=$("brandResults"); if(b) b.style.display="none"; } });
   }
   $("copyBtn").addEventListener("click",()=>{$("hostLink").select();navigator.clipboard.writeText($("hostLink").value).then(()=>{$("copied").classList.add("show");setTimeout(()=>$("copied").classList.remove("show"),2000);});});
-  ["title","question","answer"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
+  ["title","question","answer","standings","winner"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
   updateBgScope();
   refresh();
 </script>
