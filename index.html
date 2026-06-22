@@ -1811,6 +1811,7 @@ function bgBackground(style, t) {
   }
 }
 let DESIGN = null;   // declared before applyTheme so ensureDesignFonts() can read it
+let LIVE_DESIGN_ID = "";   // the design id this instance loaded (so live TVs can load the full brand)
 applyTheme(THEME);
 
 // Per-screen look — a design (made in make.html) can give the title, question, and
@@ -1869,10 +1870,11 @@ function brandLogoSrc() {
 // each screen. It's loaded by ?design=<id> from localStorage (same browser) and
 // rendered on top of the normal screen. Positions are % of the 1920×1080 stage,
 // text size is in stage px, so it scales with everything else. (DESIGN declared above.)
-async function loadDesign() {
-  let id;
-  try { id = new URLSearchParams(location.search).get("design"); } catch (e) {}
-  if (!id) return;
+async function loadDesign(idArg) {
+  let id = idArg;
+  if (!id) { try { id = new URLSearchParams(location.search).get("design"); } catch (e) {} }
+  if (!id || id === LIVE_DESIGN_ID) return;
+  LIVE_DESIGN_ID = id;
   let d = null;
   // 1) Cloud first — so custom logos/images travel to any device (links stay short).
   try {
@@ -3314,11 +3316,22 @@ function isLocalUrl() {
          h === "localhost" || h === "127.0.0.1" || h === "" ||
          h.endsWith(".local") || /^192\.168\./.test(h) || /^10\./.test(h);
 }
+// A lightweight copy of the theme for LIVE sync — strips the heavy embedded assets
+// (uploaded fonts, logo/background data-URLs) that would bloat every state push and
+// time out the write. TVs load those full assets from the design link (designId).
+function liteTheme() {
+  const t = Object.assign({}, THEME);
+  delete t.fontFaces;
+  if (/^data:/.test(t.logo || "")) t.logo = "";
+  if (/^data:/.test(t.bgimg || "")) t.bgimg = "";
+  if (t.screens) { const sc = {}; Object.keys(t.screens).forEach(k => { const s = Object.assign({}, t.screens[k] || {}); if (/^data:/.test(s.bgimg || "")) s.bgimg = ""; sc[k] = s; }); t.screens = sc; }
+  return t;
+}
 function snapshot() {
   return {
     room_code: live.code,
     // `state` carries the screen name PLUS timer + published leaderboard so displays mirror them.
-    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END, lb: { shown: LB_SHOWN, teams: TEAMS }, theme: THEME }),
+    state: JSON.stringify({ st: game.state, timerSecs: TIMER_SECS, timerEnd: TIMER_END, lb: { shown: LB_SHOWN, teams: TEAMS }, theme: liteTheme(), designId: LIVE_DESIGN_ID }),
     round_idx: game.roundIdx,   // cosmetic
     question_idx: game.cursor,  // the real sync position: index into SCHEDULE
     rounds: ROUNDS,
@@ -3691,9 +3704,12 @@ function applyRemote(row) {
         LB_SHOWN = !!ex.lb.shown;
       }
       if (ex.theme && typeof ex.theme === "object") {
-        THEME = Object.assign({}, DEFAULT_THEME, ex.theme);   // mirror the host's brand
+        THEME = Object.assign({}, DEFAULT_THEME, ex.theme);   // mirror the host's brand (colors/fonts/bg style)
         applyTheme(THEME);
       }
+      // Full brand (logo, background image, uploaded fonts, custom layout) loads once
+      // from the design link — they're too big to push on every state change.
+      if (ex.designId && ex.designId !== LIVE_DESIGN_ID) loadDesign(ex.designId);
     }
   } catch (e) { /* older/plain state string — ignore */ }
   game.cursor = Math.max(0, Math.min((row.question_idx | 0), SCHEDULE.length - 1));
