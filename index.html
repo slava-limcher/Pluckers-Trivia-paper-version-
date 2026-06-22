@@ -1255,6 +1255,42 @@
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
 
+  /* ===== Phone PLAYER mode (?play=CODE) — a real responsive phone layout, NOT
+     the scaled 1920×1080 TV stage. Neutralize the stage so it flows naturally. */
+  body.player-mode #app { position: static; transform: none !important;
+    width: 100%; height: auto; min-height: 100dvh; left: 0; top: 0; }
+  body.player-mode header, body.player-mode footer, body.player-mode #meta { display: none; }
+  body.player-mode #main { padding: 0; min-height: 100dvh; }
+  .pl-wrap { min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 22px; padding: 26px 22px; text-align: center; }
+  .pl-logo { max-width: 60%; max-height: 120px; object-fit: contain; margin-bottom: 4px; }
+  .pl-team { font-family: var(--label-font); font-size: 20px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--yellow); }
+  .pl-qnum { font-family: var(--label-font); font-size: 15px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--cream); opacity: .65; }
+  .pl-q { font-family: var(--q-font); font-size: clamp(22px, 6vw, 34px); line-height: 1.25;
+    color: var(--cream); max-width: 600px; }
+  .pl-prompt { font-family: var(--label-font); font-size: 16px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--cream); opacity: .8; }
+  .pl-input, .pl-name { width: 100%; max-width: 520px; box-sizing: border-box;
+    padding: 16px 18px; font-size: 22px; border-radius: 14px; border: 3px solid var(--yellow);
+    background: rgba(0,0,0,.28); color: var(--cream); text-align: center; font-family: var(--q-font); }
+  .pl-input:focus, .pl-name:focus { outline: none; border-color: var(--red); }
+  .pl-choices { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 520px; }
+  .pl-choice { padding: 16px 18px; font-size: 20px; border-radius: 14px; border: 3px solid rgba(255,255,255,.25);
+    background: rgba(0,0,0,.28); color: var(--cream); font-family: var(--q-font); cursor: pointer; text-align: left; }
+  .pl-choice.sel { border-color: var(--yellow); background: rgba(255,200,0,.18); }
+  .pl-btn { font-family: var(--label-font); font-size: 22px; font-weight: 900; letter-spacing: 2px;
+    color: #fff; background: var(--red); border: none; border-radius: 14px; padding: 16px 44px;
+    cursor: pointer; box-shadow: 0 6px 0 var(--red-dark, rgba(0,0,0,.4)); }
+  .pl-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--red-dark, rgba(0,0,0,.4)); }
+  .pl-btn[disabled] { opacity: .5; cursor: default; box-shadow: none; }
+  .pl-ok { font-family: var(--label-font); font-size: 28px; letter-spacing: 1px; color: var(--yellow); }
+  .pl-wait { font-family: var(--q-font); font-size: 24px; color: var(--cream); opacity: .85; max-width: 520px; }
+  .pl-sub { font-family: var(--q-font); font-size: 16px; color: var(--cream); opacity: .6; }
+  .pl-locked { font-family: var(--q-font); font-size: 20px; color: var(--cream); opacity: .9; }
+  .pl-locked b { color: var(--yellow); }
+
   /* Header (host AND TV) = a clean colored-stripe bar that mirrors the footer:
      no logo, no DON'T CHEAT, no round/question meta, no room tag — just the line. */
   .brand,
@@ -2397,6 +2433,7 @@ function viewEnd() {
 }
 
 function render() {
+  if (live.role === "player") { renderPlayer(); return; }   // phones get the player UI, never the host/TV views
   renderMeta();
   switch (game.state) {
     case State.TITLE: viewTitle(); break;
