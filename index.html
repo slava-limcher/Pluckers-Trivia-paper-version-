@@ -1780,6 +1780,12 @@ function bgBackground(style, t) {
       "repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 40px)," +
       "repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 84px)," +
       _darken(D, .66);
+    case "carbon": return `repeating-linear-gradient(45deg, ${_darken(D,.55)} 0 2px, ${_darken(D,.7)} 2px 6px), repeating-linear-gradient(135deg, ${_darken(D,.55)} 0 2px, ${_darken(D,.7)} 2px 6px), ${_darken(D,.62)}`;
+    case "rays": return `repeating-conic-gradient(from 0deg at 50% 0%, ${A}22 0 6deg, transparent 6deg 13deg), radial-gradient(1200px 820px at 50% -8%, ${_lighten(D,.16)} 0%, ${_darken(D,.62)} 60%, ${_darken(D,.82)} 100%)`;
+    case "bokeh": return `radial-gradient(circle at 18% 28%, ${P}40, transparent 9%), radial-gradient(circle at 76% 22%, ${A}38, transparent 7%), radial-gradient(circle at 62% 68%, ${P}33, transparent 11%), radial-gradient(circle at 30% 78%, ${A}30, transparent 8%), ${_darken(D,.72)}`;
+    case "aurora": return `linear-gradient(115deg, ${_darken(D,.52)} 0%, ${_darken(P,.16)} 34%, ${_darken(A,.2)} 64%, ${_darken(D,.58)} 100%)`;
+    case "plaid": return `repeating-linear-gradient(0deg, ${P}1f 0 6px, transparent 6px 48px), repeating-linear-gradient(90deg, ${P}1f 0 6px, transparent 6px 48px), repeating-linear-gradient(0deg, ${A}17 0 2px, transparent 2px 48px), ${_darken(D,.64)}`;
+    case "waves": return `radial-gradient(150% 70% at 50% 132%, ${P}3a, transparent 56%), radial-gradient(150% 70% at 50% -32%, ${A}2c, transparent 56%), linear-gradient(180deg, ${_darken(D,.5)}, ${_darken(D,.76)})`;
     case "image": return t.bgimg ? 'linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)), url("' + t.bgimg + '") center/' + ({ contain: "contain", stretch: "100% 100%" }[t.fit] || "cover") + ' no-repeat fixed' : bot;
     default: return "radial-gradient(1400px 900px at 50% -15%, " + dark + " 0%, " + mid + " 60%, " + bot + " 100%)";
   }
