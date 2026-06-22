@@ -2360,8 +2360,27 @@ if (MODE === "host") (async function hostMain() {
   // built-in items the host moved (logo/badge/category/box), refit the box text, and
   // draw any freeform text/image elements. Positions are % of the screen, same as the
   // builder, so moving an item in the builder moves it here too.
+  // Load any non-system font the design references (Google Fonts by name + embedded uploads).
+  function ensureDesignFonts() {
+    try {
+      if (!DESIGN) return;
+      const t = DESIGN.theme || {}; const fams = new Set();
+      const add = v => { if (!v) return; const m = String(v).match(/['"]([^'"]+)['"]/); const fam = m ? m[1] : String(v).split(",")[0].trim(); if (fam) fams.add(fam); };
+      add(t.font); add(t.qfont); add(t.labelfont);
+      if (t.screens) Object.keys(t.screens).forEach(k => { const s = t.screens[k]; if (s) { add(s.font); add(s.qfont); add(s.labelfont); } });
+      if (Array.isArray(DESIGN.els)) DESIGN.els.forEach(e => add(e.font));
+      (t.fontFaces || []).forEach(ff => { if (ff && ff.family && ff.src) { const id = "ff-" + ff.family.replace(/[^a-z0-9]+/gi, "-"); if (!document.getElementById(id)) { const st = document.createElement("style"); st.id = id; st.textContent = "@font-face{font-family:'" + ff.family.replace(/'/g, "") + "';src:url('" + ff.src + "');font-display:swap}"; document.head.appendChild(st); } fams.delete(ff.family); } });
+      const skip = new Set(["serif", "sans-serif", "monospace", "cursive", "Impact", "Arial", "Georgia", "ui-monospace", "system-ui", "Helvetica", "Times"]);
+      const families = [...fams].filter(f => f && !skip.has(f));
+      if (!families.length) return;
+      const href = "https://fonts.googleapis.com/css2?" + families.map(f => "family=" + encodeURIComponent(f).replace(/%20/g, "+") + ":wght@400;600;700;900").join("&") + "&display=swap";
+      let l = document.getElementById("gf-design"); if (!l) { l = document.createElement("link"); l.id = "gf-design"; l.rel = "stylesheet"; document.head.appendChild(l); }
+      if (l.getAttribute("href") !== href) l.setAttribute("href", href);
+    } catch (e) {}
+  }
   function applyPhoneDesign() {
     if (!DESIGN) return;
+    ensureDesignFonts();
     const app = document.getElementById("app"); if (!app) return;
     const k = (app.clientWidth || 1280) / 1920;   // stage px → phone px
     const key = designScreenKeyTW();

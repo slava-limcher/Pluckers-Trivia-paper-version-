@@ -1757,6 +1757,26 @@ function applyTheme(t) {
     b.style.background = dimLayer + bgBackground(style, t);
     b.classList.toggle("bg-plain", !(style === "gradient" || style === "stripes"));
   }
+  ensureDesignFonts();
+}
+// Load any non-system font the design references: Google Fonts by family name, and
+// uploaded fonts embedded in the design (THEME.fontFaces). So imported fonts render.
+function ensureDesignFonts() {
+  try {
+    const fams = new Set();
+    const add = v => { if (!v) return; const m = String(v).match(/['"]([^'"]+)['"]/); const fam = m ? m[1] : String(v).split(",")[0].trim(); if (fam) fams.add(fam); };
+    add(THEME.font); add(THEME.qfont); add(THEME.labelfont);
+    if (THEME.screens) Object.keys(THEME.screens).forEach(k => { const s = THEME.screens[k]; if (s) { add(s.font); add(s.qfont); add(s.labelfont); } });
+    if (DESIGN && Array.isArray(DESIGN.els)) DESIGN.els.forEach(e => add(e.font));
+    (THEME.fontFaces || []).forEach(ff => { if (ff && ff.family && ff.src) { const id = "ff-" + ff.family.replace(/[^a-z0-9]+/gi, "-"); if (!document.getElementById(id)) { const st = document.createElement("style"); st.id = id; st.textContent = "@font-face{font-family:'" + ff.family.replace(/'/g, "") + "';src:url('" + ff.src + "');font-display:swap}"; document.head.appendChild(st); } fams.delete(ff.family); } });
+    const skip = new Set(["serif", "sans-serif", "monospace", "cursive", "Impact", "Arial", "Georgia", "ui-monospace", "system-ui", "Helvetica", "Times"]);
+    const families = [...fams].filter(f => f && !skip.has(f));
+    if (!families.length) return;
+    const href = "https://fonts.googleapis.com/css2?" + families.map(f => "family=" + encodeURIComponent(f).replace(/%20/g, "+") + ":wght@400;600;700;900").join("&") + "&display=swap";
+    let l = document.getElementById("gf-design");
+    if (!l) { l = document.createElement("link"); l.id = "gf-design"; l.rel = "stylesheet"; document.head.appendChild(l); }
+    if (l.getAttribute("href") !== href) l.setAttribute("href", href);
+  } catch (e) {}
 }
 // Returns the CSS `background` value for a given style using the theme colors.
 function bgBackground(style, t) {
@@ -1790,6 +1810,7 @@ function bgBackground(style, t) {
     default: return "radial-gradient(1400px 900px at 50% -15%, " + dark + " 0%, " + mid + " 60%, " + bot + " 100%)";
   }
 }
+let DESIGN = null;   // declared before applyTheme so ensureDesignFonts() can read it
 applyTheme(THEME);
 
 // Per-screen look — a design (made in make.html) can give the title, question, and
@@ -1847,8 +1868,7 @@ function brandLogoSrc() {
 // A "design" (made in make.html) is custom text boxes + images placed anywhere on
 // each screen. It's loaded by ?design=<id> from localStorage (same browser) and
 // rendered on top of the normal screen. Positions are % of the 1920×1080 stage,
-// text size is in stage px, so it scales with everything else.
-let DESIGN = null;
+// text size is in stage px, so it scales with everything else. (DESIGN declared above.)
 async function loadDesign() {
   let id;
   try { id = new URLSearchParams(location.search).get("design"); } catch (e) {}
@@ -1866,6 +1886,7 @@ async function loadDesign() {
   if (!d) return;
   DESIGN = d;
   if (d.theme) { THEME = Object.assign({}, THEME, d.theme); applyTheme(THEME); }
+  ensureDesignFonts();   // load imported/element fonts even if the design carries no theme
   render();   // re-render now that the design (theme + elements) is loaded
 }
 function designScreenKey() {

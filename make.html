@@ -404,6 +404,16 @@
           <select class="inp" id="labelFont"></select>
         </div>
         <button class="btn copy" type="button" id="randomBtn">🎲 Randomize fonts &amp; background</button>
+        <div class="group" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <label class="lbl">Import a font</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" type="text" id="fontImport" placeholder="Google Font name (e.g. Lobster Two)" style="flex:1" autocomplete="off" />
+            <button class="btn copy" type="button" id="fontImportBtn">➕ Add</button>
+          </div>
+          <div class="uploadrow" style="margin-top:8px"><label class="btn copy" style="cursor:pointer">⬆ Upload font file<input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/*" hidden></label></div>
+          <div id="fontMsg" class="pubstatus" style="margin-top:6px"></div>
+          <p class="help">Type a name from <b>fonts.google.com</b>, or upload your own <b>.ttf / .otf / .woff</b>. Imported fonts show up in the dropdowns above and travel with your published design.</p>
+        </div>
       </div>
 
       <div class="sec">
@@ -506,7 +516,8 @@
     const base = sc.question || sc.title || readBgFonts();   // global fallback (misc states + phone)
     return { title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(),
       bg:base.bg, bgimg:base.bgimg, fit:base.fit, font:base.font, qfont:base.qfont, labelfont:base.labelfont, dim:base.dim,
-      boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), mode:gameMode, screens:sc };
+      boxBg:(boxOn()?$("boxBg").value:""), boxBorder:(boxOn()?$("boxBorder").value:""), boxW:($("boxWidth")?+$("boxWidth").value:100), mode:gameMode, screens:sc,
+      fontFaces:(typeof CUSTOM_FONTS!=="undefined"?CUSTOM_FONTS.filter(c=>c.src).map(c=>({family:familyOf(c.f),src:c.src})):[]) };
   };
   // Theme as URL params (used for PHONE versions — the phone engine reads these directly).
   function themeParams(){
@@ -601,6 +612,8 @@
     // to all three screens (backward compatible with older designs/presets).
     const one={ bg:t.bg||"gradient", bgimg:t.bgimg||"", fit:t.fit||"cover", dim:t.dim||0, font:t.font||"", qfont:t.qfont||"", labelfont:t.labelfont||"" };
     ["title","question","answer"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
+    // Imported (uploaded) fonts carried by the design — embed them + list them.
+    if(Array.isArray(t.fontFaces) && typeof addImportedFont==="function") t.fontFaces.forEach(ff=>{ if(ff&&ff.family&&ff.src) addImportedFont({n:ff.family, f:"'"+ff.family+"',sans-serif", src:ff.src}); });
     writeBgFonts(SCREENS[screen]); updateBgScope();
   }
   function applyPreset(p){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); if(p.slots) slots=JSON.parse(JSON.stringify(p.slots)); selBuiltin=null; selId=null; refresh(); renderProps(); if(typeof syncFreeBtn==="function") syncFreeBtn(); }
@@ -1042,6 +1055,28 @@
         files.forEach(f=>downscaleLogo(f,1280,d=>{ if(d){ BGS.unshift(d); if(first===null) first=d; } if(--pending===0){ saveBGs(); renderBGs(); if(first) useBackground(first); } })); });
     }
   })();
+  // ---- Import fonts: Google Fonts by name, or upload a .ttf/.otf/.woff (embedded) ----
+  function familyOf(stack){ if(!stack) return ""; const m=String(stack).match(/['"]([^'"]+)['"]/); return m?m[1]:String(stack).split(",")[0].trim(); }
+  function loadCustomFonts(){ try{ return JSON.parse(localStorage.getItem("trivia-fonts")||"[]"); }catch(e){ return []; } }
+  function saveCustomFonts(){ try{ localStorage.setItem("trivia-fonts", JSON.stringify(CUSTOM_FONTS)); }catch(e){} }
+  let CUSTOM_FONTS=loadCustomFonts();
+  function injectGoogleFont(family){ if(!family) return; const id="gf-"+family.replace(/[^a-z0-9]+/gi,"-"); if(document.getElementById(id)) return; const l=document.createElement("link"); l.id=id; l.rel="stylesheet"; l.href="https://fonts.googleapis.com/css2?family="+encodeURIComponent(family).replace(/%20/g,"+")+":wght@400;600;700;900&display=swap"; document.head.appendChild(l); }
+  function injectFontFace(family,src){ if(!family||!src) return; const id="ff-"+family.replace(/[^a-z0-9]+/gi,"-"); if(document.getElementById(id)) return; const st=document.createElement("style"); st.id=id; st.textContent="@font-face{font-family:'"+family.replace(/'/g,"")+"';src:url('"+src+"');font-display:swap}"; document.head.appendChild(st); }
+  function refreshFontSelects(){ ["titleFont","qFont","labelFont"].forEach(id=>{ const el=$(id); if(el){ const v=el.value; el.innerHTML=fontOptions(v); el.value=v; } }); }
+  function addImportedFont(c){
+    if(!FONTS.some(o=>o.f===c.f)) FONTS.push({n:c.n+" (imported)", f:c.f});
+    if(c.src) injectFontFace(familyOf(c.f),c.src); else injectGoogleFont(familyOf(c.f));
+    if(!CUSTOM_FONTS.some(o=>o.f===c.f)){ CUSTOM_FONTS.push(c); saveCustomFonts(); }
+    refreshFontSelects();
+  }
+  CUSTOM_FONTS.forEach(c=>{ if(!FONTS.some(o=>o.f===c.f)) FONTS.push({n:c.n+" (imported)", f:c.f}); if(c.src) injectFontFace(familyOf(c.f),c.src); else injectGoogleFont(familyOf(c.f)); });
+  function fontMsg(t,ok){ const m=$("fontMsg"); if(m){ m.textContent=t; m.className="pubstatus "+(ok?"ok":"warn"); } }
+  function importGoogleFont(name){ name=(name||"").trim().replace(/['"]/g,""); if(!name){ $("fontImport").focus(); return; } addImportedFont({n:name, f:"'"+name+"',sans-serif"}); $("titleFont").value="'"+name+"',sans-serif"; refresh(); fontMsg("✓ Added “"+name+"” — if it doesn’t render, check the spelling on fonts.google.com.",true); }
+  $("fontImportBtn").addEventListener("click",()=>{ importGoogleFont($("fontImport").value); $("fontImport").value=""; });
+  $("fontImport").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("fontImportBtn").click(); } });
+  $("fontFile").addEventListener("change",e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return;
+    const name=(f.name||"Custom Font").replace(/\.(ttf|otf|woff2?)$/i,"").replace(/[-_]+/g," ").trim()||"Custom Font";
+    const rd=new FileReader(); rd.onload=()=>{ addImportedFont({n:name, f:"'"+name+"',sans-serif", src:rd.result}); $("qFont").value="'"+name+"',sans-serif"; refresh(); fontMsg("✓ Uploaded “"+name+"”.",true); }; rd.readAsDataURL(f); e.target.value=""; });
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
   $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
