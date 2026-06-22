@@ -97,6 +97,12 @@
   .brand-sw{display:flex;gap:4px;flex:0 0 auto}
   .brand-sw i{width:20px;height:20px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
   .brand-empty{padding:11px 13px;font-size:13px;color:#6c789a;background:#fff}
+  /* my-backgrounds gallery */
+  .bg-gallery{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .bg-thumb{position:relative;width:76px;height:48px;border-radius:8px;border:2px solid var(--line-strong);background-size:cover;background-position:center;cursor:pointer;overflow:hidden;flex:0 0 auto}
+  .bg-thumb:hover{border-color:var(--accent)}
+  .bg-thumb.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .bg-thumb .px{position:absolute;top:2px;right:2px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
   /* presets */
   .preset-list{display:flex;flex-wrap:wrap;gap:8px}
   .preset{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:6px 8px 6px 11px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s,box-shadow .15s}
@@ -370,6 +376,12 @@
             </select></div>
           </div>
           <p class="help">CSS styles are built from your <b>Background</b> color. For real photo textures (wood, marble, brick, nature, galaxy photos…) choose <b>Image</b> and upload or paste one.</p>
+        </div>
+        <div class="group">
+          <label class="lbl">My backgrounds</label>
+          <div class="uploadrow"><label class="btn copy" style="cursor:pointer">➕ Add background image<input type="file" id="bgAddFile" accept="image/png,image/jpeg,image/webp" multiple hidden></label></div>
+          <div id="bgGallery" class="bg-gallery"></div>
+          <p class="help">Upload your own background photos, then click one to use it on this screen. Saved on this device for reuse across versions.</p>
         </div>
         <div class="group">
           <label class="lbl" for="dim">Dim background — <span id="dimVal">0%</span></label>
@@ -985,6 +997,26 @@
   // Remove the uploaded background image and drop to a PLAIN flat color (no gradient,
   // no stripe texture) so it's just the logo on a clean background.
   $("bgImgRemove").addEventListener("click",()=>{ bgStyle="solid"; $("bgSel").value="solid"; $("bgimg").value=""; $("bgImgFile").value=""; $("bgImgWrap").style.display="none"; refresh(); });
+  // ---- My backgrounds: upload your own photos, saved on this device, click to use ----
+  function loadBGs(){ try{ return JSON.parse(localStorage.getItem("trivia-backgrounds")||"[]"); }catch(e){ return []; } }
+  function saveBGs(){ try{ localStorage.setItem("trivia-backgrounds", JSON.stringify(BGS)); }catch(e){} }
+  let BGS=loadBGs();
+  function renderBGs(){
+    const wrap=$("bgGallery"); if(!wrap) return;
+    const cur=$("bgimg")?$("bgimg").value.trim():"";
+    if(!BGS.length){ wrap.innerHTML='<span class="preset-empty">No backgrounds added yet — upload one above.</span>'; return; }
+    wrap.innerHTML=BGS.map((src,i)=>`<div class="bg-thumb${src===cur?' active':''}" data-i="${i}" style="background-image:url('${src}')" title="Use this background"><button class="px" data-del="${i}" title="Remove">×</button></div>`).join("");
+    wrap.querySelectorAll(".bg-thumb").forEach(el=>el.addEventListener("click",ev=>{ if(ev.target.classList.contains("px")) return; useBackground(BGS[+el.dataset.i]); }));
+    wrap.querySelectorAll(".px").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); BGS.splice(+b.dataset.del,1); saveBGs(); renderBGs(); }));
+  }
+  function useBackground(src){ bgStyle="image"; if($("bgSel"))$("bgSel").value="image"; if($("bgImgWrap"))$("bgImgWrap").style.display="block"; if($("bgimg"))$("bgimg").value=src; refresh(); renderBGs(); }
+  $("bgAddFile").addEventListener("change",e=>{
+    const files=[...(e.target.files||[])]; if(!files.length) return;
+    let pending=files.length, first=null;
+    files.forEach(f=>downscaleLogo(f,1280,d=>{ if(d){ BGS.unshift(d); if(first===null) first=d; } if(--pending===0){ saveBGs(); renderBGs(); if(first) useBackground(first); } }));
+    e.target.value="";
+  });
+  renderBGs();
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
   $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
