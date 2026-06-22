@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Trivia Wings — Pluckers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;700&family=Bebas+Neue&family=Archivo+Black&family=Fredoka:wght@500;600;700&family=Poppins:wght@600;700;800&family=Montserrat:wght@700;800&family=Bungee&family=Righteous&family=Lobster&family=Pacifico&family=Playfair+Display:wght@700;800;900&family=Rye&family=Press+Start+2P&family=Monoton&family=Permanent+Marker&family=Teko:wght@500;600;700&family=Russo+One&family=Black+Ops+One&family=Staatliches&family=Alfa+Slab+One&family=Titan+One&family=Luckiest+Guy&family=Bangers&family=Fjalla+One&family=Abril+Fatface&family=Lilita+One&family=Audiowide&family=Orbitron:wght@500;700;900&family=Chewy&family=Concert+One&family=Patua+One&family=Sigmar+One&family=Special+Elite&family=Caveat:wght@500;700&family=Creepster&display=swap" rel="stylesheet">
 <style>
   :root {
     --red: #c8102e;
@@ -1149,7 +1152,7 @@ function applyTheme(t) {
   const rgb = a => "#" + a.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
   const dk = (h, a) => rgb(hx(h).map(x => x * (1 - a))), lt = (h, a) => rgb(hx(h).map(x => x + (255 - x) * a));
   const P = t.primary || "#c8102e", A = t.accent || "#f4c430", D = t.deep || "#1d3a8a", L = t.light || "#f7f1e3";
-  const bgimg = t.bgimg || "", dim = +(t.dim || 0);
+  const bgimg = t.bgimg || "", dim = +(t.dim || 0), fit = ({ contain: "contain", stretch: "100% 100%" }[t.fit] || "cover");
   function bgBackground(style) {
     const dark = dk(D, .34), mid = dk(D, .58), bot = dk(D, .74), bright = lt(D, .18);
     switch (style) {
@@ -1165,7 +1168,7 @@ function applyTheme(t) {
       case "watercolor": return `radial-gradient(540px 440px at 24% 30%,${P}55,transparent 62%),radial-gradient(540px 450px at 76% 66%,${A}55,transparent 62%),radial-gradient(500px 410px at 60% 20%,${D}55,transparent 62%),${lt(D,.42)}`;
       case "vintage": return `radial-gradient(1200px 820px at 50% 38%,${dk(A,.42)} 0%,${dk(D,.5)} 60%,${bot} 100%)`;
       case "neon": return `radial-gradient(42% 50% at 32% 44%,${P}66,transparent 70%),radial-gradient(46% 56% at 67% 56%,${A}59,transparent 72%),radial-gradient(34% 34% at 50% 50%,${A}22,transparent 70%),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 40px),repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 84px),${dk(D,.66)}`;
-      case "image": return bgimg ? `linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)),url("${bgimg}") center/cover no-repeat fixed` : bot;
+      case "image": return bgimg ? `linear-gradient(rgba(6,10,31,.5),rgba(6,10,31,.62)),url("${bgimg}") center/${fit} no-repeat fixed` : bot;
       default: return `radial-gradient(1400px 900px at 50% -15%,${dark} 0%,${mid} 60%,${bot} 100%)`;
     }
   }
