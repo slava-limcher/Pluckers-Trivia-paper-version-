@@ -973,7 +973,7 @@
     on("biDone","click",()=>{ selBuiltin=null; renderScreen(); renderProps(); });
   }
   function addText(){ const e={id:newId(),t:"text",s:screen,x:33,y:42,w:34,txt:"New text",c:$("light").value,sz:54,b:800,a:"center"}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }
-  function addImage(file){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:36,y:34,w:26,src:d}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }); }
+  function addImage(file,x,y){ downscaleLogo(file,480,d=>{ if(!d)return; const e={id:newId(),t:"img",s:screen,x:(x!=null?+x.toFixed(1):36),y:(y!=null?+y.toFixed(1):34),w:26,src:d}; els.push(e); renderDesign(); select(e.id); saveDesign(); updateLink(); }); }
 
   function refresh(){
     SCREENS[screen]=readBgFonts();   // persist this screen's background + fonts
@@ -1017,6 +1017,31 @@
     e.target.value="";
   });
   renderBGs();
+  // ---- Drag images from a folder: drop on the CANVAS = image element; drop on
+  // the BACKGROUND area = background. ----
+  const dropImgs=dt=>[...((dt&&dt.files)||[])].filter(f=>/^image\//.test(f.type));
+  const dtHasFiles=dt=>!!dt&&[...(dt.items||[])].some(i=>i.kind==="file");
+  document.addEventListener("dragover",e=>{ if(dtHasFiles(e.dataTransfer)) e.preventDefault(); });
+  document.addEventListener("drop",e=>{ if(dtHasFiles(e.dataTransfer)) e.preventDefault(); });   // stop the browser opening the file
+  (function(){
+    const stage=$("pvStage");
+    if(stage){
+      stage.addEventListener("dragover",e=>{ if(dtHasFiles(e.dataTransfer)){ e.preventDefault(); e.dataTransfer.dropEffect="copy"; stage.style.outline="3px dashed var(--accent)"; stage.style.outlineOffset="-3px"; } });
+      stage.addEventListener("dragleave",()=>{ stage.style.outline=""; });
+      stage.addEventListener("drop",e=>{ const files=dropImgs(e.dataTransfer); stage.style.outline=""; if(!files.length) return; e.preventDefault(); e.stopPropagation();
+        const r=stage.getBoundingClientRect();
+        const x=Math.max(0,Math.min(90,(e.clientX-r.left)/r.width*100)), y=Math.max(0,Math.min(90,(e.clientY-r.top)/r.height*100));
+        files.forEach((f,i)=>addImage(f, x+i*3, y+i*3)); });
+    }
+    const bgZone=$("bgGallery") && $("bgGallery").closest(".group");
+    if(bgZone){
+      bgZone.addEventListener("dragover",e=>{ if(dtHasFiles(e.dataTransfer)){ e.preventDefault(); e.dataTransfer.dropEffect="copy"; bgZone.style.outline="2px dashed var(--accent)"; bgZone.style.borderRadius="10px"; } });
+      bgZone.addEventListener("dragleave",()=>{ bgZone.style.outline=""; });
+      bgZone.addEventListener("drop",e=>{ const files=dropImgs(e.dataTransfer); bgZone.style.outline=""; if(!files.length) return; e.preventDefault(); e.stopPropagation();
+        let pending=files.length, first=null;
+        files.forEach(f=>downscaleLogo(f,1280,d=>{ if(d){ BGS.unshift(d); if(first===null) first=d; } if(--pending===0){ saveBGs(); renderBGs(); if(first) useBackground(first); } })); });
+    }
+  })();
   $("titleFont").innerHTML=fontOptions("");
   $("titleFont").addEventListener("change",refresh);
   $("qFont").innerHTML=fontOptions(""); $("qFont").addEventListener("change",refresh);
