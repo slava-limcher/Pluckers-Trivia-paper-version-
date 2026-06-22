@@ -1152,7 +1152,9 @@ function applyTheme(t) {
   const rgb = a => "#" + a.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
   const dk = (h, a) => rgb(hx(h).map(x => x * (1 - a))), lt = (h, a) => rgb(hx(h).map(x => x + (255 - x) * a));
   const P = t.primary || "#c8102e", A = t.accent || "#f4c430", D = t.deep || "#1d3a8a", L = t.light || "#f7f1e3";
-  const bgimg = t.bgimg || "", dim = +(t.dim || 0), fit = ({ contain: "contain", stretch: "100% 100%" }[t.fit] || "cover");
+  // For the PLAYER phone view, use the design's "phone" screen look (its own bg/fonts) if set.
+  const ps = ((typeof MODE !== "undefined" && MODE === "phone") && t.screens && t.screens.phone) ? t.screens.phone : null;
+  const bgimg = (ps && ps.bgimg) || t.bgimg || "", dim = +((ps && ps.dim != null ? ps.dim : t.dim) || 0), fit = ({ contain: "contain", stretch: "100% 100%" }[(ps && ps.fit) || t.fit] || "cover");
   function bgBackground(style) {
     const dark = dk(D, .34), mid = dk(D, .58), bot = dk(D, .74), bright = lt(D, .18);
     switch (style) {
@@ -1185,7 +1187,8 @@ function applyTheme(t) {
   s.setProperty("--cream", L); s.setProperty("--ink", L); s.setProperty("--ink-dim", dk(L, .18));
   const dimv = Math.max(0, Math.min(.9, dim / 100));
   const dimLayer = dimv > 0 ? `linear-gradient(rgba(0,0,0,${dimv}),rgba(0,0,0,${dimv})), ` : "";
-  const applyBg = () => { document.body.style.background = dimLayer + bgBackground(t.bg || "gradient"); };
+  const bgStyleEff = (ps && ps.bg) || t.bg || "gradient";
+  const applyBg = () => { document.body.style.background = dimLayer + bgBackground(bgStyleEff); if (ps && (ps.qfont || ps.font)) document.body.style.fontFamily = (ps.qfont || ps.font); };
   if (document.body) applyBg(); else addEventListener("DOMContentLoaded", applyBg);
 }
 // Patch an already-rendered title screen with the brand logo/title (used after the

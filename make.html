@@ -448,6 +448,7 @@
               <button data-sc="answer">Answer</button>
               <button data-sc="standings">Standings</button>
               <button data-sc="winner">Winner</button>
+              <button data-sc="phone" class="phone-only" style="display:none">📱 Phone</button>
             </div>
             <button class="btn copy" id="fsBtn" type="button" title="Fullscreen edit" style="padding:7px 12px;font-size:15px">⛶</button>
           </div>
@@ -492,7 +493,7 @@
   // Per-screen look: each screen (title/question/answer) keeps its OWN background +
   // fonts, so they can differ. The Game-background + Fonts controls edit whichever
   // screen tab is active above the preview.
-  const SCREENS = { title:null, question:null, answer:null, standings:null, winner:null };
+  const SCREENS = { title:null, question:null, answer:null, standings:null, winner:null, phone:null };
   function readBgFonts(){ return { bg:bgStyle, bgimg:($("bgimg")?$("bgimg").value.trim():""), fit:($("bgFit")?$("bgFit").value:"cover"), dim:+(($("dim")&&$("dim").value)||0), font:($("titleFont")?$("titleFont").value:""), qfont:($("qFont")?$("qFont").value:""), labelfont:($("labelFont")?$("labelFont").value:"") }; }
   function writeBgFonts(s){ s=s||{}; bgStyle=s.bg||"gradient"; if($("bgSel"))$("bgSel").value=bgStyle; if($("bgimg"))$("bgimg").value=s.bgimg||""; if($("bgFit"))$("bgFit").value=s.fit||"cover"; if($("bgImgWrap"))$("bgImgWrap").style.display=bgStyle==="image"?"block":"none"; if($("dim")){$("dim").value=s.dim||0;$("dimVal").textContent=($("dim").value)+"%";} if($("titleFont"))$("titleFont").value=s.font||""; if($("qFont"))$("qFont").value=s.qfont||""; if($("labelFont"))$("labelFont").value=s.labelfont||""; }
   function updateBgScope(){ const lbl=screen==="title"?"Title screen":screen==="question"?"Question screen":"Answer screen"; document.querySelectorAll(".scope-chip").forEach(c=>c.textContent=lbl); }
@@ -515,7 +516,7 @@
   const boxOn = () => $("boxCustom") && $("boxCustom").checked;
   const themeObj = () => {
     const sc = {};
-    ["title","question","answer","standings","winner"].forEach(k=>{ sc[k] = Object.assign({}, SCREENS[k]||{}); });
+    ["title","question","answer","standings","winner","phone"].forEach(k=>{ sc[k] = Object.assign({}, SCREENS[k]||{}); });
     sc[screen] = readBgFonts();   // capture live edits to the active screen
     const base = sc.question || sc.title || readBgFonts();   // global fallback (misc states + phone)
     return { title1:$("title1").value, title2:$("title2").value, primary:$("primary").value, accent:$("accent").value, deep:$("deep").value, light:$("light").value, logo:$("logo").value.trim(),
@@ -620,7 +621,7 @@
     // Per-screen looks: use t.screens if present, else replicate the single bg/fonts
     // to all three screens (backward compatible with older designs/presets).
     const one={ bg:t.bg||"gradient", bgimg:t.bgimg||"", fit:t.fit||"cover", dim:t.dim||0, font:t.font||"", qfont:t.qfont||"", labelfont:t.labelfont||"" };
-    ["title","question","answer","standings","winner"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
+    ["title","question","answer","standings","winner","phone"].forEach(k=>{ SCREENS[k]= (t.screens&&t.screens[k]) ? Object.assign({},one,t.screens[k]) : Object.assign({},one); });
     // Imported (uploaded) fonts carried by the design — embed them + list them.
     if(Array.isArray(t.fontFaces) && typeof addImportedFont==="function") t.fontFaces.forEach(ff=>{ if(ff&&ff.family&&ff.src) addImportedFont({n:ff.family, f:"'"+ff.family+"',sans-serif", src:ff.src}); });
     writeBgFonts(SCREENS[screen]); updateBgScope();
@@ -763,6 +764,17 @@
         <div class="sc-box" style="${boxStyle};flex:0 0 auto;height:40%"><div class="sc-box-body" style="width:100%"><span class="sc-num" style="${numStyle}">1</span>${q}</div></div>
         <div class="sc-ans" style="margin-top:${px(8)};font-family:${qFontV};font-size:${px(64)};font-weight:900;text-align:center;color:${darken(primary,.1)};background:${accent};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(20)} ${px(40)}">✓ ${a}</div>
       </div>`;
+    } else if(screen==="phone"){
+      // The actual PLAYER phone interface — its own editable background + fonts.
+      content=`<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:${px(24)}">
+        <div style="width:${px(680)};max-width:94%;display:flex;flex-direction:column;align-items:center;gap:${px(30)};padding:${px(56)} ${px(56)}">
+          <div class="sc-ph-team" style="font-family:${labelFontV};font-size:${px(40)};letter-spacing:${px(3)};color:${accent};text-shadow:${px(2)} ${px(2)} 0 #000">📱 TEAM AWESOME</div>
+          <div class="sc-ph-q" style="font-family:${qFontV};font-size:${px(60)};color:${light};text-align:center;line-height:1.15">Question 1 of 10</div>
+          <div class="sc-ph-prompt" style="font-family:${qFontV};font-size:${px(40)};color:${light};opacity:.8;text-align:center">Type your answer below</div>
+          <div class="sc-ph-input" style="width:100%;background:${darken(deep,.18)};border:${px(4)} solid ${accent};border-radius:${px(18)};padding:${px(30)} ${px(34)};color:${light};font-family:${qFontV};font-size:${px(44)};text-align:center">Your answer…</div>
+          <div class="sc-ph-submit" style="font-family:${labelFontV};font-size:${px(50)};font-weight:900;letter-spacing:${px(2)};color:${light};background:${primary};border:${px(5)} solid #000;border-radius:${px(18)};padding:${px(24)} ${px(82)};text-shadow:${px(2)} ${px(2)} 0 #000">SUBMIT</div>
+        </div>
+      </div>`;
     } else {
       // Standings + Winner screens — reusable button + hint styling.
       const btnSt=`align-self:center;font-family:${labelFontV};background:${primary};color:${light};border:${px(5)} solid #000;border-radius:${px(16)};font-size:${px(40)};font-weight:900;letter-spacing:${px(2)};padding:${px(16)} ${px(54)};white-space:nowrap;cursor:move`;
@@ -783,7 +795,9 @@
         </div>`;
       }
     }
-    $("pvScreen").innerHTML=`<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
+    $("pvScreen").innerHTML = screen==="phone"
+      ? `<div style="width:100%;height:100%;display:flex;flex-direction:column">${content}</div>`   // player phone view — no TV stripe bars
+      : `<div style="width:100%;height:100%;display:flex;flex-direction:column">${bar('bottom')}${content}${bar('top')}</div>`;
     positionBuiltins();
     if(!(slots[screen]&&slots[screen].box)){ fitPreviewBox(); requestAnimationFrame(fitPreviewBox); }   // box is auto-fit unless its size was captured/locked
   }
@@ -1145,10 +1159,15 @@
     savePresets(); renderPresets();
   });
   $("publishBtn").addEventListener("click",publish);
+  function updatePhoneTab(){
+    document.querySelectorAll("#screens .phone-only").forEach(el=>el.style.display = gameMode==="phone" ? "" : "none");
+    if(gameMode!=="phone" && screen==="phone"){ const t=[...document.querySelectorAll("#screens button")].find(b=>b.dataset.sc==="title"); if(t) t.click(); }
+  }
   document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{
     gameMode=b.dataset.mode;
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x===b));
     if($("base")) $("base").value = gameMode==="phone"?phoneBase():PAPER_BASE;
+    updatePhoneTab();
     published=false; if($("pubStatus")){$("pubStatus").textContent="";$("pubStatus").className="pubstatus";} $("hostLink").value="";
     refresh();
   }));
@@ -1373,8 +1392,9 @@
     document.addEventListener("click",e=>{ if(!e.target.closest("#brandSearch")&&!e.target.closest("#brandResults")){ const b=$("brandResults"); if(b) b.style.display="none"; } });
   }
   $("copyBtn").addEventListener("click",()=>{$("hostLink").select();navigator.clipboard.writeText($("hostLink").value).then(()=>{$("copied").classList.add("show");setTimeout(()=>$("copied").classList.remove("show"),2000);});});
-  ["title","question","answer","standings","winner"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
+  ["title","question","answer","standings","winner","phone"].forEach(k=>{ if(!SCREENS[k]) SCREENS[k]=readBgFonts(); });   // seed each screen with the defaults
   updateBgScope();
+  updatePhoneTab();
   refresh();
 </script>
 </body>
