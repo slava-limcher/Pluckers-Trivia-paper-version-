@@ -258,8 +258,8 @@
         <div class="group">
           <label class="lbl">Game type</label>
           <div class="seg" id="modeSeg">
-            <button type="button" data-mode="paper" class="active">📺 Paper / TV</button>
-            <button type="button" data-mode="phone">📱 Phone</button>
+            <button type="button" data-mode="paper" class="active">Paper / TV</button>
+            <button type="button" data-mode="phone">Paper + Join QR</button>
           </div>
           <p class="help"><b>Paper / TV:</b> host runs it, questions on the TVs, players answer on paper. <b>Phone:</b> players join &amp; answer on their phones (QR). Both use your brand below.</p>
         </div>
@@ -559,7 +559,7 @@
     const c=supaClient();
     if(!c){
       published=true;
-      setLink(gameMode==="phone" ? base+"?"+themeParams() : designLink);
+      setLink(designLink);   // both versions are the paper engine now (mode rides in the design)
       st.textContent = gameMode==="phone"
         ? "⚠ Cloud unavailable — published without the logo/images (colors & text still apply)."
         : "⚠ Cloud unavailable — this link only works on this device.";
@@ -582,7 +582,7 @@
     }
     // both attempts failed — give a size-aware hint (big designs time out the upload)
     published=true;
-    setLink(gameMode==="phone" ? base+"?"+themeParams() : designLink);
+    setLink(designLink);
     st.textContent = (kb>1100)
       ? "⚠ Couldn't publish — your design is large ("+kb+" KB). Use a smaller background photo or remove an uploaded font, then try again. (Link works on this device.)"
       : "Couldn't reach the cloud: "+((lastErr&&lastErr.message)||lastErr)+" — link works on this device.";

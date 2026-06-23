@@ -1603,9 +1603,9 @@
       <img class="brand-logo-img" src="pluckers-logo.png?v=3" alt="Pluckers" onerror="this.style.display='none'" />
       <div class="name">TRIVIA<small>NIGHT</small></div>
     </div>
-    <div class="dont-cheat">👀 DON'T CHEAT!</div>
+    <div class="dont-cheat">DON'T CHEAT!</div>
     <div class="header-right">
-      <div class="host-badge">🎤 Host's Screen</div>
+      <div class="host-badge">Host's Screen</div>
       <div class="meta" id="meta"></div>
     </div>
   </header>
@@ -2114,13 +2114,13 @@ function viewTitle() {
     <div class="view title-wrap">
       <div class="title-scoreboard" id="titleScore"></div>
       <div class="instructions">
-        <div class="instr-header">🎤 HOST GUIDE</div>
+        <div class="instr-header">HOST GUIDE</div>
         <ol class="instr-list">
-          <li><b>📺 GO LIVE</b> → name this location.</li>
+          <li><b>GO LIVE</b> → name this location.</li>
           <li>Copy the <b>TV link</b> it gives you → open on each TV (or send to your scheduler).</li>
           <li><b>START</b>, then <b>SPACE/NEXT</b> for questions.</li>
           <li>After each round, collect sheets (<b>TURN IN</b>).</li>
-          <li>Open <b>🏆 SCOREBOARD</b>, enter points, <b>📢 PUBLISH</b>.</li>
+          <li>Open <b>SCOREBOARD</b>, enter points, <b>PUBLISH</b>.</li>
         </ol>
       </div>
       ${brandLogoSrc() ? `<img class="title-logo-img" src="${brandLogoSrc()}" alt="${escapeHtml(THEME.title1)}" onerror="this.style.display='none'" />` : ""}
@@ -2129,7 +2129,7 @@ function viewTitle() {
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
-        <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">📺 GO LIVE</button>
+        <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">GO LIVE</button>
       </div>
       <div class="setup-row">
         <span class="setup-label">⏱ Seconds per question:</span>
@@ -2160,7 +2160,7 @@ function viewTitle() {
 function renderTitleScoreboard() {
   const el = document.getElementById("titleScore");
   if (!el) return;
-  let inner = '<div class="ts-head">🏆 SCOREBOARD</div>';
+  let inner = '<div class="ts-head">SCOREBOARD</div>';
   if (!TEAMS.length) {
     inner += '<div class="ts-empty">No teams yet.<br>Click to add teams &amp; scores.</div>';
   } else {
@@ -2209,7 +2209,7 @@ function viewQuestion() {
           </div>
           <div class="q-topcenter">
             <div class="q-timer${TIMER_SECS > 0 ? '' : ' q-timer-off'}" id="qTimer">${TIMER_SECS > 0 ? TIMER_SECS : 0}</div>
-            <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
+            <div class="q-score" id="qScore">SCOREBOARD</div>
           </div>
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
         </div>
@@ -2218,7 +2218,7 @@ function viewQuestion() {
             <div class="q-text-body"><span class="q-num">${game.questionIdx + 1}</span>${escapeHtml(qText)}</div>
           </div>
         </div>
-        <div class="q-howto">📝 Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
+        <div class="q-howto">Just walked in? Grab an answer sheet, write each answer in its numbered box, and turn it in after each round.</div>
         <div class="btn-row"><button class="btn" id="qNextBtn">NEXT QUESTION ▶</button></div>
         <div class="hint">Write your answer on the paper provided &nbsp;•&nbsp; Press <kbd>SPACE</kbd> or click NEXT to advance</div>
       </div>
@@ -2244,7 +2244,7 @@ function viewAnswer() {
         <div class="q-topbar">
           <div class="q-badge">ROUND ${game.roundIdx + 1} ANSWERS</div>
           <div class="q-topcenter">
-            <div class="q-score" id="qScore">🏆 SCOREBOARD</div>
+            <div class="q-score" id="qScore">SCOREBOARD</div>
           </div>
           <div class="q-category">ANSWER ${game.questionIdx + 1} OF ${round.questions.length}</div>
         </div>
@@ -2265,7 +2265,7 @@ function viewAnswer() {
 
 // Full-screen Top 3 at the end of the game.
 function viewFinalBoard() {
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["1", "2", "3"];
   const top = standings().slice(0, 3);
   const rows = top.length
     ? top.map((t, i) =>
@@ -2275,8 +2275,8 @@ function viewFinalBoard() {
           '<span class="fb-score">' + t.score + '</span>' +
         '</div>'
       ).join("")
-    : '<div class="fb-empty">No teams entered — add them in 🏆 SCOREBOARD.</div>';
-  const title = game.isFinal ? "🏆 FINAL — TOP 3 TEAMS" : ("🏆 STANDINGS — AFTER ROUND " + (game.roundIdx + 1));
+    : '<div class="fb-empty">No teams entered — add them in SCOREBOARD.</div>';
+  const title = game.isFinal ? "FINAL — TOP 3 TEAMS" : ("STANDINGS — AFTER ROUND " + (game.roundIdx + 1));
   main.innerHTML = `
     <div class="view final-board">
       <h2 class="fb-title">${title}</h2>
@@ -2297,11 +2297,11 @@ function viewWinner() {
 
   if (game.isFinal) {
     const champ = name
-      ? '<div class="champ-crown">👑</div>' +
-        '<div class="win-label">🏆 THE WINNER IS 🏆</div>' +
+      ? '<div class="champ-crown"></div>' +
+        '<div class="win-label">THE WINNER IS </div>' +
         '<div class="win-name">' + escapeHtml(name) + '</div>' +
         '<div class="win-prize">Come see the host to collect your prize!</div>'
-      : '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
+      : '<div class="win-label">Add teams in SCOREBOARD to crown a winner.</div>';
     main.innerHTML = `
       <div class="view winner-screen champion">
         <div id="confetti" class="confetti"></div>
@@ -2314,12 +2314,12 @@ function viewWinner() {
     const body = name
       ? '<div class="win-label">ROUND ' + (game.roundIdx + 1) + ' WINNER</div>' +
         '<div class="win-name">' + escapeHtml(name) + '</div>' +
-        '<div class="win-prize">🎟️ Go to the host to claim your prize!</div>' +
-        '<div class="win-prize" style="background:var(--blue);color:var(--cream);font-size:30px;">In the lead! Keep playing 🔥</div>'
-      : '<div class="win-label">Add teams in 🏆 SCOREBOARD to crown a winner.</div>';
+        '<div class="win-prize">Go to the host to claim your prize!</div>' +
+        '<div class="win-prize" style="background:var(--blue);color:var(--cream);font-size:30px;">In the lead! Keep playing </div>'
+      : '<div class="win-label">Add teams in SCOREBOARD to crown a winner.</div>';
     main.innerHTML = `
       <div class="view winner-screen">
-        <div class="win-burst">🎉</div>
+        <div class="win-burst"></div>
         ${body}
         <div class="btn-row"><button class="btn" id="winDone">NEXT ROUND ▶</button></div>
       </div>
@@ -2974,7 +2974,7 @@ function openBrandingModal() {
     <div class="modal-backdrop" id="loadModal">
       <div class="modal" role="dialog" aria-label="Branding">
         <button class="close-x" id="closeX" aria-label="Close">×</button>
-        <h2>🎨 BRANDING</h2>
+        <h2>BRANDING</h2>
         <p class="modal-lead">Make the game your own — set the title, colors, and logo. Saved in this browser and pushed live to the TVs.</p>
         <div id="msgArea"></div>
 
@@ -3450,7 +3450,7 @@ function openGoLiveModal() {
     <div class="modal-backdrop" id="goLiveModal">
       <div class="modal" role="dialog" aria-label="Go live">
         <button class="close-x" id="glClose" aria-label="Close">×</button>
-        <h2>📺 GO LIVE</h2>
+        <h2>GO LIVE</h2>
         <p class="modal-lead">Name this Pluckers location. We'll start the game and give you a <b>TV link</b> to open on your screens (or paste into your scheduler). Names must be unique while live.</p>
         <div class="field">
           <label for="glName">PLUCKERS LOCATION NAME</label>
@@ -3460,7 +3460,7 @@ function openGoLiveModal() {
         <div id="glMsg"></div>
         <div class="modal-actions">
           <button class="btn secondary" id="glCancel">CANCEL</button>
-          <button class="btn" id="glGo">🔴 GO LIVE</button>
+          <button class="btn" id="glGo">GO LIVE</button>
         </div>
       </div>
     </div>`;
@@ -3489,7 +3489,7 @@ async function goLiveSubmit() {
   const res = await startHosting(name);
   if (!res.ok) {
     warn(res.reason || "Couldn't go live — try again.");
-    if (goBtn) { goBtn.disabled = false; goBtn.textContent = "🔴 GO LIVE"; }
+    if (goBtn) { goBtn.disabled = false; goBtn.textContent = "GO LIVE"; }
     if (nameEl) nameEl.focus();
     return;
   }
@@ -3539,14 +3539,14 @@ function showGoLiveLink(name) {
             <div id="glPlayQr" style="background:#fff;padding:8px;border-radius:10px;line-height:0;min-width:120px;min-height:120px;display:flex;align-items:center;justify-content:center;"></div>
             <div style="flex:1;min-width:0;">
               <input type="text" id="glPlayUrl" readonly value="${escapeHtml(playUrl())}" />
-              <button class="btn secondary" id="glPlayCopy" style="margin-top:8px;width:100%;">📋 COPY PLAYER LINK</button>
+              <button class="btn secondary" id="glPlayCopy" style="margin-top:8px;width:100%;">COPY PLAYER LINK</button>
             </div>
           </div>
         </div>
         <div id="glCopyMsg"></div>
         <div class="modal-actions">
           <button class="btn secondary" id="glOpen">OPEN TV VIEW</button>
-          <button class="btn" id="glCopy">📋 COPY LINK</button>
+          <button class="btn" id="glCopy">COPY LINK</button>
           <button class="btn secondary" id="glDone">DONE</button>
         </div>
         <p class="gl-foot">⏱ Heads-up: this name stays reserved while you're hosting. Ending the game (or closing this host screen) frees it for reuse.</p>
@@ -3577,13 +3577,13 @@ function showGoLiveLink(name) {
     try { await navigator.clipboard.writeText(playUrlVal); }
     catch (e) { try { playEl.focus(); playEl.select(); document.execCommand("copy"); } catch (e2) {} }
     const m = document.getElementById("glCopyMsg");
-    if (m) m.innerHTML = '<div class="gl-ok">✓ Player link copied! Share it, or show the QR for phones to scan.</div>';
+    if (m) m.innerHTML = '<div class="gl-ok">Player link copied! Share it, or show the QR for phones to scan.</div>';
   });
   document.getElementById("glCopy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(url); }
     catch (e) { try { urlEl.focus(); urlEl.select(); document.execCommand("copy"); } catch (e2) {} }
     const m = document.getElementById("glCopyMsg");
-    if (m) m.innerHTML = '<div class="gl-ok">✓ Copied! Paste it on your TVs or into your scheduler.</div>';
+    if (m) m.innerHTML = '<div class="gl-ok">Copied! Paste it on your TVs or into your scheduler.</div>';
   });
   setTimeout(() => { try { urlEl.focus(); urlEl.select(); } catch (e) {} }, 30);
 }
@@ -3741,7 +3741,7 @@ function showLiveBanner() {
   const url = tvUrl();
   const local = isLocalUrl();
   const warn = local
-    ? '<div class="lb-warn">⚠ This link only works on this computer. To use it on your TVs, ' +
+    ? '<div class="lb-warn">This link only works on this computer. To use it on your TVs, ' +
       'put the game online (drag the folder to <b>app.netlify.com/drop</b>) and press GO LIVE there.</div>'
     : '';
   el.innerHTML =
@@ -3918,7 +3918,7 @@ function playerQuestionHTML() {
   if (player.submittedCursor === game.cursor) {
     return '<div class="pl-wrap">' + plLogoBlock() +
       '<div class="pl-team">' + escapeHtml(player.team) + '</div>' +
-      '<div class="pl-ok">✓ Answer locked in</div>' +
+      '<div class="pl-ok">Answer locked in</div>' +
       '<div class="pl-locked">You said: <b>' + escapeHtml(player.answers[game.cursor] || "") + '</b></div>' +
       '<div class="pl-sub">Waiting for the next question…</div>' +
       '</div>';
@@ -4069,7 +4069,7 @@ function renderJoinQr() {
   if (!el) { el = document.createElement("div"); el.id = "joinQr"; stageEl().appendChild(el); }
   if (el.dataset.code === live.code) return;   // already built for this room — don't regenerate every render
   el.dataset.code = live.code;
-  el.innerHTML = '<div class="joinqr-label">📱 SCAN TO PLAY</div><div class="joinqr-box" id="joinQrBox"></div>';
+  el.innerHTML = '<div class="joinqr-label">SCAN TO PLAY</div><div class="joinqr-box" id="joinQrBox"></div>';
   const box = document.getElementById("joinQrBox");
   if (!box) return;
   if (isLocalUrl()) { box.innerHTML = '<div class="joinqr-local">Publish online so phones can scan</div>'; return; }
@@ -4084,7 +4084,7 @@ function updatePlayerTracker() {
   const joined = playerCount();
   let line2 = "";
   if (game.state === State.QUESTION) line2 = '<span class="pt-ans">' + answeredCountForCursor(game.cursor) + ' / ' + joined + ' answered</span>';
-  el.innerHTML = '<span class="pt-join">👥 ' + joined + ' player' + (joined === 1 ? '' : 's') + ' joined</span>' + line2;
+  el.innerHTML = '<span class="pt-join">' + joined + ' player' + (joined === 1 ? '' : 's') + ' joined</span>' + line2;
 }
 
 function applyRemote(row) {
@@ -4185,7 +4185,7 @@ function updateLeaderboardOverlay() {
   // The full-screen board/winner take over completely — never show the banner there.
   const finale = (game.state === State.FINAL_BOARD || game.state === State.WINNER);
   if (!LB_SHOWN || finale) { ov.classList.remove("show"); return; }
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["1", "2", "3"];
   const rows = standings().slice(0, 3).map((t, i) =>   // top 3 only
     '<div class="lbo-row' + (i === 0 ? ' lbo-first' : '') + '">' +
       '<span class="lbo-rank">' + medals[i] + '</span>' +
@@ -4214,7 +4214,7 @@ function openScoreboardModal() {
       '<div class="sb-row">' +
         '<input class="sb-name" data-i="' + i + '" value="' + escapeHtml(t.name) + '" placeholder="Team name" />' +
         '<input class="sb-score" type="number" inputmode="numeric" data-i="' + i + '" value="' + t.score + '" />' +
-        '<button class="sb-del" data-i="' + i + '" title="Remove">✕</button>' +
+        '<button class="sb-del" data-i="' + i + '" title="Remove">×</button>' +
       '</div>'
     ).join("");
   }
@@ -4223,14 +4223,14 @@ function openScoreboardModal() {
       '<div class="modal-backdrop" id="loadModal">' +
         '<div class="modal" role="dialog" aria-label="Scoreboard">' +
           '<button class="close-x" id="closeX" aria-label="Close">×</button>' +
-          '<h2>🏆 Scoreboard</h2>' +
+          '<h2>Scoreboard</h2>' +
           '<p class="modal-lead">Enter team names and scores. Press <b>PUBLISH</b> to show the leaderboard on the TVs (press again anytime to refresh it). <b>HIDE</b> takes it back off.</p>' +
           '<div class="sb-status">' + statusHtml() + '</div>' +
           '<div id="sbRows" class="sb-rows">' + rowsHtml() + '</div>' +
-          '<button class="btn secondary" id="sbAdd" style="margin-top:6px">➕ Add team</button>' +
+          '<button class="btn secondary" id="sbAdd" style="margin-top:6px">+ Add team</button>' +
           '<div class="modal-actions">' +
             '<button class="btn secondary" id="sbHide">HIDE FROM TVs</button>' +
-            '<button class="btn" id="sbPublish">📢 PUBLISH TO TVs</button>' +
+            '<button class="btn" id="sbPublish">PUBLISH TO TVs</button>' +
           '</div>' +
         '</div>' +
       '</div>';
