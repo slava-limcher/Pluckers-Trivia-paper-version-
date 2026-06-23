@@ -2099,6 +2099,23 @@ function renderMeta() {
   `;
 }
 
+// Host clicks RANDOMIZE QUESTIONS on the title screen: shuffle the question order
+// inside each round (categories/rounds stay put), rebuild the schedule, and push
+// the new order to any live TVs. Per-session only — reloading restores the design's
+// original order.
+function shuffleQuestions() {
+  ROUNDS.forEach(r => {
+    const q = r.questions || [];
+    for (let i = q.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = q[i]; q[i] = q[j]; q[j] = t;
+    }
+  });
+  buildSchedule();
+  game.cursor = 0; applyFrame(SCHEDULE[0]);   // stay on the title; only the order changed
+  if (live.role === "host") pushState();      // TVs mirror the new order (snapshot carries ROUNDS)
+}
+
 // ============================================================
 // VIEWS
 // ============================================================
@@ -2132,7 +2149,8 @@ function viewTitle() {
         <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">GO LIVE</button>
       </div>
       <div class="setup-row">
-        <span class="setup-label">⏱ Seconds per question:</span>
+        <button class="btn secondary" id="randomizeBtn" style="background:var(--red);color:var(--cream);box-shadow:0 8px 0 var(--red-deep, rgba(0,0,0,.4));">RANDOMIZE QUESTIONS</button>
+        <span class="setup-label">Seconds per question:</span>
         <input id="timerInput" class="timer-input" type="number" min="0" step="5" value="${TIMER_SECS}" />
         <span class="setup-label" style="font-size:14px; opacity:.75;">(0 = no timer)</span>
       </div>
@@ -2151,6 +2169,12 @@ function viewTitle() {
     ti.value = TIMER_SECS;
     saveTimer();
     if (live.role === "host") pushState();
+  });
+  const rb = document.getElementById("randomizeBtn");
+  if (rb) rb.addEventListener("click", () => {
+    shuffleQuestions();
+    rb.textContent = "RANDOMIZED!";
+    setTimeout(() => { if (rb.isConnected) rb.textContent = "RANDOMIZE QUESTIONS"; }, 1200);
   });
   renderTitleScoreboard();
   processLogos();

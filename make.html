@@ -560,9 +560,7 @@
     if(!c){
       published=true;
       setLink(designLink);   // both versions are the paper engine now (mode rides in the design)
-      st.textContent = gameMode==="phone"
-        ? "⚠ Cloud unavailable — published without the logo/images (colors & text still apply)."
-        : "⚠ Cloud unavailable — this link only works on this device.";
+      st.textContent = "⚠ Cloud unavailable — this link only works on this device.";
       st.className="pubstatus warn"; return;
     }
     st.textContent="Publishing…"; st.className="pubstatus";
@@ -575,7 +573,7 @@
         if(error) throw error;
         published=true; setLink(designLink);
         st.textContent = gameMode==="phone"
-          ? "✓ Phone version published — players join & answer on their phones (logo, colors & text included)."
+          ? "✓ Published — players scan the on-screen QR to answer on their phones (works on any device)."
           : "✓ Published — your link works on any device (logo & images included).";
         st.className="pubstatus ok"; return;
       }catch(e){ lastErr=e; }
@@ -621,7 +619,7 @@
   function setTheme(t){
     gameMode = t.mode==="phone" ? "phone" : "paper";
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x.dataset.mode===gameMode));
-    if($("base")) $("base").value = gameMode==="phone"?phoneBase():PAPER_BASE;
+    if($("base")) $("base").value = PAPER_BASE;   // both versions run on the paper engine
     $("title1").value=t.title1||"TRIVIA"; $("title2").value=t.title2||"";
     ["primary","accent","deep","light"].forEach(k=>{ if(t[k]) $(k).value=t[k]; });
     $("logo").value=(t.logo&&t.logo!=="none")?t.logo:"";
@@ -1188,7 +1186,7 @@
   document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{
     gameMode=b.dataset.mode;
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x===b));
-    if($("base")) $("base").value = gameMode==="phone"?phoneBase():PAPER_BASE;
+    if($("base")) $("base").value = PAPER_BASE;   // both versions run on the paper engine
     updatePhoneTab();
     published=false; if($("pubStatus")){$("pubStatus").textContent="";$("pubStatus").className="pubstatus";} $("hostLink").value="";
     refresh();
