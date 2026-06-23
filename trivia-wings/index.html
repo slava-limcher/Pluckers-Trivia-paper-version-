@@ -1278,8 +1278,15 @@ function loadRoundsFromStorage() {
   } catch (e) { /* ignore */ }
   return DEFAULT_ROUNDS;
 }
-function saveRoundsToStorage(rounds) { localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds)); }
-function clearStoredRounds() { localStorage.removeItem(STORAGE_KEY); }
+function saveRoundsToStorage(rounds, source) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds));
+  if (source) localStorage.setItem(STORAGE_KEY + "-source", source);
+}
+function clearStoredRounds() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_KEY + "-source");
+}
+function getStoredSource() { return localStorage.getItem(STORAGE_KEY + "-source") || ""; }
 
 function validateRounds(data) {
   if (!Array.isArray(data) || data.length === 0)
@@ -1438,6 +1445,10 @@ if (MODE === "host") (async function hostMain() {
 
   function viewTitle() {
     const isCustom = !!localStorage.getItem(STORAGE_KEY);
+    const source = getStoredSource();
+    const sourceLabel = isCustom
+      ? (source ? `<b>${escapeHtml(source)}</b>` : "<b>CUSTOM</b>")
+      : `<b>DEFAULT</b>`;
     const counts = ROUNDS.map(r => r.questions.length);
     const uniform = counts.every(c => c === counts[0]);
     const qLabel = uniform ? `<b>${counts[0]}</b> questions each` : `<b>${totalQuestions()}</b> questions total`;
@@ -1464,7 +1475,7 @@ if (MODE === "host") (async function hostMain() {
         </div>
         ${BRAND.logo ? `<div class="title-logo"><img src="${BRAND.logo}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block"></div>` : (BRAND.title1 || BRAND.title2) ? "" : `<div class="title-logo"><span class="logo-em">🍗</span></div>`}
         <h1 class="title">${escapeHtml(BRAND.title1 || "TRIVIA")}<span class="sub">${escapeHtml(BRAND.title1 ? (BRAND.title2 || "") : "WINGS")}</span></h1>
-        <div class="status-pill ${isCustom ? "custom" : ""}"><b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
+        <div class="status-pill ${isCustom ? "custom" : ""}">SOURCE: ${sourceLabel} &nbsp;•&nbsp; <b>${ROUNDS.length}</b> rounds &nbsp;•&nbsp; ${qLabel}</div>
         <div class="btn-row">
           <button class="btn" id="startBtn">START GAME</button>
           <button class="btn secondary" id="randomBtn" style="background:var(--blue);color:var(--yellow);text-shadow:2px 2px 0 var(--black);">🎲 RANDOM</button>
@@ -1584,7 +1595,7 @@ if (MODE === "host") (async function hostMain() {
   const DEFAULT_RANDOM_CATEGORIES = [9, 11, 12, 17, 21, 22, 23];
 
   const randomConfig = {
-    difficulty: "any",
+    difficulty: "medium",   // sweet spot — challenging but fair (was "any")
     categories: new Set(DEFAULT_RANDOM_CATEGORIES),
     // Map<topicName, null | [{q,a},...]>  null = AI-generate; array = use these literal questions
     customTopics: new Map(),
@@ -1850,9 +1861,22 @@ if (MODE === "host") (async function hostMain() {
 
   async function fetchGeminiTopic(topic, count, apiKey) {
     const prompt =
-      `Generate exactly ${count} distinct trivia questions about "${topic}". ` +
-      `Return ONLY a JSON array of ${count} objects, each with "q" (the question) and "a" (the answer). ` +
-      `Keep questions short. Answers should be brief — usually 1-4 words.`;
+      `Generate exactly ${count} distinct trivia questions about "${topic}".
+
+REQUIREMENTS — every question MUST satisfy ALL of these:
+1. EXACTLY ONE correct, factual answer — no ambiguous or multi-valid answers.
+   ✗ Bad: "Name a US state" (50 valid answers)
+   ✗ Bad: "Is the glass half full or half empty?" (perspective, not fact)
+   ✗ Bad: "What's the best Beatles song?" (opinion)
+   ✓ Good: "How many strings are on a standard guitar?" — "6"
+2. Difficulty: medium — challenging but answerable by someone with general knowledge of the topic. Mix easier and harder questions, average toward medium. Not so easy everyone knows it, not so obscure no one knows.
+3. Answer must be a concrete fact, not an opinion, interpretation, or trick.
+4. Answer must not depend on current events that change (e.g. "current world champion", "today's price").
+5. Don't include trick wording, double negatives, or "all of the above" style.
+6. Answers should be brief — usually 1-4 words. Names, dates, numbers, or short phrases.
+7. Question text should be a single sentence ending with "?".
+
+Return ONLY a JSON array of ${count} objects, each with "q" and "a" fields. No commentary, no preamble.`;
     // Try multiple models in order. Use JSON-mode output for reliable parsing.
     // Order: lite variants first (1000 RPD), then flagships (200-250 RPD).
     const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"];
@@ -2142,7 +2166,15 @@ if (MODE === "host") (async function hostMain() {
         return;
       }
       if (rounds.length === 0) throw new Error("No questions could be fetched. " + aiErrors.join(" "));
-      saveRoundsToStorage(rounds);
+      // Tag the source so the title pill can show where the pack came from
+      const hasOTDB = catObjs.length > 0;
+      const hasAI = aiTopics.length > 0 && aiResults.some((r) => !(r && r.__error));
+      const hasManual = manualEntries.length > 0;
+      const parts = [];
+      if (hasOTDB) parts.push("RANDOM");
+      if (hasAI) parts.push("AI");
+      if (hasManual) parts.push("MANUAL");
+      saveRoundsToStorage(rounds, parts.join("+") || "RANDOM");
       ROUNDS = rounds;
       closeRandomModal();
       render();
@@ -2831,7 +2863,7 @@ if (MODE === "host") (async function hostMain() {
       try {
         const parsed = normalizeRounds(collectBuilderRounds());
         validateRounds(parsed);
-        saveRoundsToStorage(parsed); ROUNDS = parsed;
+        saveRoundsToStorage(parsed, "LOADED"); ROUNDS = parsed;
         const total = parsed.reduce((n, r) => n + r.questions.length, 0);
         showModalMsg("Built " + parsed.length + " categories, " + total + " questions.", "ok");
         setTimeout(() => { closeLoadModal(); render(); }, 600);
@@ -2867,7 +2899,7 @@ if (MODE === "host") (async function hostMain() {
         }
         parsed = chunked;
       }
-      saveRoundsToStorage(parsed); ROUNDS = parsed;
+      saveRoundsToStorage(parsed, "LOADED"); ROUNDS = parsed;
       const total = parsed.reduce((n, r) => n + r.questions.length, 0);
       showModalMsg(`Loaded ${parsed.length} categories, ${total} questions.`, "ok");
       setTimeout(() => { closeLoadModal(); render(); }, 600);
