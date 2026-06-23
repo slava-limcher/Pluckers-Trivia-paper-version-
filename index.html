@@ -1300,6 +1300,26 @@
   #playerTracker .pt-ans { color: var(--yellow); font-size: 13px; font-weight: 700; }
   body.display-mode #playerTracker, body.player-mode #playerTracker { display: none !important; }
 
+  /* ===== Phone version (mode=phone): the TV/host question screen keeps the exact
+     paper layout but drops the blue box + stripe texture and adds a "scan to play"
+     join QR in the top-right corner. Scoped to .phone-version so the paper game is
+     unchanged. ===== */
+  body.phone-version::before { opacity: 0 !important; }            /* no diagonal stripe texture */
+  body.phone-version .q-text {
+    background: transparent; border-color: transparent; box-shadow: none;
+    text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 2px rgba(0,0,0,.6);  /* readable on any background */
+  }
+  /* Make room for the corner QR so it never sits on top of the category pill. */
+  body.phone-version .q-topbar--full { padding-right: 250px; }
+  #joinQr { position: absolute; top: 20px; right: 20px; z-index: 60; width: 172px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+  #joinQr .joinqr-label { font-family: var(--label-font, "Anton","Oswald",Impact,sans-serif);
+    font-size: 24px; letter-spacing: 2px; color: var(--cream); text-shadow: 2px 2px 0 #000; }
+  #joinQr .joinqr-box { background: #fff; padding: 11px; border-radius: 14px; line-height: 0;
+    box-shadow: 0 8px 26px rgba(0,0,0,.5); }
+  #joinQr .joinqr-local { font: 600 12px/1.3 system-ui, sans-serif; color: #b00;
+    max-width: 150px; text-align: center; padding: 10px; }
+
   /* Header (host AND TV) = a clean colored-stripe bar that mirrors the footer:
      no logo, no DON'T CHEAT, no round/question meta, no room tag — just the line. */
   .brand,
@@ -1801,6 +1821,7 @@ function applyTheme(t) {
     const dimLayer = dimv > 0 ? "linear-gradient(rgba(0,0,0," + dimv + "),rgba(0,0,0," + dimv + ")), " : "";
     b.style.background = dimLayer + bgBackground(style, t);
     b.classList.toggle("bg-plain", !(style === "gradient" || style === "stripes"));
+    b.classList.toggle("phone-version", t.mode === "phone");   // phone game: clean question + join QR
   }
   ensureDesignFonts();
 }
@@ -2468,6 +2489,8 @@ function render() {
   // Box stays the size the host set — re-fit the question text into it (every
   // question, after the box's final size/position is applied).
   if (game.state === State.QUESTION) fitQuestion();
+  // Phone version: keep the top-right join QR in sync with the current screen.
+  renderJoinQr();
   // Refresh the host's "players joined / answered" tracker for this screen.
   if (live.role === "host") updatePlayerTracker();
 }
@@ -4034,6 +4057,24 @@ function answeredCountForCursor(c) {
   return n;
 }
 function playerCount() { return Object.keys(hostPlayers).filter(uid => (hostPlayers[uid].team || "").trim()).length; }
+
+// Phone version only: a persistent "scan to play" QR in the top-right of the
+// question screen (shown on the TV + host) so players can join + answer on their
+// phones at any time. Hidden for the paper version and on non-question screens.
+function renderJoinQr() {
+  const existing = document.getElementById("joinQr");
+  const show = THEME.mode === "phone" && live.code && game.state === State.QUESTION;
+  if (!show) { if (existing) existing.remove(); return; }
+  let el = existing;
+  if (!el) { el = document.createElement("div"); el.id = "joinQr"; stageEl().appendChild(el); }
+  if (el.dataset.code === live.code) return;   // already built for this room — don't regenerate every render
+  el.dataset.code = live.code;
+  el.innerHTML = '<div class="joinqr-label">📱 SCAN TO PLAY</div><div class="joinqr-box" id="joinQrBox"></div>';
+  const box = document.getElementById("joinQrBox");
+  if (!box) return;
+  if (isLocalUrl()) { box.innerHTML = '<div class="joinqr-local">Publish online so phones can scan</div>'; return; }
+  if (typeof QRCode !== "undefined") { try { new QRCode(box, { text: playUrl(), width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { box.innerHTML = ""; } }
+}
 
 // A small host-only panel showing how many phones joined / answered the current Q.
 function updatePlayerTracker() {
