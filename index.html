@@ -1306,12 +1306,11 @@
      unchanged. ===== */
   body.phone-version::before { opacity: 0 !important; }            /* no diagonal stripe texture */
   body.phone-version .q-text {
-    background: transparent; border-color: transparent; box-shadow: none;
+    background: transparent; box-shadow: none;   /* no blue fill, but keep the bordered box */
     text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 2px rgba(0,0,0,.6);  /* readable on any background */
   }
   /* Make room for the corner QR so it never sits on top of the category pill. */
-  body.phone-version .q-topbar--full { padding-right: 250px; }
-  #joinQr { position: absolute; top: 20px; right: 20px; z-index: 60; width: 172px;
+  #joinQr { position: absolute; bottom: 20px; right: 20px; z-index: 60; width: 172px;
     display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
   #joinQr .joinqr-label { font-family: var(--label-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 24px; letter-spacing: 2px; color: var(--cream); text-shadow: 2px 2px 0 #000; }
@@ -2059,14 +2058,36 @@ function applyFrame(f) {
   game.answersIdx  = (f.answersIdx != null) ? f.answersIdx : 0;
   game.isFinal     = !!f.final;
 }
+// ---- Phone version self-run: no host clicks NEXT. Each question advances when
+// every joined player has answered OR after 3 minutes; other screens auto-advance
+// on a short delay. Only the host drives it (TVs + phones follow the sync).
+const AUTO_QSECS = 180;        // 3 minutes per question (default; host's timer overrides)
+let AUTO_DEADLINE = 0;         // epoch ms the current screen auto-advances at (0 = manual)
+function phoneHostAuto() { return THEME.mode === "phone" && live.role === "host"; }
+function autoScreenSecs(state) {
+  switch (state) {
+    case State.ROUND_INTRO: return 8;
+    case State.TURN_IN: return 6;
+    case State.ANSWER: return 9;
+    case State.FINAL_BOARD: return 14;
+    case State.WINNER: return 14;
+    default: return 8;
+  }
+}
 function gotoCursor(n) {
   game.cursor = Math.max(0, Math.min(n, SCHEDULE.length - 1));
   applyFrame(SCHEDULE[game.cursor]);
-  // Host starts a fresh countdown each time it lands on a question.
-  if (game.state === State.QUESTION && TIMER_SECS > 0) {
-    TIMER_END = Date.now() + TIMER_SECS * 1000;
+  const auto = phoneHostAuto();
+  if (game.state === State.QUESTION) {
+    // Per-question countdown: host's timer if set, else the phone-version 3-min default.
+    const secs = TIMER_SECS > 0 ? TIMER_SECS : (auto ? AUTO_QSECS : 0);
+    TIMER_END = secs > 0 ? Date.now() + secs * 1000 : 0;
+    AUTO_DEADLINE = auto ? Date.now() + (TIMER_SECS > 0 ? TIMER_SECS : AUTO_QSECS) * 1000 : 0;
   } else {
     TIMER_END = 0;
+    // Phone version self-runs the in-between screens too; title/end wait for a person.
+    AUTO_DEADLINE = (auto && game.state !== State.TITLE && game.state !== State.END)
+      ? Date.now() + autoScreenSecs(game.state) * 1000 : 0;
   }
   render();
 }
@@ -2232,7 +2253,7 @@ function viewQuestion() {
             <div class="q-badge">QUESTION ${game.questionIdx + 1} OF ${round.questions.length}</div>
           </div>
           <div class="q-topcenter">
-            <div class="q-timer${TIMER_SECS > 0 ? '' : ' q-timer-off'}" id="qTimer">${TIMER_SECS > 0 ? TIMER_SECS : 0}</div>
+            <div class="q-timer${(TIMER_SECS > 0 || THEME.mode === 'phone') ? '' : ' q-timer-off'}" id="qTimer">${TIMER_SECS > 0 ? TIMER_SECS : (THEME.mode === 'phone' ? '3:00' : 0)}</div>
             <div class="q-score" id="qScore">SCOREBOARD</div>
           </div>
           <div class="q-category">${escapeHtml(round.category).toUpperCase()}</div>
@@ -4417,13 +4438,26 @@ window.addEventListener("beforeunload", () => {
   }
 });
 
+function fmtTimer(secs) { return secs >= 60 ? (Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0")) : String(secs); }
+// Phone version (host only): advance when everyone answered or the deadline passes.
+function autoAdvanceTick() {
+  if (!phoneHostAuto() || !AUTO_DEADLINE) return;
+  let go = Date.now() >= AUTO_DEADLINE;
+  if (!go && game.state === State.QUESTION) {
+    const joined = playerCount();
+    if (joined > 0 && answeredCountForCursor(game.cursor) >= joined) go = true;   // everyone's in → move on
+  }
+  if (go) { AUTO_DEADLINE = 0; advance(); }
+}
 // Tick the question countdown timer (updates any visible .q-timer each second).
 setInterval(() => {
   const el = document.getElementById("qTimer");
-  if (!el || !TIMER_END) return;
-  const left = Math.max(0, Math.ceil((TIMER_END - Date.now()) / 1000));
-  el.textContent = left > 0 ? left : "TIME!";
-  el.classList.toggle("q-timer-up", left <= 0);
+  if (el && TIMER_END) {
+    const left = Math.max(0, Math.ceil((TIMER_END - Date.now()) / 1000));
+    el.textContent = left > 0 ? fmtTimer(left) : "TIME!";
+    el.classList.toggle("q-timer-up", left <= 0);
+  }
+  autoAdvanceTick();
 }, 250);
 </script>
 </body>
