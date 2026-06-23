@@ -1504,7 +1504,7 @@
   .final-board {
     position: fixed; inset: 0; z-index: 70;
     width: auto; max-width: none;   /* override .view's 1500px cap so it fills the whole screen */
-    background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    background: transparent;   /* inherit the theme / per-screen background instead of a hardcoded blue */
     text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
   }
   .final-board .fb-title { font-size: 80px; color: var(--yellow); margin: 0; letter-spacing: 4px; text-shadow: 4px 4px 0 var(--red), 8px 8px 0 var(--black); }
@@ -1520,7 +1520,7 @@
   .winner-screen {
     position: fixed; inset: 0; z-index: 70;
     width: auto; max-width: none;   /* override .view's 1500px cap so it fills the whole screen */
-    background: radial-gradient(1200px 800px at 50% -10%, var(--blue-dark) 0%, #0a1234 60%, #060a1f 100%);
+    background: transparent;   /* inherit the theme / per-screen background instead of a hardcoded blue */
     text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   }
   .winner-screen .win-burst { font-size: 90px; animation: turnin-pop .5s cubic-bezier(.2,.8,.3,1.2) both; }
