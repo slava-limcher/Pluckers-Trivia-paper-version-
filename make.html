@@ -595,9 +595,29 @@
     {name:"Buffalo Wild Wings", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#FFD200",accent:"#FFFFFF",deep:"#161616",light:"#FFFFFF",bg:"gradient",bgimg:"",logo:""}, els:[]},
     {name:"Twin Peaks", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#B11F1A",accent:"#F2E8D4",deep:"#262422",light:"#F2E8D4",bg:"gradient",bgimg:"",logo:""}, els:[]}
   ];
-  function loadPresets(){ try{ return JSON.parse(localStorage.getItem("trivia-presets")||"[]"); }catch(e){ return []; } }
-  function savePresets(){ try{ localStorage.setItem("trivia-presets", JSON.stringify(PRESETS)); }catch(e){} }
-  let PRESETS = loadPresets();
+  // Presets can embed full background/logo images + uploaded fonts, which blow past
+  // localStorage's ~5MB cap — the save then fails silently and the preset vanishes on
+  // reload. Store them in IndexedDB instead (far larger quota) and migrate any presets
+  // previously saved in localStorage so existing ones aren't lost.
+  const PRESET_DB = "trivia-studio", PRESET_STORE = "kv", PRESET_KEY = "trivia-presets";
+  function idbOpen(){ return new Promise(function(res,rej){ var r=indexedDB.open(PRESET_DB,1); r.onupgradeneeded=function(){ if(!r.result.objectStoreNames.contains(PRESET_STORE)) r.result.createObjectStore(PRESET_STORE); }; r.onsuccess=function(){res(r.result);}; r.onerror=function(){rej(r.error);}; }); }
+  function idbGet(k){ return idbOpen().then(function(db){ return new Promise(function(res,rej){ var q=db.transaction(PRESET_STORE,"readonly").objectStore(PRESET_STORE).get(k); q.onsuccess=function(){res(q.result);}; q.onerror=function(){rej(q.error);}; }); }); }
+  function idbSet(k,v){ return idbOpen().then(function(db){ return new Promise(function(res,rej){ var q=db.transaction(PRESET_STORE,"readwrite").objectStore(PRESET_STORE).put(v,k); q.onsuccess=function(){res(true);}; q.onerror=function(){rej(q.error);}; }); }); }
+  let PRESETS = [];
+  async function loadPresetsAsync(){
+    try {
+      var v = await idbGet(PRESET_KEY);
+      if (Array.isArray(v)) { PRESETS = v; }
+      else {   // one-time migration from the old localStorage store
+        try { var raw = localStorage.getItem(PRESET_KEY); if (raw) { PRESETS = JSON.parse(raw) || []; if (PRESETS.length) await idbSet(PRESET_KEY, PRESETS); } } catch(e){}
+      }
+    } catch(e){ PRESETS = []; }
+    renderPresets();
+  }
+  async function savePresets(){
+    try { await idbSet(PRESET_KEY, PRESETS); return true; }
+    catch(e){ alert("Couldn't save the preset — storage error: " + ((e&&e.name)||e) + "\nTry deleting an old preset, or remove a very large uploaded background/font from this look."); return false; }
+  }
   function setTheme(t){
     gameMode = t.mode==="phone" ? "phone" : "paper";
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x.dataset.mode===gameMode));
@@ -1152,11 +1172,13 @@
   });
   $("addText").addEventListener("click",addText);
   $("addImg").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)addImage(f);e.target.value="";});
-  $("savePreset").addEventListener("click",()=>{
+  $("savePreset").addEventListener("click",async ()=>{
     const name=prompt("Name this preset:", $("vname").value||"My brand");
     if(!name) return;
-    PRESETS.push({name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e))});
-    savePresets(); renderPresets();
+    const entry={name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e))};
+    PRESETS.push(entry); renderPresets();
+    const ok=await savePresets();
+    if(!ok){ PRESETS=PRESETS.filter(p=>p!==entry); renderPresets(); }   // didn't persist — don't pretend it did
   });
   $("publishBtn").addEventListener("click",publish);
   function updatePhoneTab(){
@@ -1179,7 +1201,7 @@
   const onFs=()=>{ const fs=!!(document.fullscreenElement||document.webkitFullscreenElement); $("fsBtn").textContent=fs?"✕":"⛶"; refresh(); renderProps(); };
   document.addEventListener("fullscreenchange",onFs);
   document.addEventListener("webkitfullscreenchange",onFs);
-  renderPresets();
+  loadPresetsAsync();   // loads saved presets from IndexedDB (+ migrates old localStorage ones), then renders
   renderTemplates();
   $("logoFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;downscaleLogo(f,240,d=>{if(d){$("logo").value=d;refresh();}});});
   $("logoClear").addEventListener("click",()=>{$("logo").value="";$("logoFile").value="";refresh();});
