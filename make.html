@@ -107,6 +107,7 @@
   .preset-list{display:flex;flex-wrap:wrap;gap:8px}
   .preset{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:6px 8px 6px 11px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s,box-shadow .15s}
   .preset:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+  .preset.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring);font-weight:800}
   .preset .pv-dots{display:inline-flex;gap:3px}
   .preset .pv-dots i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
   .preset .px{border:none;background:#eef1f7;color:#8893a8;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center;padding:0}
@@ -251,7 +252,11 @@
       <div class="sec">
         <div class="sec-h">Presets</div>
         <div class="preset-list" id="presetList"></div>
-        <button class="btn copy" type="button" id="savePreset" style="margin-top:11px">💾 Save current as preset</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px">
+          <button class="btn copy" type="button" id="newBlank">New (blank)</button>
+          <button class="btn copy" type="button" id="savePreset">Save as new</button>
+          <button class="btn copy" type="button" id="updatePreset" style="display:none">Update preset</button>
+        </div>
       </div>
       <div class="sec">
         <div class="sec-h">Identity</div>
@@ -616,6 +621,16 @@
     try { await idbSet(PRESET_KEY, PRESETS); return true; }
     catch(e){ alert("Couldn't save the preset — storage error: " + ((e&&e.name)||e) + "\nTry deleting an old preset, or remove a very large uploaded background/font from this look."); return false; }
   }
+  // The saved preset currently loaded (so "Update preset" knows which to overwrite). null = none.
+  let activePreset = null;
+  // A completely blank canvas to start a brand-new look from scratch: no title, no logo,
+  // no placed elements, neutral colors on a plain white background.
+  const BLANK_PRESET = { name:"Blank", theme:{ title1:"", title2:"", primary:"#444444", accent:"#999999", deep:"#FFFFFF", light:"#111111", bg:"solid", bgimg:"", logo:"", font:"", qfont:"", labelfont:"", dim:0, boxBg:"", boxBorder:"", boxW:100, mode:"paper", screens:{} }, els:[], slots:{} };
+  function refreshPresetButtons(){
+    const u=$("updatePreset"); if(!u) return;
+    if(activePreset!=null && PRESETS[activePreset]){ u.style.display=""; u.textContent="Update “"+PRESETS[activePreset].name+"”"; }
+    else { u.style.display="none"; }
+  }
   function setTheme(t){
     gameMode = t.mode==="phone" ? "phone" : "paper";
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x.dataset.mode===gameMode));
@@ -644,7 +659,7 @@
     if(Array.isArray(t.fontFaces) && typeof addImportedFont==="function") t.fontFaces.forEach(ff=>{ if(ff&&ff.family&&ff.src) addImportedFont({n:ff.family, f:"'"+ff.family+"',sans-serif", src:ff.src}); });
     writeBgFonts(SCREENS[screen]); updateBgScope();
   }
-  function applyPreset(p){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); if(p.slots) slots=JSON.parse(JSON.stringify(p.slots)); selBuiltin=null; selId=null; refresh(); renderProps(); if(typeof syncFreeBtn==="function") syncFreeBtn(); }
+  function applyPreset(p, idx){ setTheme(p.theme||{}); els=(p.els||[]).map(e=>Object.assign({},e)); slots = p.slots ? JSON.parse(JSON.stringify(p.slots)) : {}; selBuiltin=null; selId=null; activePreset = (typeof idx==="number") ? idx : null; refresh(); renderProps(); if(typeof syncFreeBtn==="function") syncFreeBtn(); if(typeof refreshPresetButtons==="function") refreshPresetButtons(); renderPresets(); }
   // Ready-made design templates — full looks (colors + fonts + background). Apply, then tweak.
   const TEMPLATES=[
     {name:"Classic Pub", theme:{title1:"TRIVIA",title2:"NIGHT",primary:"#B11116",accent:"#E8A33D",deep:"#241C14",light:"#FFF7E8",bg:"gradient",font:"'Patua One',serif",qfont:"'Patua One',serif",labelfont:"'Oswald',sans-serif",boxBg:"#2A2018",boxBorder:"#E8A33D"}, els:[]},
