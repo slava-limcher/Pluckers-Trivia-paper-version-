@@ -635,7 +635,7 @@
     gameMode = t.mode==="phone" ? "phone" : "paper";
     document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("active",x.dataset.mode===gameMode));
     if($("base")) $("base").value = PAPER_BASE;   // both versions run on the paper engine
-    $("title1").value=t.title1||"TRIVIA"; $("title2").value=t.title2||"";
+    $("title1").value=(t.title1!=null)?t.title1:"TRIVIA"; $("title2").value=t.title2||"";
     ["primary","accent","deep","light"].forEach(k=>{ if(t[k]) $(k).value=t[k]; });
     $("logo").value=(t.logo&&t.logo!=="none")?t.logo:"";
     bgStyle=t.bg||"gradient";
@@ -677,14 +677,14 @@
     const wrap=$("presetList"); if(!wrap) return;
     const dots=t=>`<span class="pv-dots"><i style="background:${t.primary}"></i><i style="background:${t.accent}"></i><i style="background:${t.deep}"></i></span>`;
     let html=BUILTIN_PRESETS.map((p,i)=>`<span class="preset" data-b="${i}">${dots(p.theme)}${esc(p.name)}</span>`).join("");
-    html+=PRESETS.map((p,i)=>`<span class="preset" data-s="${i}">${dots(p.theme)}${esc(p.name)}<button class="px" data-del="${i}" title="Delete preset">×</button></span>`).join("");
+    html+=PRESETS.map((p,i)=>`<span class="preset${activePreset===i?' active':''}" data-s="${i}">${dots(p.theme)}${esc(p.name)}<button class="px" data-del="${i}" title="Delete preset">×</button></span>`).join("");
     wrap.innerHTML=html||'<span class="preset-empty">No saved presets yet — design a look, then save it.</span>';
     wrap.querySelectorAll(".preset").forEach(el=>el.addEventListener("click",ev=>{
       if(ev.target.classList.contains("px")) return;
       if(el.dataset.b!==undefined) applyPreset(BUILTIN_PRESETS[+el.dataset.b]);
-      else applyPreset(PRESETS[+el.dataset.s]);
+      else applyPreset(PRESETS[+el.dataset.s], +el.dataset.s);
     }));
-    wrap.querySelectorAll(".px").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); PRESETS.splice(+b.dataset.del,1); savePresets(); renderPresets(); }));
+    wrap.querySelectorAll(".px").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); const di=+b.dataset.del; PRESETS.splice(di,1); if(activePreset===di) activePreset=null; else if(activePreset!=null && di<activePreset) activePreset--; savePresets(); renderPresets(); refreshPresetButtons(); }));
   }
   function renderTemplates(){
     const wrap=$("templateList"); if(!wrap) return;
@@ -1186,12 +1186,25 @@
   $("addText").addEventListener("click",addText);
   $("addImg").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)addImage(f);e.target.value="";});
   $("savePreset").addEventListener("click",async ()=>{
-    const name=prompt("Name this preset:", $("vname").value||"My brand");
+    const name=prompt("Name this new preset:", $("vname").value||"My brand");
     if(!name) return;
-    const entry={name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e))};
-    PRESETS.push(entry); renderPresets();
+    const entry={name:name.trim(), theme:themeObj(), els:els.map(e=>Object.assign({},e)), slots:JSON.parse(JSON.stringify(slots))};
+    PRESETS.push(entry); activePreset=PRESETS.length-1; renderPresets(); refreshPresetButtons();
     const ok=await savePresets();
-    if(!ok){ PRESETS=PRESETS.filter(p=>p!==entry); renderPresets(); }   // didn't persist — don't pretend it did
+    if(!ok){ PRESETS=PRESETS.filter(p=>p!==entry); activePreset=null; renderPresets(); refreshPresetButtons(); }   // didn't persist — don't pretend it did
+  });
+  // Start a brand-new look from a completely blank canvas (no preset is "active" after this).
+  $("newBlank").addEventListener("click",()=>{ applyPreset(BLANK_PRESET); });
+  // Overwrite the currently-loaded saved preset with the current design (keeps its name).
+  $("updatePreset").addEventListener("click",async ()=>{
+    if(activePreset==null || !PRESETS[activePreset]) return;
+    const keepName=PRESETS[activePreset].name;
+    PRESETS[activePreset]={ name:keepName, theme:themeObj(), els:els.map(e=>Object.assign({},e)), slots:JSON.parse(JSON.stringify(slots)) };
+    renderPresets();
+    const u=$("updatePreset"); u.textContent="Updated!";
+    const ok=await savePresets();
+    setTimeout(refreshPresetButtons, 1100);
+    if(!ok && PRESETS[activePreset]) PRESETS[activePreset].name=keepName;   // alert already shown by savePresets
   });
   $("publishBtn").addEventListener("click",publish);
   function updatePhoneTab(){
