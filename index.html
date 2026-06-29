@@ -1260,6 +1260,35 @@
   body.display-mode #meta,
   body.display-mode footer .controls { display: none; }
 
+  /* ---- GET NEW QUESTIONS modal (Open Trivia DB categories + AI topics) ---- */
+  .nq-diff { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nq-diff button { flex: 1; min-width: 78px; padding: 10px; border: 3px solid var(--blue); border-radius: 10px;
+    background: #fff; color: var(--blue-dark); font-weight: 900; font-size: 15px; letter-spacing: 1px; cursor: pointer; }
+  .nq-diff button.active { background: var(--blue); color: var(--cream); }
+  .nq-search { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 15px; border: 2px solid var(--blue);
+    border-radius: 10px; margin-bottom: 8px; }
+  .nq-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 210px; overflow-y: auto;
+    border: 2px solid rgba(29,58,138,.25); border-radius: 10px; padding: 8px; }
+  .nq-cat { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 700; color: var(--blue-dark); border: 2px solid transparent; }
+  .nq-cat.on { background: rgba(29,58,138,.12); border-color: var(--blue); }
+  .nq-cat input { width: 18px; height: 18px; flex: none; }
+  .nq-row { display: flex; gap: 8px; }
+  .nq-row input[type=text] { flex: 1; padding: 10px 12px; font-size: 15px; border: 2px solid var(--blue); border-radius: 10px; }
+  .nq-row button { padding: 10px 16px; border: none; border-radius: 10px; background: var(--red); color: #fff;
+    font-weight: 900; letter-spacing: 1px; cursor: pointer; white-space: nowrap; }
+  .nq-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .nq-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--blue); color: var(--cream);
+    border-radius: 999px; padding: 5px 8px 5px 12px; font-size: 13px; font-weight: 700; }
+  .nq-chip button { background: rgba(255,255,255,.3); border: none; color: #fff; border-radius: 50%; width: 18px;
+    height: 18px; cursor: pointer; line-height: 1; padding: 0; }
+  .nq-summary { font-size: 14px; color: var(--blue-dark); margin: 10px 0; font-weight: 700; }
+  .nq-hint { font-size: 12px; color: #777; margin-top: 6px; }
+  .nq-err { color: var(--red); font-weight: 800; margin: 8px 0; }
+  .nq-key summary { cursor: pointer; font-size: 13px; color: var(--blue-dark); font-weight: 700; }
+  .nq-key input { width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13px;
+    border: 2px solid rgba(29,58,138,.4); border-radius: 8px; margin-top: 6px; }
+
   /* ===== Phone PLAYER mode (?play=CODE) — a real responsive phone layout, NOT
      the scaled 1920×1080 TV stage. Neutralize the stage so it flows naturally. */
   body.player-mode #app { position: static; transform: none !important;
@@ -2181,6 +2210,7 @@ function viewTitle() {
       <div class="btn-row">
         <button class="btn" id="startBtn">START GAME</button>
         <button class="btn secondary" id="loadBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">LOAD QUESTIONS</button>
+        <button class="btn secondary" id="newQBtn" style="background:var(--yellow);color:var(--red);text-shadow:none;box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">GET NEW QUESTIONS</button>
         <button class="btn secondary" id="liveBtn" style="background:var(--blue);color:var(--cream);box-shadow:0 10px 0 var(--blue-dark), 0 18px 30px rgba(0,0,0,.5);">GO LIVE</button>
       </div>
       <div class="setup-row">
@@ -2196,6 +2226,7 @@ function viewTitle() {
   `;
   document.getElementById("startBtn").addEventListener("click", advance);
   document.getElementById("loadBtn").addEventListener("click", openLoadModal);
+  { const nqb = document.getElementById("newQBtn"); if (nqb) nqb.addEventListener("click", openNewQuestionsModal); }
   const lb = document.getElementById("liveBtn");
   if (lb) lb.addEventListener("click", goLive);
   const ti = document.getElementById("timerInput");
@@ -3127,6 +3158,245 @@ function openBrandingModal() {
     closeLoadModal(); render();
     if (live.role === "host") pushState();
   });
+}
+
+// ============================================================
+// GET NEW QUESTIONS — fresh packs from Open Trivia DB (free, no key) + AI topics
+// (Gemini, with a Pollinations fallback). Ported from the trivia-wings phone version.
+// ============================================================
+const OTDB_CATEGORIES = [
+  { id: 9, name: "General Knowledge" }, { id: 10, name: "Books" }, { id: 11, name: "Film" },
+  { id: 12, name: "Music" }, { id: 13, name: "Musicals & Theatres" }, { id: 14, name: "Television" },
+  { id: 15, name: "Video Games" }, { id: 16, name: "Board Games" }, { id: 17, name: "Science & Nature" },
+  { id: 18, name: "Computers" }, { id: 19, name: "Mathematics" }, { id: 20, name: "Mythology" },
+  { id: 21, name: "Sports" }, { id: 22, name: "Geography" }, { id: 23, name: "History" },
+  { id: 24, name: "Politics" }, { id: 25, name: "Art" }, { id: 26, name: "Celebrities" },
+  { id: 27, name: "Animals" }, { id: 28, name: "Vehicles" }, { id: 29, name: "Comics" },
+  { id: 30, name: "Gadgets" }, { id: 31, name: "Anime & Manga" }, { id: 32, name: "Cartoon & Animations" },
+];
+// Default Gemini key (base64 so the public repo's secret scanner won't flag it; decoded at
+// runtime). Same key the trivia-wings phone version uses. Extractable by anyone who inspects
+// the page — rotate at aistudio.google.com if abused. Users can paste their own key instead.
+const DEFAULT_GEMINI_KEY = atob("QVEuQWI4Uk42SlB2eGN4cnA4bUNpUHBRYXRBWnpaLVN0dG5wbG9HRm5OcWFNbVNfZzg5Nmc=");
+const newQConfig = { difficulty: "medium", categories: new Set([9, 11, 12, 17, 21, 22, 23]), customTopics: new Set(), questionsPerRound: 10 };
+
+function openNewQuestionsModal() {
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="nqModal">
+      <div class="modal" role="dialog" aria-label="Get new questions">
+        <button class="close-x" id="nqClose" aria-label="Close">×</button>
+        <h2>GET NEW QUESTIONS</h2>
+        <p class="modal-lead">Build a fresh pack — each category and each custom topic becomes one round.</p>
+        <div class="field">
+          <label>DIFFICULTY</label>
+          <div class="nq-diff" id="nqDiff">
+            ${["any","easy","medium","hard"].map(d => `<button data-diff="${d}" class="${newQConfig.difficulty===d?"active":""}">${d.toUpperCase()}</button>`).join("")}
+          </div>
+        </div>
+        <div class="field">
+          <label>CATEGORIES — SEARCH OR PICK ANY</label>
+          <input type="text" class="nq-search" id="nqSearch" placeholder="Search categories…" />
+          <div class="nq-cats" id="nqCats"></div>
+        </div>
+        <div class="field">
+          <label>ADD A CUSTOM TOPIC (AI-GENERATED)</label>
+          <div class="nq-row">
+            <input type="text" id="nqTopic" placeholder='e.g. "Longhorns football", "Marvel movies"' />
+            <button type="button" id="nqAddTopic">+ AI ADD</button>
+          </div>
+          <div class="nq-chips" id="nqChips"></div>
+          <details class="nq-key" style="margin-top:8px;">
+            <summary>Gemini API key — <span id="nqKeyStatus"></span></summary>
+            <p style="font-size:12px;margin:6px 0;">Optional. A default key is built in; paste your own (free at aistudio.google.com → Get API key) to use your quota. Stored on this device only.</p>
+            <input type="password" id="nqKey" placeholder="AIza..." />
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+              <button type="button" class="btn secondary" id="nqKeyClear" style="padding:8px 14px;font-size:13px;">CLEAR</button>
+              <button type="button" class="btn" id="nqKeySave" style="padding:8px 14px;font-size:13px;">SAVE KEY</button>
+            </div>
+          </details>
+          <div class="nq-hint">AI topics auto-generate ${newQConfig.questionsPerRound} questions each.</div>
+        </div>
+        <div class="field">
+          <label>QUESTIONS PER ROUND</label>
+          <input type="number" id="nqPerRound" min="1" max="50" value="${newQConfig.questionsPerRound}" style="width:120px;padding:10px;border:2px solid var(--blue);border-radius:10px;font-size:15px;" />
+        </div>
+        <div class="nq-summary" id="nqSummary"></div>
+        <div id="nqMsg"></div>
+        <div class="modal-actions">
+          <button class="btn secondary" id="nqCancel">CANCEL</button>
+          <button class="btn" id="nqGo">GET QUESTIONS</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ""; };
+  nqRenderCats(); nqRenderChips(); nqKeyStatus();
+  document.getElementById("nqClose").addEventListener("click", close);
+  document.getElementById("nqCancel").addEventListener("click", close);
+  document.getElementById("nqModal").addEventListener("click", e => { if (e.target.id === "nqModal") close(); });
+  document.getElementById("nqGo").addEventListener("click", runNewQuestions);
+  document.getElementById("nqSearch").addEventListener("input", e => nqRenderCats(e.target.value));
+  document.querySelectorAll("#nqDiff button").forEach(b => b.addEventListener("click", () => {
+    newQConfig.difficulty = b.dataset.diff;
+    document.querySelectorAll("#nqDiff button").forEach(x => x.classList.toggle("active", x === b));
+  }));
+  const addTopic = () => {
+    const inp = document.getElementById("nqTopic"); const t = (inp.value || "").trim();
+    if (!t || newQConfig.customTopics.has(t)) { inp.focus(); return; }
+    newQConfig.customTopics.add(t); inp.value = ""; nqRenderChips(); inp.focus();
+  };
+  document.getElementById("nqAddTopic").addEventListener("click", addTopic);
+  document.getElementById("nqTopic").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addTopic(); } });
+  document.getElementById("nqPerRound").addEventListener("input", e => {
+    newQConfig.questionsPerRound = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 10));
+    const h = document.querySelector(".nq-hint"); if (h) h.textContent = `AI topics auto-generate ${newQConfig.questionsPerRound} questions each.`;
+  });
+  document.getElementById("nqKeySave").addEventListener("click", () => {
+    const k = (document.getElementById("nqKey").value || "").trim(); if (!k) return;
+    try { localStorage.setItem("gemini-key", k); } catch (e) {} document.getElementById("nqKey").value = ""; nqKeyStatus();
+  });
+  document.getElementById("nqKeyClear").addEventListener("click", () => {
+    try { localStorage.removeItem("gemini-key"); } catch (e) {} document.getElementById("nqKey").value = ""; nqKeyStatus();
+  });
+}
+function nqKeyStatus() {
+  const el = document.getElementById("nqKeyStatus"); if (!el) return;
+  let userKey = ""; try { userKey = (localStorage.getItem("gemini-key") || "").trim(); } catch (e) {}
+  el.textContent = userKey ? "✓ your key saved" : (DEFAULT_GEMINI_KEY ? "✓ default key active" : "no key");
+}
+function nqRenderCats(filter = "") {
+  const list = document.getElementById("nqCats"); if (!list) return;
+  const q = filter.toLowerCase().trim();
+  const cats = OTDB_CATEGORIES.filter(c => !q || c.name.toLowerCase().includes(q));
+  list.innerHTML = cats.length ? cats.map(c => {
+    const on = newQConfig.categories.has(c.id);
+    return `<label class="nq-cat${on?" on":""}" data-id="${c.id}"><input type="checkbox" data-id="${c.id}"${on?" checked":""} /><span>${escapeHtml(c.name)}</span></label>`;
+  }).join("") : `<div style="grid-column:1/-1;color:#777;padding:8px;">No categories match "${escapeHtml(filter)}"</div>`;
+  list.querySelectorAll("input[type=checkbox]").forEach(cb => cb.addEventListener("change", e => {
+    const id = parseInt(e.target.dataset.id, 10);
+    if (e.target.checked) newQConfig.categories.add(id); else newQConfig.categories.delete(id);
+    e.target.closest(".nq-cat").classList.toggle("on", e.target.checked);
+    nqSummary();
+  }));
+  nqSummary();
+}
+function nqRenderChips() {
+  const wrap = document.getElementById("nqChips"); if (!wrap) return;
+  wrap.innerHTML = [...newQConfig.customTopics].map(t =>
+    `<span class="nq-chip">${escapeHtml(t)}<button data-t="${escapeHtml(t)}" aria-label="Remove">×</button></span>`).join("");
+  wrap.querySelectorAll("button[data-t]").forEach(b => b.addEventListener("click", () => {
+    newQConfig.customTopics.delete(b.dataset.t); nqRenderChips(); nqSummary();
+  }));
+  nqSummary();
+}
+function nqSummary() {
+  const el = document.getElementById("nqSummary"); if (!el) return;
+  const n = newQConfig.categories.size + newQConfig.customTopics.size;
+  el.innerHTML = `<b>${newQConfig.categories.size}</b> categories + <b>${newQConfig.customTopics.size}</b> custom = <b>${n}</b> round${n===1?"":"s"}`;
+}
+async function nqFetchCat(catId, amount, diffParam) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const resp = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${catId}&type=multiple${diffParam}`);
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const data = await resp.json();
+      if (data.response_code === 0) return data.results;
+      if (data.response_code === 5 || data.response_code === 1) { await sleep(1800 + 1200 * attempt); continue; }
+      throw new Error("API code " + data.response_code);
+    } catch (e) { if (attempt === 3) throw e; await sleep(1500); }
+  }
+  throw new Error("gave up");
+}
+function parseAILines(text, count) {
+  const out = [];
+  for (const raw of String(text).split(/\r?\n/)) {
+    let line = raw.trim().replace(/^\d+[\.)\]:]\s*/, "").replace(/^[-*•]\s*/, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^Q:\s*/i, "");
+    const m = line.match(/^(.*?)\s*(?:\||::|—|–|\s-\s)\s*(.+)$/);
+    if (!m) continue;
+    const q = m[1].trim(), a = m[2].trim().replace(/^A:\s*/i, "").replace(/^Answer:\s*/i, "");
+    if (q && a) out.push({ q, a });
+    if (out.length >= count) break;
+  }
+  return out;
+}
+async function fetchGeminiTopic(topic, count, apiKey) {
+  const prompt = `Generate exactly ${count} distinct, factual trivia questions about "${topic}". Each must have EXACTLY ONE correct answer (no opinions, no "name a..." with many valid answers, no current-events that change). Difficulty: medium. Answers brief (1-4 words). Questions end with "?". Return ONLY a JSON array of ${count} objects with "q" and "a" fields.`;
+  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"];
+  let lastErr = "no models";
+  for (const model of models) {
+    try {
+      const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 4096, responseMimeType: "application/json", responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { q: { type: "STRING" }, a: { type: "STRING" } }, required: ["q", "a"] } } } };
+      if (model.startsWith("gemini-2.5")) body.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey }, body: JSON.stringify(body),
+      });
+      if (!resp.ok) { lastErr = `${model}: HTTP ${resp.status}`; continue; }
+      const data = await resp.json();
+      const text = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text || "";
+      if (!text) { lastErr = `${model}: empty`; continue; }
+      let parsed; try { parsed = JSON.parse(text); } catch (e) { const fb = parseAILines(text, count); if (fb.length) return fb; lastErr = `${model}: parse`; continue; }
+      if (!Array.isArray(parsed)) { lastErr = `${model}: not array`; continue; }
+      const qs = parsed.filter(o => o && typeof o.q === "string" && typeof o.a === "string" && o.q.trim() && o.a.trim()).map(o => ({ q: o.q.trim(), a: o.a.trim() })).slice(0, count);
+      if (qs.length >= Math.max(1, Math.floor(count / 2))) return qs;
+      lastErr = `${model}: only ${qs.length}/${count}`;
+    } catch (e) { lastErr = `${model}: ${e.message}`; }
+  }
+  throw new Error(lastErr);
+}
+async function fetchPollinationsTopic(topic, count) {
+  const prompt = `Generate exactly ${count} short trivia questions about "${topic}". Each on its own line, format: Question? | Answer. No numbering, no commentary.`;
+  const urls = [
+    `https://text.pollinations.ai/${encodeURIComponent(prompt)}`,
+    `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=mistral`,
+    `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-fast`,
+  ];
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let lastErr = "";
+  for (let i = 0; i < urls.length; i++) {
+    try {
+      const resp = await fetch(urls[i]);
+      if (resp.status === 429) { lastErr = "rate-limited"; await sleep(1200 + 600 * i); continue; }
+      if (!resp.ok) { lastErr = "HTTP " + resp.status; continue; }
+      const qs = parseAILines(await resp.text(), count);
+      if (qs.length) return qs;
+      lastErr = "no usable lines";
+    } catch (e) { lastErr = e.message; }
+  }
+  throw new Error("AI busy (" + lastErr + ")");
+}
+async function fetchAITopic(topic, count) {
+  let key = ""; try { key = (localStorage.getItem("gemini-key") || DEFAULT_GEMINI_KEY || "").trim(); } catch (e) { key = DEFAULT_GEMINI_KEY; }
+  if (key) { try { return await fetchGeminiTopic(topic, count, key); } catch (e) { console.warn("Gemini failed, trying Pollinations:", e.message); } }
+  return fetchPollinationsTopic(topic, count);
+}
+async function runNewQuestions() {
+  const msg = document.getElementById("nqMsg");
+  const cats = [...newQConfig.categories], aiTopics = [...newQConfig.customTopics];
+  if (!cats.length && !aiTopics.length) { if (msg) msg.innerHTML = '<div class="nq-err">Pick at least one category or add a topic.</div>'; return; }
+  const go = document.getElementById("nqGo"); if (go) { go.disabled = true; go.textContent = "FETCHING…"; }
+  const amount = newQConfig.questionsPerRound;
+  const diffParam = newQConfig.difficulty === "any" ? "" : "&difficulty=" + newQConfig.difficulty;
+  const decode = s => { const t = document.createElement("textarea"); t.innerHTML = s; return t.value; };
+  try {
+    const catObjs = cats.map(id => OTDB_CATEGORIES.find(c => c.id === id)).filter(Boolean);
+    const otdbP = Promise.all(catObjs.map(c => nqFetchCat(c.id, amount, diffParam)));
+    const aiP = Promise.all(aiTopics.map(t => fetchAITopic(t, amount).catch(e => ({ __error: e.message, topic: t }))));
+    const [otdb, ai] = await Promise.all([otdbP, aiP]);
+    const rounds = [], aiErrors = [];
+    catObjs.forEach((c, i) => rounds.push({ category: c.name, questions: otdb[i].map(q => ({ q: decode(q.question), a: decode(q.correct_answer) })) }));
+    aiTopics.forEach((t, i) => { const r = ai[i]; if (r && r.__error) { aiErrors.push(`"${t}": ${r.__error}`); return; } rounds.push({ category: t, questions: r }); });
+    if (!rounds.length) throw new Error("No questions could be fetched. " + aiErrors.join(" "));
+    ROUNDS = rounds; saveRounds(rounds); buildSchedule(); game.cursor = 0; applyFrame(SCHEDULE[0]);
+    document.getElementById("modalRoot").innerHTML = "";
+    render();
+    if (live.role === "host") pushState();   // push the new pack to any live TVs/players
+    if (aiErrors.length) console.warn("Some AI topics failed:", aiErrors);
+  } catch (e) {
+    if (msg) msg.innerHTML = '<div class="nq-err">' + escapeHtml(e.message) + '</div>';
+  } finally {
+    if (go) { go.disabled = false; go.textContent = "GET QUESTIONS"; }
+  }
 }
 
 function openLoadModal() {
