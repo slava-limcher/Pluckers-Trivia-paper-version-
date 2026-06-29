@@ -1314,10 +1314,17 @@
     background: transparent; box-shadow: none;   /* no blue fill, but keep the bordered box */
     text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 2px rgba(0,0,0,.6);  /* readable on any background */
   }
+  /* The topbar nudges the badge + category DOWN 70px to sit beside the logo. The phone
+     version's always-on timer makes the topbar taller, so that nudge collides the
+     category with the question box — drop the vertical nudge (keep the horizontal one). */
+  body.phone-version .q-topbar--full .q-category { transform: translate(-120px, 0); }
+  body.phone-version .q-topbar--full .q-badge { transform: none; }
   /* QR sits in the natural bottom-right gap (below the question box, above the footer
      stripe, right of the howto) — no layout reservation, so nothing else moves. */
-  #joinQr { position: absolute; bottom: 34px; right: 32px; z-index: 60; width: 204px;
+  #joinQr { position: absolute; bottom: 54px; right: 32px; z-index: 60; width: 204px;
     display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; }
+  /* TV footer is shorter but the box is taller, so the QR can ride lower there. */
+  body.display-mode #joinQr { bottom: 34px; }
   #joinQr .joinqr-label { font-family: var(--label-font, "Anton","Oswald",Impact,sans-serif);
     font-size: 16px; letter-spacing: 1px; color: var(--cream); text-shadow: 2px 2px 0 #000; }
   #joinQr .joinqr-box { background: #fff; padding: 8px; border-radius: 12px; line-height: 0;
