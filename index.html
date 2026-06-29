@@ -1310,10 +1310,9 @@
      join QR in the top-right corner. Scoped to .phone-version so the paper game is
      unchanged. ===== */
   body.phone-version::before { opacity: 0 !important; }            /* no diagonal stripe texture */
-  body.phone-version .q-text {
-    background: transparent; box-shadow: none;   /* no blue fill, but keep the bordered box */
-    text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 2px rgba(0,0,0,.6);  /* readable on any background */
-  }
+  /* The question box keeps its own fill (var(--qbox-bg), from the brand or the custom
+     box color) + border + shadow — same as the paper version — so it's a distinct panel
+     even when the page has no background image. (Set the box color in make.html.) */
   /* The topbar nudges the badge + category DOWN 70px to sit beside the logo. The phone
      version's always-on timer makes the topbar taller, so that nudge collides the
      category with the question box — drop the vertical nudge (keep the horizontal one). */
