@@ -519,6 +519,8 @@
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: start;
   }
   .q-topbar--full .q-category { justify-self: end; transform: translate(-120px, 70px); }
+  /* Drop the "QUESTION x OF y" badge down to the same height as the category. */
+  .q-topbar--full .q-badge { transform: translateY(70px); }
   /* Big brand logo in the actual top-left corner of each question. */
   .q-corner-logo { height: 150px; max-width: 310px; object-fit: contain; display: block; }
   .q-score {
