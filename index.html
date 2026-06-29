@@ -3831,6 +3831,9 @@ function resetHostSession() {
   TIMER_END = 0;
   game.cursor = 0;
   applyFrame(SCHEDULE[0]);
+  // Forget any phone players from a previous game so they don't carry into the next one.
+  if (typeof hostPlayers === "object" && hostPlayers) Object.keys(hostPlayers).forEach(k => delete hostPlayers[k]);
+  if (typeof lastStandingsKey !== "undefined") lastStandingsKey = "";
   try { localStorage.removeItem(TEAMS_KEY); } catch (e) {}
   try { localStorage.removeItem(TIMER_KEY); } catch (e) {}
 }
@@ -4404,7 +4407,11 @@ async function refreshPlayers() {
   try {
     const { data } = await liveClient().from(LIVE_TABLE).select("room_code,state").like("room_code", live.code + "__p__%");
     if (!Array.isArray(data)) return;
-    data.forEach(row => { try { const s = JSON.parse(row.state); if (s && s.uid) hostPlayers[s.uid] = { team: s.team || "", answers: s.answers || {} }; } catch (e) {} });
+    // Rebuild from THIS poll so hostPlayers reflects only the current room — nothing lingers.
+    const next = {};
+    data.forEach(row => { try { const s = JSON.parse(row.state); if (s && s.uid) next[s.uid] = { team: s.team || "", answers: s.answers || {} }; } catch (e) {} });
+    Object.keys(hostPlayers).forEach(k => delete hostPlayers[k]);
+    Object.assign(hostPlayers, next);
     recomputeScores();
     updatePlayerTracker();
     // Push refreshed scores to the TVs only when the standings actually change.
